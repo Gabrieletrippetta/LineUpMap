@@ -1,16 +1,16 @@
-2024-08-05 09:32:21 UTC
-Windows-10-10.0.22631
-Ren'Py 8.2.3.24061702
+2025-01-30 10:26:36 UTC
+Windows-10-10.0.26100
+Ren'Py 8.3.4.24120703
 
-Early init took 0.05s
-Loading error handling took 0.03s
-Loading script took 0.22s
-Loading save slot metadata took 0.03s
+Early init took 0.06s
+Loading error handling took 0.07s
+Loading script took 0.29s
+Loading save slot metadata took 0.14s
 Loading persistent took 0.00s
-Running init code took 0.05s
-Loading analysis data took 0.02s
+Running init code took 0.03s
+Loading analysis data took 0.03s
 Analyze and compile ATL took 0.00s
-Reloading save slot metadata took 0.02s
+Reloading save slot metadata took 0.10s
 Index archives took 0.00s
 Dump and make backups took 0.04s
 Cleaning cache took 0.00s
@@ -23,9 +23,9 @@ Creating interface object took 0.00s
 Cleaning stores took 0.00s
 Init translation took 0.03s
 Build styles took 0.00s
-Load screen analysis took 0.03s
+Load screen analysis took 0.04s
 Analyze screens took 0.00s
 Save screen analysis took 0.00s
 Prepare screens took 0.07s
 Save pyanalysis. took 0.00s
-Save bytecode. took 0.03s
+Save bytecode. took 0.00s

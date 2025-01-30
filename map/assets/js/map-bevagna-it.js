@@ -33,6 +33,169 @@ map.on("load", function (e) {
 var stores = {
   type: "FeatureCollection",
   features: [      
+    // PORTALS GAITE
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [12.608231387105889, 42.932829261692824],
+      }, 
+      properties: {
+        address_it: "Portale Mercato delle Gaite",
+        address_en: "Mercato delle Gaite Portal",
+        city: "Bevagna",
+        country: "Italy",
+        postalCode: "06031",
+        description_it: "Se non hai l'app Zappar potrai scaricarla cliccando sul link sottostante.",
+        description_en: "If you don't have the Zappar app, you'll be redirected to the app store to download it, then you can enjoy the portal!",
+        markerType: "portals",
+        site: "https://webxr.run/Vb5Adgw582d6Z",
+      },
+    },
+    // {
+    //   type: "Feature",
+    //   geometry: {
+    //     type: "Point",
+    //     coordinates: [12.608045948399779, 42.9328888254322],
+    //   }, 
+    //   properties: {
+    //     address_it: "Portale Gaita San Giovanni",
+    //     address_en: "Gaita San Giovanni Portal",
+    //     city: "Bevagna",
+    //     country: "Italy",
+    //     postalCode: "06031",
+    //     description_it: "",
+    //     markerType: "portals",
+    //   },
+    // },
+    // {
+    //   type: "Feature",
+    //   geometry: {
+    //     type: "Point",
+    //     coordinates: [12.608180148251774, 42.932735250662574],
+    //   }, 
+    //   properties: {
+    //     address_it: "Portale Gaita San Giorgio",
+    //     address_en: "Gaita San Giorgio Portal",
+    //     city: "Bevagna",
+    //     country: "Italy",
+    //     postalCode: "06031",
+    //     description_it: "",
+    //     description_en: "",
+    //     markerType: "portals",
+    //   },
+    // },
+    // {
+    //   type: "Feature",
+    //   geometry: {
+    //     type: "Point",
+    //     coordinates: [12.607844084756854, 42.93267580226183],
+    //   }, 
+    //   properties: {
+    //     address_it: "Portale Gaita San Pietro",
+    //     address_en: "Gaita San Pietro Portal",
+    //     city: "Bevagna",
+    //     country: "Italy",
+    //     postalCode: "06031",
+    //     description_it: "",
+    //     description_en: "",
+    //     markerType: "portals",
+    //   },
+    // },
+    // {
+    //   type: "Feature",
+    //   geometry: {
+    //     type: "Point",
+    //     coordinates: [12.60797151822976, 42.932599840332955],
+    //   }, 
+    //   properties: {
+    //     address_it: "Portale Gaita Santa Maria",
+    //     address_en: "Gaita Santa Maria Portal",
+    //     city: "Bevagna",
+    //     country: "Italy",
+    //     postalCode: "06031",
+    //     description_it: "",
+    //     description_en: "",
+    //     markerType: "portals",
+    //   },
+    // },
+    // END PORTALS GAITE
+    
+    // MESTIERI GAITE
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [12.610776563411152, 42.934996177151284],
+      }, 
+      properties: {
+        address_it: "Mestiere Gaita San Giovanni",
+        address_en: "Gaita San Giovanni Craft",
+        city: "Bevagna",
+        country: "Italy",
+        postalCode: "06031",
+        description_it: "",
+        description_en: "",
+        markerType: "sanGiovanni",
+        site: "/assets/renpy/Cartiera/index.html",
+      },
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [12.607107126589524, 42.93244475232125],
+      }, 
+      properties: {
+        address_it: "Mestiere Gaita San Pietro",
+        address_en: "Gaita San Pietro Craft",
+        city: "Bevagna",
+        country: "Italy",
+        postalCode: "06031",
+        description_it: "",
+        description_en: "",
+        markerType: "sanPietro",
+        site: "/assets/renpy/Cereria/index.html",
+      },
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [12.609526419514012, 42.93342634588887],
+      }, 
+      properties: {
+        address_it: "Mestiere Gaita San Giorgio",
+        address_en: "Gaita San Giorgio Craft",
+        city: "Bevagna",
+        country: "Italy",
+        postalCode: "06031",
+        description_it: "",
+        description_en: "",
+        markerType: "sanGiorgio",
+        site: "/assets/renpy/Dipintore/index.html",
+      },
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [12.60748257632491, 42.93164125523298],
+      }, 
+      properties: {
+        address_it: "Mestiere Gaita Santa Maria",
+        address_en: "Gaita Santa Maria Craft",
+        city: "Bevagna",
+        country: "Italy",
+        postalCode: "06031",
+        description_it: "",
+        description_en: "",
+        markerType: "santaMaria",
+        site: "/assets/renpy/Setificio/index.html",
+      },
+    },
+    // END MESTIERI GAITE
+
     // PARCHEGGI
     {
       type: "Feature",
@@ -378,168 +541,6 @@ var stores = {
     // },
     // END POINT OF INTEREST
     
-    // PORTALS GAITE
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.608231387105889, 42.932829261692824],
-      }, 
-      properties: {
-        address_it: "Portale Mercato delle Gaite",
-        address_en: "Mercato delle Gaite Portal",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "Se non hai l'app Zappar potrai scaricarla cliccando sul link sottostante",
-        description_en: "If you don't have the Zappar app, you'll be redirected to the app store to download it, then you can enjoy the portal!",
-        markerType: "portals",
-        site: "https://webxr.run/Vb5Adgw582d6Z",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.608045948399779, 42.9328888254322],
-      }, 
-      properties: {
-        address_it: "Portale Gaita San Giovanni",
-        address_en: "Gaita San Giovanni Portal",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        markerType: "portals",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.608180148251774, 42.932735250662574],
-      }, 
-      properties: {
-        address_it: "Portale Gaita San Giorgio",
-        address_en: "Gaita San Giorgio Portal",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        description_en: "",
-        markerType: "portals",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.607844084756854, 42.93267580226183],
-      }, 
-      properties: {
-        address_it: "Portale Gaita San Pietro",
-        address_en: "Gaita San Pietro Portal",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        description_en: "",
-        markerType: "portals",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.60797151822976, 42.932599840332955],
-      }, 
-      properties: {
-        address_it: "Portale Gaita Santa Maria",
-        address_en: "Gaita Santa Maria Portal",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        description_en: "",
-        markerType: "portals",
-      },
-    },
-    // END PORTALS GAITE
-    
-    // MESTIERI GAITE
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.610776563411152, 42.934996177151284],
-      }, 
-      properties: {
-        address_it: "Mestiere Gaita San Giovanni",
-        address_en: "Gaita San Giovanni Craft",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        description_en: "",
-        markerType: "sanGiovanni",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.607107126589524, 42.93244475232125],
-      }, 
-      properties: {
-        address_it: "Mestiere Gaita San Pietro",
-        address_en: "Gaita San Pietro Craft",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        description_en: "",
-        markerType: "sanPietro",
-        site: "/assets/renpy/Cereria/index.html",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.609526419514012, 42.93342634588887],
-      }, 
-      properties: {
-        address_it: "Mestiere Gaita San Giorgio",
-        address_en: "Gaita San Giorgio Craft",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        description_en: "",
-        markerType: "sanGiorgio",
-        site: "/assets/renpy/Dipintore/index.html",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [12.60748257632491, 42.93164125523298],
-      }, 
-      properties: {
-        address_it: "Mestiere Gaita Santa Maria",
-        address_en: "Gaita Santa Maria Craft",
-        city: "Bevagna",
-        country: "Italy",
-        postalCode: "06031",
-        description_it: "",
-        description_en: "",
-        markerType: "santaMaria",
-        site: "/assets/renpy/Setificio/index.html",
-      },
-    },
-    // END MESTIERI GAITE
-    
     // TOILET
     {
       type: "Feature",
@@ -858,15 +859,15 @@ const translations = {
   it: {
       filterOptions: [
           "Tutte le categorie",
-          "Le Porte",
-          "Punti d'interesse",
-          "Parcheggi", 
           "Portali Gaite", 
           "Mestieri medievali",  
           "Gaita San Giovanni", 
           "Gaita San Giorgio", 
           "Gaita San Pietro", 
           "Gaita Santa Maria", 
+          "Le Porte",
+          "Punti d'interesse",
+          "Parcheggi", 
           "Bagni Pubblici", 
           "Fontana di Acqua Potabile"
       ]
@@ -874,15 +875,15 @@ const translations = {
   en: {
       filterOptions: [
           "All Categories", 
-          "The Doors", 
-          "Points of Interest",
-          "Parking lots", 
           "Gaite Portal", 
           "Medieval Crafts",
           "Gaita San Giovanni", 
           "Gaita San Giorgio", 
           "Gaita San Pietro", 
           "Gaita Santa Maria", 
+          "The Doors", 
+          "Points of Interest",
+          "Parking lots", 
           "Public Toilet", 
           "Drinking Water Fountain"
       ]
@@ -891,27 +892,27 @@ const translations = {
 function translate(language) {
   
   document.getElementById('all').innerHTML = translations[language].filterOptions[0];
-  document.getElementById('entrance').innerHTML = translations[language].filterOptions[1];
-  // document.getElementById('tourism').innerHTML = translations[language].filterOptions[2];
-  document.getElementById('parking').innerHTML = translations[language].filterOptions[3];
-  document.getElementById('portals').innerHTML = translations[language].filterOptions[4];
-  document.getElementById('sanGiovanni').innerHTML = translations[language].filterOptions[6];
-  document.getElementById('sanGiorgio').innerHTML = translations[language].filterOptions[7];
-  document.getElementById('sanPietro').innerHTML = translations[language].filterOptions[8];
-  document.getElementById('santaMaria').innerHTML = translations[language].filterOptions[9];
+  document.getElementById('portals').innerHTML = translations[language].filterOptions[1];
+  document.getElementById('sanGiovanni').innerHTML = translations[language].filterOptions[3];
+  document.getElementById('sanGiorgio').innerHTML = translations[language].filterOptions[4];
+  document.getElementById('sanPietro').innerHTML = translations[language].filterOptions[5];
+  document.getElementById('santaMaria').innerHTML = translations[language].filterOptions[6];
+  document.getElementById('entrance').innerHTML = translations[language].filterOptions[7];
+  // document.getElementById('tourism').innerHTML = translations[language].filterOptions[8];
+  document.getElementById('parking').innerHTML = translations[language].filterOptions[9];
   document.getElementById('toilet').innerHTML = translations[language].filterOptions[10];
   document.getElementById('water').innerHTML = translations[language].filterOptions[11];
 
   
   document.getElementById('marker-all').innerHTML = translations[language].filterOptions[0];
-  document.getElementById('marker-entrance').innerHTML = translations[language].filterOptions[1];
-  // document.getElementById('marker-tourism').innerHTML = translations[language].filterOptions[2];
-  document.getElementById('marker-parking').innerHTML = translations[language].filterOptions[3];
-  document.getElementById('marker-portals').innerHTML = translations[language].filterOptions[4];
-  document.getElementById('marker-sanGiovanni').innerHTML = translations[language].filterOptions[6];
-  document.getElementById('marker-sanGiorgio').innerHTML = translations[language].filterOptions[7];
-  document.getElementById('marker-sanPietro').innerHTML = translations[language].filterOptions[8];
-  document.getElementById('marker-santaMaria').innerHTML = translations[language].filterOptions[9];
+  document.getElementById('marker-portals').innerHTML = translations[language].filterOptions[1];
+  document.getElementById('marker-sanGiovanni').innerHTML = translations[language].filterOptions[3];
+  document.getElementById('marker-sanGiorgio').innerHTML = translations[language].filterOptions[4];
+  document.getElementById('marker-sanPietro').innerHTML = translations[language].filterOptions[5];
+  document.getElementById('marker-entrance').innerHTML = translations[language].filterOptions[7];
+  // document.getElementById('marker-tourism').innerHTML = translations[language].filterOptions[8];
+  document.getElementById('marker-parking').innerHTML = translations[language].filterOptions[9];
+  document.getElementById('marker-santaMaria').innerHTML = translations[language].filterOptions[6];
   document.getElementById('marker-toilet').innerHTML = translations[language].filterOptions[10];
   document.getElementById('marker-water').innerHTML = translations[language].filterOptions[11];
   
