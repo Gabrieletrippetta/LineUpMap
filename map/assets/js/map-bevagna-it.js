@@ -46,7 +46,7 @@ var stores = {
         city: "Bevagna",
         country: "Italy",
         postalCode: "06031",
-        description_it: "Se non hai l'app Zappar potrai scaricarla cliccando sul link sottostante.",
+        description_it: "Se hai l'app Zappar già installata sul tuo dispositivo, cliccando sul link sottostante l'esperienza si attiverà direttamente. \n\nSe non hai l'app Zappar verrai portato ad una schermata che ti consentirà di scaricarla",
         description_en: "If you don't have the Zappar app, you'll be redirected to the app store to download it, then you can enjoy the portal!",
         markerType: "portals",
         site: "https://webxr.run/Vb5Adgw582d6Z",
