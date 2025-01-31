@@ -60,17 +60,17 @@ body {
 
 .sidebar {
   border-right: 1px solid rgba(0, 0, 0, 0.25);
-  background-color: #E9E4E3;
+  background-color: #c0baba;
   z-index: 8;
   width: 100vw;
 }
 
 .heading {
-  border-bottom: 1px solid #E9E4E3;
+  border-bottom: 1px solid #c0baba;
   min-height: 40px;
   line-height: 40px;
   padding-top: 10px;
-  background-color: #E9E4E3; 
+  background-color: #c0baba; 
   color: #32679A; 
   margin: 0;
 }
@@ -557,7 +557,7 @@ body {
   font-weight: 700;
   text-decoration: none;
   color: white;
-  background-color: burlywood;
+  background-color: #F5A04C;
   padding: 10px;
   min-height: 120px;
   border-radius: 25px;
@@ -572,7 +572,7 @@ body {
   font-weight: 700;
   text-decoration: none;
   color: white;
-  background-color: burlywood;
+  background-color: #F5A04C;
   padding: 10px;
   min-height: 120px;
   border-radius: 25px;
@@ -587,7 +587,7 @@ body {
   font-weight: 700;
   text-decoration: none;
   color: white;
-  background-color: burlywood;
+  background-color: #F5A04C;
   padding: 10px;
   min-height: 120px;
   border-radius: 25px;
@@ -602,7 +602,7 @@ body {
   font-weight: 700;
   text-decoration: none;
   color: white;
-  background-color: burlywood;
+  background-color: #F5A04C;
   padding: 10px;
   min-height: 120px;
   border-radius: 25px;
