@@ -9,164 +9,66 @@
 </head>
 <body>
     <h1>LINEup School Data Explorer - An Open-Source Map to Longitudinal Databases in Europe</h1>
+
+    <button id="auth-container">Register/Login</button>
+    <!-- <a href="/auth.html" class="register-login">Register/Login</a> -->
+    
+    <div id="user-info" style="display: none;">
+        <p>Welcome, <span id="user-name"></span>!</p>
+        <button id="logout-btn">Logout</button>
+    </div>    
+
+    <div id="advanced-tools" style="display:none;">
+        <h2>Advanced Researcher Tools</h2>
+        <p>Access metadata, filtering options, and raw dataset links.</p>
+    </div>
+    
+
+    <!-- Search and Filtering UI -->
+    <div class="filter-container">
+        <input type="text" id="searchInput" placeholder="Search...">
+        
+        <select id="filterCountry">
+            <option value="all">Select all</option>
+        </select>
+        
+        <select id="filterEducation">
+            <option value="">School education</option>
+            <option value="ISCED 1">ISCED 1</option>
+            <option value="ISCED 2">ISCED 2</option>
+            <option value="ISCED 3">ISCED 3</option>
+        </select>
+        
+        <select id="filterDataAvailability">
+            <option value="">Data availability</option>
+            <option value="Open">Open</option>
+            <option value="Restricted">Restricted</option>
+            <option value="Request">On Request</option>
+        </select>
+        
+        <button onclick="searchData()">Search</button>
+    </div>
+    
     <div id="map"></div>
+    <script src="assets/script.js"></script>
     <script>
-        var map = L.map('map').setView([54.5260, 15.2551], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        var countries = { "AT": [47.5162, 14.5501], "BE": [50.8503, 4.3517], "BG": [42.7339, 25.4858], "HR": [45.1, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.8153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 8.2275], "UK": [55.3781, -3.436] };
-
-        Object.keys(countries).forEach(country => {
-            var customIcon = L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
-            var marker = L.marker(countries[country], {icon: customIcon}).addTo(map);
-            marker.on('click', function() { loadCsvList(country, marker); });
-        });
-
-        function loadCsvList(country, marker) {
-            fetch(`http://localhost:3000/data/${country}`)
-                .then(response => response.json())
-                .then(files => {
-                    if (files.length === 0) {
-                        marker.bindPopup("<b>Nessun dato disponibile per " + country + "</b>").openPopup();
-                        return;
-                    }
-                    let popupContent = `<b>${country}</b><br><ul>`;
-                    files.slice(0, 5).forEach(file => {
-                        popupContent += `<li><button class="csv-button" onclick="fetchAndShowChart('${country}', '${file}')">${file}</button></li>`;
-                    });
-                    if (files.length > 5) {
-                        popupContent += `<li><button class="expand-button" onclick="expandCsvList('${country}')">Mostra tutti</button></li>`;
-                    }
-                    popupContent += "</ul>";
-                    marker.bindPopup(popupContent).openPopup();
-                    marker.files = files; // Salva i file nel marker per l'espansione
-                })
-                .catch(err => console.error("Errore nel recupero file CSV:", err));
-        }
-
-        function expandCsvList(country) {
-            map.eachLayer(layer => {
-                if (layer instanceof L.Marker && layer.getPopup()) {
-                    let popup = layer.getPopup();
-                    if (popup && popup.getContent().includes(country)) {
-                        let files = layer.files || [];
-                        let expandedPopupContent = `<b>${country}</b><br><ul>`;
-                        files.forEach(file => {
-                            expandedPopupContent += `<li><button class="csv-button" onclick="fetchAndShowChart('${country}', '${file}')">${file}</button></li>`;
-                        });
-                        expandedPopupContent += "</ul>";
-                        layer.bindPopup(expandedPopupContent).openPopup();
-                    }
-                }
-            });
-        }
-            
-        let popupRow = 0;
-        let popupColumn = 0;
-        const maxPopupsPerColumn = 3;
-        function createChartPopup(country, csvData, csvFile) {
-            let popup = document.createElement('div');
-            popup.classList.add('chart-popup');
-            popup.style.left = `${50 + (popupColumn * 420)}px`;
-            popup.style.top = `${50 + (popupRow * 250)}px`;
-            popupRow++;
-            if (popupRow >= maxPopupsPerColumn) {
-                popupRow = 0;
-                popupColumn++;
-            }
-            
-            let closeButton = document.createElement('button');
-            closeButton.innerText = '✖';
-            closeButton.style.float = 'right';
-            closeButton.onclick = () => {
-                popup.remove();
-                rearrangePopups();
-            };
-            
-            let title = document.createElement('h3');
-            title.innerText = `Dati per ${country} - ${csvFile}`;
-            let canvas = document.createElement('canvas');
-            popup.appendChild(closeButton);
-            popup.appendChild(title);
-            popup.appendChild(canvas);
-            document.body.appendChild(popup);
-            updateChart(canvas, csvData);
-            
-            makePopupDraggable(popup);
-        }
-
-        function rearrangePopups() {
-            let popups = document.querySelectorAll('.chart-popup');
-            popupRow = 0;
-            popupColumn = 0;
-            popups.forEach(popup => {
-                popup.style.left = `${50 + (popupColumn * 420)}px`;
-                popup.style.top = `${50 + (popupRow * 250)}px`;
-                popupRow++;
-                if (popupRow >= maxPopupsPerColumn) {
-                    popupRow = 0;
-                    popupColumn++;
-                }
-            });
-        }
-
-        function makePopupDraggable(popup) {
-            let offsetX, offsetY, isDragging = false;
-            popup.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                offsetX = e.clientX - popup.offsetLeft;
-                offsetY = e.clientY - popup.offsetTop;
-                popup.style.zIndex = 1001;
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    popup.style.left = `${e.clientX - offsetX}px`;
-                    popup.style.top = `${e.clientY - offsetY}px`;
-                }
-            });
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-                popup.style.zIndex = 1000;
-            });
-        }
-
-        function fetchAndShowChart(country, csvFile) {
-            fetch(`http://localhost:3000/data/${country}/${csvFile}`)
-                .then(response => response.json())
-                .then(csvData => {
-                    if (!csvData.length) {
-                        alert("Il file CSV è vuoto.");
-                        return;
-                    }
-                    createChartPopup(country, csvData, csvFile);
-                })
-                .catch(err => console.error("Errore nel caricamento CSV:", err));
-        }
-
-        function updateChart(canvas, csvData) {
-            new Chart(canvas.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: csvData.map(row => Object.keys(row)[0]),
-                    datasets: [{
-                        label: "Valori",
-                        data: csvData.map(row => parseFloat(Object.values(row)[1]) || 0),
-                        borderColor: 'blue',
-                        fill: false
-                    }]
-                }
-            });
-        }
-
+        var _paq = window._paq || [];
+        _paq.push(["trackPageView"]);
+        _paq.push(["enableLinkTracking"]);
+        (function() {
+            var u="https://your-matomo-instance.com/";
+            _paq.push(["setTrackerUrl", u+"matomo.php"]);
+            _paq.push(["setSiteId", "1"]);
+            var d=document, g=d.createElement("script"), s=d.getElementsByTagName("script")[0];
+            g.async=true; g.src=u+"matomo.js"; s.parentNode.insertBefore(g,s);
+        })();
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'YOUR_GA_ID');
     </script>
 </body>
 </html>

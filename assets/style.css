@@ -1,9 +1,10 @@
 body {
     margin: 0;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
 }
 
 #map { 
-    height: 90vh; 
+    height: 82.5vh; 
 }
 
 .chart-popup {
@@ -33,23 +34,48 @@ h1 {
     margin-bottom: 20px;
     height: 5vh;
 }
+
+#auth-container {
+    background-color: #0056b3; 
+    color: #ffffff;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    position:absolute;
+    top: 20px;
+    right: 20px;
+}
+
+#auth-container:hover {
+    background-color: #004494; 
+}
+
 .close-btn {
     position: absolute;
     top: 5px;
     right: 5px;
-    background: red;
-    color: white;
+    background: none;
+    color: red;
     border: none;
     border-radius: 50%;
     cursor: pointer;
     padding: 5px 10px;
     font-size: 15px;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
+}
+
+.close-btn:hover {
+    background: red;
+    color: white;
 }
 
 ul {
@@ -78,4 +104,161 @@ ul {
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
+}
+
+/* Contenitore per allineare gli elementi in linea */
+.filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; 
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+/* Stile generale per input e select */
+input[type="text"], select {
+    background-color: #ffffff; /* Bianco */
+    color: #333333; /* Testo grigio scuro */
+    font-size: 16px;
+    border: 1px solid #cccccc; /* Bordo grigio chiaro */
+    border-radius: 4px;
+    padding: 10px;
+    width: 250px; /* Larghezza uniforme */
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Effetto al passaggio del mouse */
+input[type="text"]:hover, select:hover {
+    border-color: #999999; /* Bordo grigio medio */
+}
+
+/* Effetto quando l'elemento è focalizzato */
+input[type="text"]:focus, select:focus {
+    border-color: #0056b3; /* Bordo blu scuro */
+    box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+    outline: none;
+}
+
+/* Stile per il pulsante */
+button {
+    background-color: #0056b3; 
+    color: #ffffff;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Effetto al passaggio del mouse sul pulsante */
+button:hover {
+    background-color: #004494; 
+}
+
+#user-info {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #f1f1f1;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Stile per il testo "Welcome, username!" */
+#user-info p {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* Stile per il pulsante Logout */
+#user-info button {
+    background-color: #d9534f; /* Rosso */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#user-info button:hover {
+    background-color: #c9302c; /* Rosso più scuro al passaggio */
+}
+
+/* Centrare il form di login e registrazione */
+.auth-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+}
+
+.auth-container h2 {
+    text-align: center;
+    margin: 30px 0 10px;
+}
+
+/* Stile per i form di login e registrazione */
+.auth-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    background: #ffffff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: 300px;
+    margin: 0px 0px 40px;
+}
+
+.auth-container input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 92%;
+}
+
+.auth-container button {
+    background-color: #0056b3;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.auth-container button:hover {
+    background-color: #004494;
+}
+
+#back-to-map {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    margin-top: 20px;
+    background-color: #28a745; /* Verde */
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-align: center;
+}
+
+#back-to-map:hover {
+    background-color: #218838; /* Verde scuro al passaggio */
 }
