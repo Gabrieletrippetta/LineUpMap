@@ -164,7 +164,7 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
             };
             
             let title = document.createElement('h3');
-            title.innerText = `Dati per ${country} - ${csvFile}`;
+            title.innerText = `${country} Data - ${csvFile}`;
             let canvas = document.createElement('canvas');
             popup.appendChild(closeButton);
             popup.appendChild(title);
