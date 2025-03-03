@@ -31,34 +31,48 @@ const countries = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "
 
 // Creare cartelle per ogni nazione
 countries.forEach(country => {
-    const countryUploadPath = path.join(uploadsDir, country);
     const countryCsvPath = path.join(csvDir, country);
-    if (!fs.existsSync(countryUploadPath)) {
-        fs.mkdirSync(countryUploadPath, { recursive: true });
-    }
     if (!fs.existsSync(countryCsvPath)) {
         fs.mkdirSync(countryCsvPath, { recursive: true });
     }
 });
 
 // Funzione per convertire xlsx in csv
-function convertXlsxToCsv(targetFile, country) {
+function convertXlsxToCsv(targetFile) {
     const workbook = xlsx.readFile(targetFile);
     const sheetName = workbook.SheetNames[0];
-    const csvFile = path.join(csvDir, country, path.basename(targetFile, '.xlsx') + '.csv');
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(sheet);
+
+    if (jsonData.length === 0 || !jsonData[0]["Database country"]) {
+        console.error(`❌ Nessuna nazione trovata nel file ${targetFile}. File ignorato.`);
+        return;
+    }
+
+    const country = jsonData[0]["Database country"].toUpperCase().trim(); // Estrai il paese dalla colonna "Database country"
     
-    const csvData = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+    if (!countries.includes(country)) {
+        console.warn(`⚠️ Nazione '${country}' non riconosciuta. Assegnata a 'UNKNOWN'.`);
+    }
+
+    const targetCountry = countries.includes(country) ? country : "UNKNOWN";
+    const csvFile = path.join(csvDir, targetCountry, path.basename(targetFile, '.xlsx') + '.csv');
+
+    // Converte in CSV
+    const csvData = xlsx.utils.sheet_to_csv(sheet);
     fs.writeFileSync(csvFile, csvData);
-    console.log(`Converted: ${targetFile} -> ${csvFile}`);
+    console.log(`✅ Convertito: ${targetFile} -> ${csvFile}`);
+
+    // Rimuove il file originale dopo la conversione
+    fs.unlinkSync(targetFile);
+    console.log(`🗑️ File originale eliminato: ${targetFile}`);
 }
 
 // Monitoraggio della cartella "uploads" per nuovi file .xlsx
-chokidar.watch(uploadsDir, { persistent: true, depth: 1 }).on('add', filePath => {
+chokidar.watch(uploadsDir, { persistent: true }).on('add', filePath => {
     if (path.extname(filePath) === '.xlsx') {
-        const country = path.basename(path.dirname(filePath));
-        if (countries.includes(country)) {
-            convertXlsxToCsv(filePath, country);
-        }
+        console.log(`📂 Nuovo file rilevato: ${filePath}`);
+        convertXlsxToCsv(filePath);
     }
 });
 
