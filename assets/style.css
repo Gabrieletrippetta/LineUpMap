@@ -17,6 +17,7 @@ body {
     z-index: 1000;
     cursor: move;
 }
+
 #chart-list {
     position: fixed;
     top: 10px;
@@ -245,8 +246,8 @@ button:hover {
 
 #back-to-map {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 0px;
+    right: 15px;
     margin-top: 20px;
     background-color: #28a745; /* Verde */
     color: white;

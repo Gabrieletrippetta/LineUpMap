@@ -9,6 +9,11 @@ const cors = require('cors');
 const authController = require('./controllers/authController');
 const db = require('./config/database'); // Importa il database MySQL
 
+const multer = require('multer');
+
+// Configurazione Multer per salvare i file nella cartella "uploads"
+const upload = multer({ dest: 'uploads/' });
+
 const app = express();
 const PORT = 3000;
 
@@ -166,6 +171,15 @@ app.get('/search', (req, res) => {
     res.json(results);
 });
 
+// API per l'upload dei file
+app.post('/upload', upload.array('files'), (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ success: false, message: "Nessun file caricato." });
+    }
+
+    console.log(`✅ ${req.files.length} file caricati con successo.`);
+    res.json({ success: true, message: "File caricati con successo!" });
+});
 
 // Servire i file statici per il frontend
 app.use(express.static('public'));

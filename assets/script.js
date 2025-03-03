@@ -144,35 +144,116 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
         let popupRow = 0;
         let popupColumn = 0;
         const maxPopupsPerColumn = 3;
+
+        let openPopups = []; // Array che tiene traccia delle posizioni dei popup aperti
+        const popupWidth = 420;
+        const popupHeight = 260;
+        const margin = 20; // Margine tra i popup
+        
         function createChartPopup(country, csvData, csvFile) {
             let popup = document.createElement('div');
             popup.classList.add('chart-popup');
-            popup.style.left = `${50 + (popupColumn * 420)}px`;
-            popup.style.top = `${50 + (popupRow * 250)}px`;
-            popupRow++;
-            if (popupRow >= maxPopupsPerColumn) {
-                popupRow = 0;
-                popupColumn++;
-            }
             
+            // Dimensioni massime dello schermo
+            let maxX = window.innerWidth - popupWidth - margin;
+            let maxY = window.innerHeight - popupHeight - margin;
+        
+            // Trova una posizione libera
+            let left = 50, top = 50;
+            let positionFound = false;
+        
+            for (let y = 50; y <= maxY; y += popupHeight + margin) {
+                for (let x = 50; x <= maxX; x += popupWidth + margin) {
+                    let overlaps = openPopups.some(p => Math.abs(p.left - x) < popupWidth && Math.abs(p.top - y) < popupHeight);
+                    if (!overlaps) {
+                        left = x;
+                        top = y;
+                        positionFound = true;
+                        break;
+                    }
+                }
+                if (positionFound) break;
+            }
+        
+            // Se lo schermo è pieno, imposta il popup in una posizione casuale disponibile
+            if (!positionFound) {
+                left = Math.random() * (maxX - 50) + 50;
+                top = Math.random() * (maxY - 50) + 50;
+            }
+        
+            popup.style.left = `${left}px`;
+            popup.style.top = `${top}px`;
+        
+            openPopups.push({ left, top, element: popup });
+        
             let closeButton = document.createElement('button');
             closeButton.classList.add('close-btn');
             closeButton.innerText = '✖';
             closeButton.style.float = 'right';
             closeButton.onclick = () => {
                 popup.remove();
+                openPopups = openPopups.filter(p => p.element !== popup); // Libera la posizione
             };
-            
+        
             let title = document.createElement('h3');
-            title.innerText = `${country} Data - ${csvFile}`;
+            let fileTitle = csvFile.replace(".csv", "")
+            title.innerText = `${country} Data - ${fileTitle}`;
+
+            //Select per cambiare tipo di grafico
+            let chartTypeSelect = document.createElement('select');
+            chartTypeSelect.innerHTML = `
+                <option value="bar">Bar</option>
+                <option value="line">Line</option>
+                <option value="pie">Pie</option>
+                <option value="scatter">Scatter</option>
+                <option value="bubble">Bubble</option>
+            `;
+            chartTypeSelect.style.marginBottom ="10px";
+        
+            let canvasWrapper = document.createElement('div');
             let canvas = document.createElement('canvas');
+            canvasWrapper.appendChild(canvas);
+        
             popup.appendChild(closeButton);
             popup.appendChild(title);
-            popup.appendChild(canvas);
+            popup.appendChild(chartTypeSelect);
+            popup.appendChild(canvasWrapper);
             document.body.appendChild(popup);
-            updateChart(canvas, csvData);
-            
+        
+            let ctx = canvas.getContext('2d');
+            let chart = createChart(ctx, csvData, "line"); // Grafico di default
+        
+            // Cambia il grafico quando si seleziona un nuovo tipo
+            chartTypeSelect.addEventListener("change", () => {
+                chart.destroy(); // Rimuove il vecchio grafico
+                chart = createChart(ctx, csvData, chartTypeSelect.value); // Crea il nuovo grafico con il tipo selezionato
+            });
+
             makePopupDraggable(popup);
+        }
+        
+        //Questa funzione genera il grafico nel formato selezionato
+        function createChart(ctx, csvData, chartType) {
+            let labels = csvData.map(row => Object.keys(row)[0]);
+            let values = csvData.map(row => parseFloat(Object.values(row)[1]) || 0);
+
+            return new Chart(ctx, {
+                type: chartType, 
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Value",
+                        data: values,
+                        borderColor: 'blue',
+                        backgroundColor: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
         }
 
         function makePopupDraggable(popup) {
@@ -222,3 +303,33 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
                 }
             });
         }
+
+        function uploadFiles() {
+            let fileInput = document.getElementById("fileInput");
+            let files = fileInput.files;
+        
+            if (files.length === 0) {
+                alert("Seleziona almeno un file da caricare.");
+                return;
+            }
+        
+            let formData = new FormData();
+            for (let file of files) {
+                formData.append("files", file);
+            }
+        
+            fetch("./upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("File caricati con successo!");
+                } else {
+                    alert("Errore nel caricamento dei file.");
+                }
+            })
+            .catch(error => console.error("Errore durante l'upload:", error));
+        }
+        
