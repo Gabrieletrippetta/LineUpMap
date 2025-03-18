@@ -3,7 +3,6 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const xlsx = require('xlsx');
-const chokidar = require('chokidar');
 const cors = require('cors'); 
 
 const authController = require('./controllers/authController');
@@ -30,97 +29,25 @@ app.get('/profile', authController.authenticateJWT, (req, res) => {
 });
 
 const uploadsDir = path.join(__dirname, 'uploads');
-const csvDir = path.join(__dirname, 'csv');
 
 const countries = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO", "CH", "UK"];
 
-// Creare cartelle per ogni nazione
-countries.forEach(country => {
-    const countryCsvPath = path.join(csvDir, country);
-    if (!fs.existsSync(countryCsvPath)) {
-        fs.mkdirSync(countryCsvPath, { recursive: true });
+app.post('/upload-xlsx', upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: "Nessun file caricato" });
     }
-});
 
-// Funzione per convertire xlsx in csv
-function convertXlsxToCsv(targetFile) {
-    const workbook = xlsx.readFile(targetFile);
+    const filePath = req.file.path;
+    const workbook = xlsx.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet);
 
-    if (jsonData.length === 0 || !jsonData[0]["Database country"]) {
-        console.error(`❌ Nessuna nazione trovata nel file ${targetFile}. File ignorato.`);
-        return;
-    }
+    fs.unlinkSync(filePath); // Rimuove il file dopo la lettura
 
-    const country = jsonData[0]["Database country"].toUpperCase().trim(); // Estrai il paese dalla colonna "Database country"
-    
-    if (!countries.includes(country)) {
-        console.warn(`⚠️ Nazione '${country}' non riconosciuta. Assegnata a 'UNKNOWN'.`);
-    }
-
-    const targetCountry = countries.includes(country) ? country : "UNKNOWN";
-    const csvFile = path.join(csvDir, targetCountry, path.basename(targetFile, '.xlsx') + '.csv');
-
-    // Converte in CSV
-    const csvData = xlsx.utils.sheet_to_csv(sheet);
-    fs.writeFileSync(csvFile, csvData);
-    console.log(`✅ Convertito: ${targetFile} -> ${csvFile}`);
-
-    // Rimuove il file originale dopo la conversione
-    fs.unlinkSync(targetFile);
-    console.log(`🗑️ File originale eliminato: ${targetFile}`);
-}
-
-// Monitoraggio della cartella "uploads" per nuovi file .xlsx
-chokidar.watch(uploadsDir, { persistent: true }).on('add', filePath => {
-    if (path.extname(filePath) === '.xlsx') {
-        console.log(`📂 Nuovo file rilevato: ${filePath}`);
-        convertXlsxToCsv(filePath);
-    }
+    res.json(jsonData); // Restituisce i dati estratti al client
 });
 
-// API per ottenere il contenuto di un file CSV di una nazione
-app.get('/data/:country/:file', (req, res) => {
-    const country = req.params.country.toUpperCase();
-    const fileName = req.params.file;
-    
-    if (!countries.includes(country)) {
-        return res.status(400).json({ error: 'Nazione non supportata' });
-    }
-    
-    const filePath = path.join(csvDir, country, fileName);
-    
-    if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'File non trovato' });
-    }
-
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).json({ error: 'Errore nella lettura del file' });
-        }
-        const rows = data.trim().split("\n").map(row => row.split(","));
-        const headers = rows.shift();
-        const jsonData = rows.map(row => Object.fromEntries(row.map((val, i) => [headers[i], val])));
-        res.json(jsonData);
-    });
-});
-
-// API per ottenere l'elenco dei file CSV disponibili per una nazione
-app.get('/data/:country', (req, res) => {
-    const country = req.params.country.toUpperCase();
-    if (!countries.includes(country)) {
-        return res.status(400).json({ error: 'Nazione non supportata' });
-    }
-    const countryCsvPath = path.join(csvDir, country);
-    fs.readdir(countryCsvPath, (err, files) => {
-        if (err) {
-            return res.status(500).json({ error: 'Errore nel recupero dei file' });
-        }
-        res.json(files.filter(f => f.endsWith('.csv')));
-    });
-});
 
 // API di ricerca con filtri avanzati
 app.get('/search', (req, res) => {
@@ -131,54 +58,11 @@ app.get('/search', (req, res) => {
         return res.status(400).json({ error: "Inserisci un termine di ricerca valido" });
     }
 
-    // Normalizza la query: rimuove spazi e underscore per una ricerca più flessibile
-    const normalizedQuery = q.trim().toLowerCase().replace(/[_\s]+/g, ""); 
-
-    countries.forEach(cntry => {
-        const countryCsvPath = path.join(csvDir, cntry);
-        if (!fs.existsSync(countryCsvPath)) return;
-
-        fs.readdirSync(countryCsvPath).forEach(file => {
-            const filePath = path.join(countryCsvPath, file);
-            const data = fs.readFileSync(filePath, 'utf8');
-            const rows = data.trim().split("\n").map(row => row.split(","));
-            const headers = rows.shift();
-            const jsonData = rows.map(row => 
-                Object.fromEntries(row.map((val, i) => [headers[i], val.trim().toLowerCase()])) 
-            );
-
-            // 🔹 Normalizza il nome del file rimuovendo underscore e spazi
-            const fileNameNormalized = file.toLowerCase().replace(".csv", "").replace(/[_\s]+/g, ""); 
-
-            // 🔹 Cerca sia nei dati che nel nome file
-            const matchesQuery = fileNameNormalized.includes(normalizedQuery) || 
-                jsonData.some(row => Object.values(row).some(value => value.replace(/[_\s]+/g, "").includes(normalizedQuery)));
-
-            const matchesCountry = (!country || country.toLowerCase() === "all") ? true : cntry === country.toUpperCase();
-            const matchesEducation = education ? jsonData.some(row => row["Education Level"] && row["Education Level"].toLowerCase() === education.toLowerCase()) : true;
-            const matchesAvailability = availability ? jsonData.some(row => row["Data Availability"] && row["Data Availability"].toLowerCase() === availability.toLowerCase()) : true;
-
-            if (matchesQuery && matchesCountry && matchesEducation && matchesAvailability) {
-                results.push({ country: cntry, file });
-            }
-        });
-    });
-
     if (results.length === 0) {
         return res.status(404).json({ error: "Nessun database trovato" });
     }
 
     res.json(results);
-});
-
-// API per l'upload dei file
-app.post('/upload', upload.array('files'), (req, res) => {
-    if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ success: false, message: "Nessun file caricato." });
-    }
-
-    console.log(`✅ ${req.files.length} file caricati con successo.`);
-    res.json({ success: true, message: "File caricati con successo!" });
 });
 
 // Servire i file statici per il frontend

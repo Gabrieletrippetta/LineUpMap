@@ -54,30 +54,14 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
                 shadowSize: [41, 41]
             });
             var marker = L.marker(countries[country], {icon: customIcon}).addTo(map);
-            marker.on('click', function() { loadCsvList(country, marker); });
+            marker.on('click', function() {
+                if (!marker || typeof marker.bindPopup !== 'function') {
+                    console.error(`Errore: il marker di ${country} non è valido`, marker);
+                    return;
+                }
+                // showPopup(marker, country, countryData[country] || []);
+            });
         });
-
-        function loadCsvList(country, marker) {
-            fetch(`http://localhost:3000/data/${country}`)
-                .then(response => response.json())
-                .then(files => {
-                    if (files.length === 0) {
-                        marker.bindPopup("<b>No data for " + country + "</b>").openPopup();
-                        return;
-                    }
-                    let popupContent = `<b>${country}</b><br><ul>`;
-                    files.slice(0, 5).forEach(file => {
-                        popupContent += `<li><button class="csv-button" onclick="fetchAndShowChart('${country}', '${file}')">${file}</button></li>`;
-                    });
-                    if (files.length > 5) {
-                        popupContent += `<li><button class="expand-button" onclick="expandCsvList('${country}')">Show all</button></li>`;
-                    }
-                    popupContent += "</ul>";
-                    marker.bindPopup(popupContent).openPopup();
-                    marker.files = files; // Salva i file nel marker per l'espansione
-                })
-                .catch(err => console.error("Error in CSV file retrieval:", err));
-        }
 
         document.addEventListener("DOMContentLoaded", function() {
             let countrySelect = document.getElementById('filterCountry');
@@ -122,23 +106,6 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
                     });
                 })
                 .catch(err => console.error("Error in data search:", err));
-        }
-
-        function expandCsvList(country) {
-            map.eachLayer(layer => {
-                if (layer instanceof L.Marker && layer.getPopup()) {
-                    let popup = layer.getPopup();
-                    if (popup && popup.getContent().includes(country)) {
-                        let files = layer.files || [];
-                        let expandedPopupContent = `<b>${country}</b><br><ul>`;
-                        files.forEach(file => {
-                            expandedPopupContent += `<li><button class="csv-button" onclick="fetchAndShowChart('${country}', '${file}')">${file}</button></li>`;
-                        });
-                        expandedPopupContent += "</ul>";
-                        layer.bindPopup(expandedPopupContent).openPopup();
-                    }
-                }
-            });
         }
             
         let popupRow = 0;
@@ -305,31 +272,76 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
         }
 
         function uploadFiles() {
-            let fileInput = document.getElementById("fileInput");
-            let files = fileInput.files;
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet);
+                
+                processUploadedData(jsonData);
+            };
+            reader.readAsArrayBuffer(file);
+        }
         
-            if (files.length === 0) {
-                alert("Seleziona almeno un file da caricare.");
+        document.getElementById("fileInput").addEventListener("change", uploadFiles);
+
+        function processUploadedData(data) {
+            let countryData = {};
+            
+            data.forEach(row => {
+                let country = row["Database country"];
+                let name = row["Name"];
+        
+                if (!country) return;
+        
+                // Rimuove il testo tra parentesi
+                country = country.replace(/\(.*?\)/g, "").trim();
+        
+                if (!countryData[country]) {
+                    countryData[country] = [];
+                }
+                if (name) {
+                    countryData[country].push(name);
+                }
+            });
+        
+            Object.keys(countries).forEach(country => {
+                if (countries[country]) {
+                    let marker = L.marker(countries[country]).addTo(map);
+                    let names = countryData[country] || [];
+                    marker.on('click', () => showPopup(marker, country, names));
+                }
+            });
+        }
+        // Inizializza subito i marker per tutti i paesi
+        updateMapMarkers();
+
+        function showPopup(marker, country, names) {
+            if (!marker || typeof marker.bindPopup !== 'function') {
+                console.error(`Errore: Il marker per ${country} non è valido`, marker);
                 return;
             }
-        
-            let formData = new FormData();
-            for (let file of files) {
-                formData.append("files", file);
+
+            let popupContent = `<b>${country}</b><br>`;
+            if (!Array.isArray(names) || names.length === 0) {
+                popupContent += `<i>No data for ${country}</i>`;
+            } else {
+                popupContent += "<ul>";
+                names.forEach(name => {
+                    popupContent += `<li><button class="name-button" onclick="fetchAndShowChart('${country}', '${name}')">${name}</button></li>`;
+                });
+                popupContent += "</ul>";
             }
-        
-            fetch("./upload", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert("File caricati con successo!");
-                } else {
-                    alert("Errore nel caricamento dei file.");
-                }
-            })
-            .catch(error => console.error("Errore durante l'upload:", error));
+
+            marker.bindPopup(popupContent).openPopup();
         }
+
+        
+        
         
