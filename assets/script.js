@@ -44,6 +44,8 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
 
         var countries = { "AT": [47.5162, 14.5501], "BE": [50.8503, 4.3517], "BG": [42.7339, 25.4858], "HR": [45.1, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.8153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 8.2275], "UK": [53.3781, -1.436] };
 
+        var markers = {};
+
         Object.keys(countries).forEach(country => {
             var customIcon = L.icon({
                 iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
@@ -54,6 +56,13 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
                 shadowSize: [41, 41]
             });
             var marker = L.marker(countries[country], {icon: customIcon}).addTo(map);
+
+            // Imposta popup iniziale con "No data for ${country}"
+            marker.bindPopup(`<b>${country}</b><br><i>No data for ${country}</i>`); 
+
+            // Salva il marker per aggiornamenti futuri
+            markers[country] = marker;
+
             marker.on('click', function() {
                 if (!marker || typeof marker.bindPopup !== 'function') {
                     console.error(`Errore: il marker di ${country} non è valido`, marker);
@@ -272,56 +281,122 @@ var map = L.map('map').setView([54.5260, 14.5551], 4);
         }
 
         function uploadFiles() {
-            const fileInput = document.getElementById('fileInput');
+            const fileInput = document.getElementById("fileInput");
+        
+            if (!fileInput.files.length) {
+                alert("Nessun file selezionato!");
+                return;
+            }
+        
             const file = fileInput.files[0];
-            if (!file) return;
-            
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
+        
+            reader.onload = function (event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+        
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(sheet);
-                
-                processUploadedData(jsonData);
+        
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+                if (jsonData.length < 2) {
+                    alert("Il file selezionato è vuoto o ha un formato errato.");
+                    return;
+                }
+        
+                const headers = jsonData[1]; // La seconda riga contiene le intestazioni reali
+                const dataRows = jsonData.slice(2); // Escludiamo la prima e la seconda riga
+        
+                const possibleCountryKeys = ["Country", "Paese", "Nation", "State"];
+                let countryColumnIndex = headers.findIndex(header => possibleCountryKeys.includes(header));
+                let nameColumnIndex = headers.findIndex(header => header === "Name");
+        
+                if (countryColumnIndex === -1 || nameColumnIndex === -1) {
+                    alert("Il file deve contenere colonne 'Country' e 'Name'.");
+                    return;
+                }
+        
+                // Raccogliamo i dati in un oggetto per aggiornare i popup
+                let countryData = {};
+        
+                dataRows.forEach(row => {
+                    if (row[countryColumnIndex] && row[nameColumnIndex]) {
+                        const countryName = row[countryColumnIndex].toString().trim();
+                        const countryCode = countryName.toUpperCase().slice(0, 2);
+                        const name = row[nameColumnIndex].toString().trim();
+        
+                        if (countries[countryCode]) {
+                            if (!countryData[countryCode]) {
+                                countryData[countryCode] = [];
+                            }
+                            countryData[countryCode].push(name);
+                        }
+                    }
+                });
+        
+                // Aggiorniamo i popup dei marker esistenti
+                Object.keys(markers).forEach(countryCode => {
+                    let marker = markers[countryCode];
+                    let names = countryData[countryCode] || []; // Se non ci sono dati, mantiene "No data for ${countryCode}"
+                    updateMarkerPopup(marker, countryCode, names);
+                });
+        
+                alert("File elaborato con successo!");
             };
+        
             reader.readAsArrayBuffer(file);
         }
         
-        document.getElementById("fileInput").addEventListener("change", uploadFiles);
-
-        function processUploadedData(data) {
-            let countryData = {};
-            
-            data.forEach(row => {
-                let country = row["Database country"];
-                let name = row["Name"];
+        // Funzione per aggiornare il popup di un marker
+        function updateMarkerPopup(marker, countryCode, names) {
+            let popupContent = `<b>${countryCode}</b><br>`;
         
-                if (!country) return;
+            if (names.length === 0) {
+                popupContent += `<i>No data for ${countryCode}</i>`;
+            } else {
+                popupContent += `<div id="nameList-${countryCode}" class="name-container">`;
+                names.slice(0, 3).forEach(name => {
+                    popupContent += `<button class="name-button">${name}</button>`;
+                });
+                popupContent += `</div>`;
         
-                // Rimuove il testo tra parentesi
-                country = country.replace(/\(.*?\)/g, "").trim();
-        
-                if (!countryData[country]) {
-                    countryData[country] = [];
+                if (names.length > 3) {
+                    popupContent += `
+                        <div class="show-hide-buttons">
+                            <button id="showAll-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', true)">Show all</button>
+                            <button id="hide-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', false)" style="display:none;">Hide</button>
+                        </div>
+                    `;
                 }
-                if (name) {
-                    countryData[country].push(name);
-                }
-            });
+            }
         
-            Object.keys(countries).forEach(country => {
-                if (countries[country]) {
-                    let marker = L.marker(countries[country]).addTo(map);
-                    let names = countryData[country] || [];
-                    marker.on('click', () => showPopup(marker, country, names));
-                }
-            });
+            marker.bindPopup(popupContent);
+        }        
+        
+        function showAllNames(countryCode, encodedNames, showAll) {
+            let names = JSON.parse(decodeURIComponent(encodedNames));
+            let nameList = document.getElementById(`nameList-${countryCode}`);
+            let showAllButton = document.getElementById(`showAll-${countryCode}`);
+            let hideButton = document.getElementById(`hide-${countryCode}`);
+        
+            nameList.innerHTML = ""; // Pulisce la lista
+        
+            if (showAll) {
+                names.forEach(name => {
+                    nameList.innerHTML += `<button class="name-button">${name}</button>`;
+                });
+                showAllButton.style.display = "none";
+                hideButton.style.display = "inline-block";
+            } else {
+                names.slice(0, 3).forEach(name => {
+                    nameList.innerHTML += `<button class="name-button">${name}</button>`;
+                });
+                showAllButton.style.display = "inline-block";
+                hideButton.style.display = "none";
+            }
         }
-        // Inizializza subito i marker per tutti i paesi
-        updateMapMarkers();
-
+        
         function showPopup(marker, country, names) {
             if (!marker || typeof marker.bindPopup !== 'function') {
                 console.error(`Errore: Il marker per ${country} non è valido`, marker);

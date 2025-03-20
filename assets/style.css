@@ -263,3 +263,33 @@ button:hover {
 #back-to-map:hover {
     background-color: #218838; /* Verde scuro al passaggio */
 }
+
+.name-button {
+    background-color: #064420;  /* Verde scuro */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.name-button:hover {
+    background-color: #0a5c2d; /* Verde leggermente più chiaro */
+}
+
+/* Contenitore dei nomi */
+.name-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Spazio tra i bottoni */
+}
+
+/* Aggiunge margine sopra a Show all e Hide */
+.show-hide-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
