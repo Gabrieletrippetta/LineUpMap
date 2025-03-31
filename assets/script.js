@@ -1,6 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Mostra modale se non è stato ancora scelto un ruolo
+    const userRole = localStorage.getItem("userRole");
+    if (!userRole) {
+        document.getElementById("role-modal").style.display = "flex";
+    } else {
+        document.getElementById("role-display-container").style.display = "block";
+        updateRoleDisplay(userRole);
+        console.log("Ruolo selezionato:", userRole);
+        // Qui in futuro potrai condizionare la logica in base al ruolo
+    }    
+    
     const token = localStorage.getItem("token");
-
+    
     if (token) {
         fetch("http://localhost:3000/profile", {
             method: "GET",
@@ -12,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("auth-container").style.display = "none"; // Nasconde il pulsante Register/Login
                 document.getElementById("user-info").style.display = "block";
                 document.getElementById("user-name").innerText = data.user.username;
-
+                
                 // Se l'utente è un ricercatore, mostra gli strumenti avanzati
                 if (data.user.role === "researcher") {
                     document.getElementById("advanced-tools").style.display = "block";
@@ -28,395 +39,456 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("logout-btn").addEventListener("click", logout);
 });
 
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "/auth.html"; // Reindirizza alla pagina di autenticazione
+const roleDescriptions = {
+    stakeholder: "(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education. Require user-friendly visualizations, summary reports, and comparative tools to analyse trends and inequalities and support evidence-based decision-making.",
+    researcher: "(including data analysts) interested in the databases themselves for deeper statistical analysis and academic studies. Need detailed dataset metadata, advanced filtering, and access information to facilitate data discovery for national and cross-national longitudinal studies."
+};
+
+function updateRoleDisplay(role) {
+    const roleSpan = document.getElementById("current-role");
+    const roleBox = document.getElementById("role-description-box");
+    
+    console.log("updateRoleDisplay() chiamato con:", role);
+    
+    if (role === "stakeholder") {
+        roleSpan.innerText = "Educational Stakeholder";
+        roleBox.innerText = roleDescriptions.stakeholder;
+    } else if (role === "researcher") {
+        roleSpan.innerText = "Researcher";
+        roleBox.innerText = roleDescriptions.researcher;
+    }
 }
 
-document.getElementById("auth-container").addEventListener("click", () => {
-    window.location.href = "auth.html";
-});
+function showRoleDescription() {
+    document.getElementById("role-description-box").style.display = "block";
+}
+
+function hideRoleDescription() {
+    document.getElementById("role-description-box").style.display = "none";
+}
+
+function changeRole() {
+    document.getElementById("role-modal").style.display = "flex";
+}
+
+function selectRole(role) {
+    localStorage.setItem("userRole", role);
+    document.getElementById("role-modal").style.display = "none";
+    document.getElementById("role-display-container").style.display = "block";
+    updateRoleDisplay(role);
+}
 
 var map = L.map('map').setView([54.5260, 14.5551], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-        var countries = { "AT": [47.5162, 14.5501], "BE": [50.8503, 4.3517], "BG": [42.7339, 25.4858], "HR": [45.1, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.8153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 8.2275], "UK": [53.3781, -1.436] };
+var countries = { "AT": [47.5162, 14.5501], "BE": [50.8503, 4.3517], "BG": [42.7339, 25.4858], "HR": [45.1, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.8153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 8.2275], "UK": [53.3781, -1.436] };
 
-        var markers = {};
+var markers = {};
 
-        Object.keys(countries).forEach(country => {
-            var customIcon = L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
-            var marker = L.marker(countries[country], {icon: customIcon}).addTo(map);
-
-            // Imposta popup iniziale con "No data for ${country}"
-            marker.bindPopup(`<b>${country}</b><br><i>No data for ${country}</i>`); 
-
-            // Salva il marker per aggiornamenti futuri
-            markers[country] = marker;
-
-            marker.on('click', function() {
-                if (!marker || typeof marker.bindPopup !== 'function') {
-                    console.error(`Errore: il marker di ${country} non è valido`, marker);
-                    return;
-                }
-                // showPopup(marker, country, countryData[country] || []);
-            });
-        });
-
-        document.addEventListener("DOMContentLoaded", function() {
-            let countrySelect = document.getElementById('filterCountry');
-            
-            // Aggiunge le opzioni al select
-            Object.keys(countries).forEach(country => {
-                let option = document.createElement('option');
-                option.value = country;
-                option.textContent = country;
-                countrySelect.appendChild(option);
-            });
-
-            countrySelect.addEventListener('change', function() {
-                if (this.value === 'all') {
-                    this.selectedIndex = 0; 
-                }
-            });
-        });
-
-        function searchData() {
-            let query = document.getElementById('searchInput').value.toLowerCase();
-            let countryFilter = document.getElementById('filterCountry').value;
-            let educationFilter = document.getElementById('filterEducation').value;
-            let dataAvailabilityFilter = document.getElementById('filterDataAvailability').value;
-
-            let searchParams = new URLSearchParams({
-                q: query,
-                country: countryFilter,
-                education: educationFilter,
-                availability: dataAvailabilityFilter
-            });
-
-            fetch(`http://localhost:3000/search?${searchParams.toString()}`)
-                .then(response => response.json())
-                .then(results => {
-                    if (results.length === 0) {
-                        alert("Nessun dato trovato per la ricerca: " + query);
-                        return;
-                    }
-                    results.forEach(result => {
-                        fetchAndShowChart(result.country, result.file);
-                    });
-                })
-                .catch(err => console.error("Error in data search:", err));
+Object.keys(countries).forEach(country => {
+    var customIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+    var marker = L.marker(countries[country], {icon: customIcon}).addTo(map);
+    
+    // Imposta popup iniziale con "No data for ${country}"
+    marker.bindPopup(`<b>${country}</b><br><i>No data for ${country}</i>`); 
+    
+    // Salva il marker per aggiornamenti futuri
+    markers[country] = marker;
+    
+    marker.on('click', function() {
+        if (!marker || typeof marker.bindPopup !== 'function') {
+            console.error(`Errore: il marker di ${country} non è valido`, marker);
+            return;
         }
-            
-        let popupRow = 0;
-        let popupColumn = 0;
-        const maxPopupsPerColumn = 3;
+        // showPopup(marker, country, countryData[country] || []);
+    });
+});
 
-        let openPopups = []; // Array che tiene traccia delle posizioni dei popup aperti
-        const popupWidth = 420;
-        const popupHeight = 260;
-        const margin = 20; // Margine tra i popup
-        
-        function createChartPopup(country, csvData, csvFile) {
-            let popup = document.createElement('div');
-            popup.classList.add('chart-popup');
-            
-            // Dimensioni massime dello schermo
-            let maxX = window.innerWidth - popupWidth - margin;
-            let maxY = window.innerHeight - popupHeight - margin;
-        
-            // Trova una posizione libera
-            let left = 50, top = 50;
-            let positionFound = false;
-        
-            for (let y = 50; y <= maxY; y += popupHeight + margin) {
-                for (let x = 50; x <= maxX; x += popupWidth + margin) {
-                    let overlaps = openPopups.some(p => Math.abs(p.left - x) < popupWidth && Math.abs(p.top - y) < popupHeight);
-                    if (!overlaps) {
-                        left = x;
-                        top = y;
-                        positionFound = true;
-                        break;
-                    }
-                }
-                if (positionFound) break;
-            }
-        
-            // Se lo schermo è pieno, imposta il popup in una posizione casuale disponibile
-            if (!positionFound) {
-                left = Math.random() * (maxX - 50) + 50;
-                top = Math.random() * (maxY - 50) + 50;
-            }
-        
-            popup.style.left = `${left}px`;
-            popup.style.top = `${top}px`;
-        
-            openPopups.push({ left, top, element: popup });
-        
-            let closeButton = document.createElement('button');
-            closeButton.classList.add('close-btn');
-            closeButton.innerText = '✖';
-            closeButton.style.float = 'right';
-            closeButton.onclick = () => {
-                popup.remove();
-                openPopups = openPopups.filter(p => p.element !== popup); // Libera la posizione
-            };
-        
-            let title = document.createElement('h3');
-            let fileTitle = csvFile.replace(".csv", "")
-            title.innerText = `${country} Data - ${fileTitle}`;
+document.addEventListener("DOMContentLoaded", function() {
+    let countrySelect = document.getElementById('filterCountry');
+    
+    // Aggiunge le opzioni al select
+    Object.keys(countries).forEach(country => {
+        let option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        countrySelect.appendChild(option);
+    });
+    
+    countrySelect.addEventListener('change', function() {
+        if (this.value === 'all') {
+            this.selectedIndex = 0; 
+        }
+    });
+});
 
-            //Select per cambiare tipo di grafico
-            let chartTypeSelect = document.createElement('select');
-            chartTypeSelect.innerHTML = `
+function searchData() {
+    let query = document.getElementById('searchInput').value.toLowerCase();
+    let countryFilter = document.getElementById('filterCountry').value;
+    let educationFilter = document.getElementById('filterEducation').value;
+    let dataAvailabilityFilter = document.getElementById('filterDataAvailability').value;
+    
+    let searchParams = new URLSearchParams({
+        q: query,
+        country: countryFilter,
+        education: educationFilter,
+        availability: dataAvailabilityFilter
+    });
+    
+    fetch(`http://localhost:3000/search?${searchParams.toString()}`)
+    .then(response => response.json())
+    .then(results => {
+        if (results.length === 0) {
+            alert("Nessun dato trovato per la ricerca: " + query);
+            return;
+        }
+        results.forEach(result => {
+            fetchAndShowChart(result.country, result.file);
+        });
+    })
+    .catch(err => console.error("Error in data search:", err));
+}
+
+let popupRow = 0;
+let popupColumn = 0;
+const maxPopupsPerColumn = 3;
+
+let openPopups = []; // Array che tiene traccia delle posizioni dei popup aperti
+const popupWidth = 420;
+const popupHeight = 260;
+const margin = 20; // Margine tra i popup
+
+function createChartPopup(country, csvData, csvFile) {
+    let popup = document.createElement('div');
+    popup.classList.add('chart-popup');
+    
+    // Dimensioni massime dello schermo
+    let maxX = window.innerWidth - popupWidth - margin;
+    let maxY = window.innerHeight - popupHeight - margin;
+    
+    // Trova una posizione libera
+    let left = 50, top = 50;
+    let positionFound = false;
+    
+    for (let y = 50; y <= maxY; y += popupHeight + margin) {
+        for (let x = 50; x <= maxX; x += popupWidth + margin) {
+            let overlaps = openPopups.some(p => Math.abs(p.left - x) < popupWidth && Math.abs(p.top - y) < popupHeight);
+            if (!overlaps) {
+                left = x;
+                top = y;
+                positionFound = true;
+                break;
+            }
+        }
+        if (positionFound) break;
+    }
+    
+    // Se lo schermo è pieno, imposta il popup in una posizione casuale disponibile
+    if (!positionFound) {
+        left = Math.random() * (maxX - 50) + 50;
+        top = Math.random() * (maxY - 50) + 50;
+    }
+    
+    popup.style.left = `${left}px`;
+    popup.style.top = `${top}px`;
+    
+    openPopups.push({ left, top, element: popup });
+    
+    let closeButton = document.createElement('button');
+    closeButton.classList.add('close-btn');
+    closeButton.innerText = '✖';
+    closeButton.style.float = 'right';
+    closeButton.onclick = () => {
+        popup.remove();
+        openPopups = openPopups.filter(p => p.element !== popup); // Libera la posizione
+    };
+    
+    let title = document.createElement('h3');
+    let fileTitle = csvFile.replace(".csv", "")
+    title.innerText = `${country} Data - ${fileTitle}`;
+    
+    //Select per cambiare tipo di grafico
+    let chartTypeSelect = document.createElement('select');
+    chartTypeSelect.innerHTML = `
                 <option value="bar">Bar</option>
                 <option value="line">Line</option>
                 <option value="pie">Pie</option>
                 <option value="scatter">Scatter</option>
                 <option value="bubble">Bubble</option>
             `;
-            chartTypeSelect.style.marginBottom ="10px";
-        
-            let canvasWrapper = document.createElement('div');
-            let canvas = document.createElement('canvas');
-            canvasWrapper.appendChild(canvas);
-        
-            popup.appendChild(closeButton);
-            popup.appendChild(title);
-            popup.appendChild(chartTypeSelect);
-            popup.appendChild(canvasWrapper);
-            document.body.appendChild(popup);
-        
-            let ctx = canvas.getContext('2d');
-            let chart = createChart(ctx, csvData, "line"); // Grafico di default
-        
-            // Cambia il grafico quando si seleziona un nuovo tipo
-            chartTypeSelect.addEventListener("change", () => {
-                chart.destroy(); // Rimuove il vecchio grafico
-                chart = createChart(ctx, csvData, chartTypeSelect.value); // Crea il nuovo grafico con il tipo selezionato
-            });
+    chartTypeSelect.style.marginBottom ="10px";
+    
+    let canvasWrapper = document.createElement('div');
+    let canvas = document.createElement('canvas');
+    canvasWrapper.appendChild(canvas);
+    
+    popup.appendChild(closeButton);
+    popup.appendChild(title);
+    popup.appendChild(chartTypeSelect);
+    popup.appendChild(canvasWrapper);
+    document.body.appendChild(popup);
+    
+    let ctx = canvas.getContext('2d');
+    let chart = createChart(ctx, csvData, "line"); // Grafico di default
+    
+    // Cambia il grafico quando si seleziona un nuovo tipo
+    chartTypeSelect.addEventListener("change", () => {
+        chart.destroy(); // Rimuove il vecchio grafico
+        chart = createChart(ctx, csvData, chartTypeSelect.value); // Crea il nuovo grafico con il tipo selezionato
+    });
+    
+    makePopupDraggable(popup);
+}
 
-            makePopupDraggable(popup);
+//Questa funzione genera il grafico nel formato selezionato
+function createChart(ctx, csvData, chartType) {
+    let labels = csvData.map(row => Object.keys(row)[0]);
+    let values = csvData.map(row => parseFloat(Object.values(row)[1]) || 0);
+    
+    return new Chart(ctx, {
+        type: chartType, 
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Value",
+                data: values,
+                borderColor: 'blue',
+                backgroundColor: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
         }
-        
-        //Questa funzione genera il grafico nel formato selezionato
-        function createChart(ctx, csvData, chartType) {
-            let labels = csvData.map(row => Object.keys(row)[0]);
-            let values = csvData.map(row => parseFloat(Object.values(row)[1]) || 0);
+    });
+}
 
-            return new Chart(ctx, {
-                type: chartType, 
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: "Value",
-                        data: values,
-                        borderColor: 'blue',
-                        backgroundColor: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
+function makePopupDraggable(popup) {
+    let offsetX, offsetY, isDragging = false;
+    popup.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - popup.offsetLeft;
+        offsetY = e.clientY - popup.offsetTop;
+        popup.style.zIndex = 1001;
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            popup.style.left = `${e.clientX - offsetX}px`;
+            popup.style.top = `${e.clientY - offsetY}px`;
         }
+    });
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        popup.style.zIndex = 1000;
+    });
+}
 
-        function makePopupDraggable(popup) {
-            let offsetX, offsetY, isDragging = false;
-            popup.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                offsetX = e.clientX - popup.offsetLeft;
-                offsetY = e.clientY - popup.offsetTop;
-                popup.style.zIndex = 1001;
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    popup.style.left = `${e.clientX - offsetX}px`;
-                    popup.style.top = `${e.clientY - offsetY}px`;
-                }
-            });
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-                popup.style.zIndex = 1000;
-            });
+function fetchAndShowChart(country, csvFile) {
+    fetch(`http://localhost:3000/data/${country}/${csvFile}`)
+    .then(response => response.json())
+    .then(csvData => {
+        if (!csvData.length) {
+            alert("Il file CSV è vuoto.");
+            return;
         }
+        createChartPopup(country, csvData, csvFile);
+    })
+    .catch(err => console.error("Errore nel caricamento CSV:", err));
+}
 
-        function fetchAndShowChart(country, csvFile) {
-            fetch(`http://localhost:3000/data/${country}/${csvFile}`)
-                .then(response => response.json())
-                .then(csvData => {
-                    if (!csvData.length) {
-                        alert("Il file CSV è vuoto.");
-                        return;
-                    }
-                    createChartPopup(country, csvData, csvFile);
-                })
-                .catch(err => console.error("Errore nel caricamento CSV:", err));
+function updateChart(canvas, csvData) {
+    new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: csvData.map(row => Object.keys(row)[0]),
+            datasets: [{
+                label: "Valori",
+                data: csvData.map(row => parseFloat(Object.values(row)[1]) || 0),
+                borderColor: 'blue',
+                fill: false
+            }]
         }
+    });
+}
 
-        function updateChart(canvas, csvData) {
-            new Chart(canvas.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: csvData.map(row => Object.keys(row)[0]),
-                    datasets: [{
-                        label: "Valori",
-                        data: csvData.map(row => parseFloat(Object.values(row)[1]) || 0),
-                        borderColor: 'blue',
-                        fill: false
-                    }]
-                }
-            });
-        }
-
-        function uploadFiles() {
-            const fileInput = document.getElementById("fileInput");
+// Funzione per aggiornare il popup di un marker
+function updateMarkerPopup(marker, countryCode, names) {
+    let popupContent = `<b>${countryCode}</b><br>`;
+    
+    if (names.length === 0) {
+        popupContent += `<i>No data for ${countryCode}</i>`;
+    } else {
+        popupContent += `<div id="nameList-${countryCode}" style="display: flex; flex-wrap: wrap; gap: 8px;">`;
+        names.slice(0, 3).forEach(name => {
+            popupContent += `<button class="name-button">${name}</button>`;
+        });
+        popupContent += `</div>`;
         
-            if (!fileInput.files.length) {
-                alert("Nessun file selezionato!");
-                return;
-            }
-        
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-        
-            reader.onload = function (event) {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: "array" });
-        
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-        
-                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        
-                if (jsonData.length < 2) {
-                    alert("Il file selezionato è vuoto o ha un formato errato.");
-                    return;
-                }
-        
-                const headers = jsonData[1]; // La seconda riga contiene le intestazioni reali
-                const dataRows = jsonData.slice(2); // Escludiamo la prima e la seconda riga
-        
-                const possibleCountryKeys = ["Country", "Paese", "Nation", "State"];
-                let countryColumnIndex = headers.findIndex(header => possibleCountryKeys.includes(header));
-                let nameColumnIndex = headers.findIndex(header => header === "Name");
-        
-                if (countryColumnIndex === -1 || nameColumnIndex === -1) {
-                    alert("Il file deve contenere colonne 'Country' e 'Name'.");
-                    return;
-                }
-        
-                // Raccogliamo i dati in un oggetto per aggiornare i popup
-                let countryData = {};
-        
-                dataRows.forEach(row => {
-                    if (row[countryColumnIndex] && row[nameColumnIndex]) {
-                        const countryName = row[countryColumnIndex].toString().trim();
-                        const countryCode = countryName.toUpperCase().slice(0, 2);
-                        const name = row[nameColumnIndex].toString().trim();
-        
-                        if (countries[countryCode]) {
-                            if (!countryData[countryCode]) {
-                                countryData[countryCode] = [];
-                            }
-                            countryData[countryCode].push(name);
-                        }
-                    }
-                });
-        
-                // Aggiorniamo i popup dei marker esistenti
-                Object.keys(markers).forEach(countryCode => {
-                    let marker = markers[countryCode];
-                    let names = countryData[countryCode] || []; // Se non ci sono dati, mantiene "No data for ${countryCode}"
-                    updateMarkerPopup(marker, countryCode, names);
-                });
-        
-                alert("File elaborato con successo!");
-            };
-        
-            reader.readAsArrayBuffer(file);
-        }
-        
-        // Funzione per aggiornare il popup di un marker
-        function updateMarkerPopup(marker, countryCode, names) {
-            let popupContent = `<b>${countryCode}</b><br>`;
-        
-            if (names.length === 0) {
-                popupContent += `<i>No data for ${countryCode}</i>`;
-            } else {
-                popupContent += `<div id="nameList-${countryCode}" class="name-container">`;
-                names.slice(0, 3).forEach(name => {
-                    popupContent += `<button class="name-button">${name}</button>`;
-                });
-                popupContent += `</div>`;
-        
-                if (names.length > 3) {
-                    popupContent += `
-                        <div class="show-hide-buttons">
-                            <button id="showAll-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', true)">Show all</button>
-                            <button id="hide-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', false)" style="display:none;">Hide</button>
-                        </div>
+        if (names.length > 3) {
+            popupContent += `
+                        <button id="showAll-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', true)">Show all</button>
+                        <button id="hide-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', false)" style="display:none;">Hide</button>
                     `;
-                }
-            }
-        
-            marker.bindPopup(popupContent);
-        }        
-        
-        function showAllNames(countryCode, encodedNames, showAll) {
-            let names = JSON.parse(decodeURIComponent(encodedNames));
-            let nameList = document.getElementById(`nameList-${countryCode}`);
-            let showAllButton = document.getElementById(`showAll-${countryCode}`);
-            let hideButton = document.getElementById(`hide-${countryCode}`);
-        
-            nameList.innerHTML = ""; // Pulisce la lista
-        
-            if (showAll) {
-                names.forEach(name => {
-                    nameList.innerHTML += `<button class="name-button">${name}</button>`;
-                });
-                showAllButton.style.display = "none";
-                hideButton.style.display = "inline-block";
-            } else {
-                names.slice(0, 3).forEach(name => {
-                    nameList.innerHTML += `<button class="name-button">${name}</button>`;
-                });
-                showAllButton.style.display = "inline-block";
-                hideButton.style.display = "none";
+        }
+    }
+    
+    marker.bindPopup(popupContent);
+}
+
+function showAllNames(countryCode, encodedNames, showAll) {
+    let names = JSON.parse(decodeURIComponent(encodedNames));
+    let nameList = document.getElementById(`nameList-${countryCode}`);
+    let showAllButton = document.getElementById(`showAll-${countryCode}`);
+    let hideButton = document.getElementById(`hide-${countryCode}`);
+    
+    nameList.innerHTML = ""; // Pulisce la lista
+    
+    if (showAll) {
+        names.forEach(name => {
+            nameList.innerHTML += `<button class="name-button">${name}</button>`;
+        });
+        showAllButton.style.display = "none";
+        hideButton.style.display = "inline-block";
+    } else {
+        names.slice(0, 3).forEach(name => {
+            nameList.innerHTML += `<button class="name-button">${name}</button>`;
+        });
+        showAllButton.style.display = "inline-block";
+        hideButton.style.display = "none";
+    }
+}
+
+function showPopup(marker, country, names) {
+    if (!marker || typeof marker.bindPopup !== 'function') {
+        console.error(`Errore: Il marker per ${country} non è valido`, marker);
+        return;
+    }
+    
+    let popupContent = `<b>${country}</b><br>`;
+    if (!Array.isArray(names) || names.length === 0) {
+        popupContent += `<i>No data for ${country}</i>`;
+    } else {
+        popupContent += "<ul>";
+        names.forEach(name => {
+            popupContent += `<li><button class="name-button" onclick="fetchAndShowChart('${country}', '${name}')">${name}</button></li>`;
+        });
+        popupContent += "</ul>";
+    }
+    
+    marker.bindPopup(popupContent).openPopup();
+}
+
+const userRole = localStorage.getItem("userRole");
+if (!userRole) {
+    document.getElementById("role-modal").style.display = "flex";
+} else {
+    document.getElementById("role-display-container").style.display = "block";
+    updateRoleDisplay(userRole);
+}
+
+//CREA NUMERI PER OGNI PIN DELLA MAPPA
+
+function countEntriesByCountry(data) {
+    const counts = {};
+    
+    data.forEach(row => {
+        let rawCountry = row["Country"];
+        if (rawCountry) {
+            let code = rawCountry.match(/\b[A-Z]{2}\b/); // estrae sigla come IT, DE
+            if (code) {
+                let countryCode = code[0];
+                counts[countryCode] = (counts[countryCode] || 0) + 1;
             }
         }
-        
-        function showPopup(marker, country, names) {
-            if (!marker || typeof marker.bindPopup !== 'function') {
-                console.error(`Errore: Il marker per ${country} non è valido`, marker);
-                return;
-            }
-
-            let popupContent = `<b>${country}</b><br>`;
-            if (!Array.isArray(names) || names.length === 0) {
-                popupContent += `<i>No data for ${country}</i>`;
-            } else {
-                popupContent += "<ul>";
-                names.forEach(name => {
-                    popupContent += `<li><button class="name-button" onclick="fetchAndShowChart('${country}', '${name}')">${name}</button></li>`;
-                });
-                popupContent += "</ul>";
-            }
-
-            marker.bindPopup(popupContent).openPopup();
+    });
+    
+    // Aggiunge i paesi mancanti con valore 0
+    Object.keys(countries).forEach(code => {
+        if (!counts[code]) {
+            counts[code] = 0;
         }
+    });
+    
+    return counts;
+}
+
+function groupDataByCountry(data) {
+    const grouped = {};
+    
+    data.forEach(row => {
+        let rawCountry = row["Country"];
+        let match = rawCountry && rawCountry.match(/\b[A-Z]{2}\b/);
+        if (match) {
+            let code = match[0];
+            if (!grouped[code]) grouped[code] = [];
+            grouped[code].push({
+                name: row["Name"] || "-",
+                acronym: row["Acronymum"] || "-",
+                sample: row["Sample Level"] || "-"
+            });
+        }
+    });
+    
+    return grouped;
+}
+
+function renderMapWithCounts(counts, groupedData) {
+    Object.keys(countries).forEach(code => {
+        const count = counts[code] || 0;
+        const latlng = countries[code];
+        
+        const iconHtml = `
+            <div class="svg-pin">
+            <svg width="40" height="50" viewBox="0 0 24 24" fill="#007bff" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            </svg>
+            <span class="pin-count">${count}</span>
+            </div>`;
 
         
+        const icon = L.divIcon({
+            className: '',
+            html: iconHtml,
+            iconSize: [40, 50],
+            iconAnchor: [20, 50]
+        });
         
+        if (markers[code]) map.removeLayer(markers[code]);
         
+        const marker = L.marker(latlng, { icon }).addTo(map);
+        markers[code] = marker;
+
+        const entries = groupedData[code] || [];
+        const popupContent = entries.length
+            ? `<b>${code}</b><br>` + entries.map(e =>
+                    `<div><b>${e.name}</b><br><i>${e.acronym}</i><br>Sample: ${e.sample}</div><hr>`
+                ).join("")
+            : `<b>${code}</b><br><i>No data available</i>`;
+
+        marker.bindPopup(popupContent);
+
+        marker.on("mouseover", () => marker.openPopup());
+        marker.on("mouseout", () => marker.closePopup());
+    });
+    console.log("COUNTS:", counts);
+    console.log("GROUPED:", grouped);
+
+}
+
+fetch("/data/mapping_data.json") 
+.then(response => response.json())
+.then(data => {
+    const countryCounts = countEntriesByCountry(data);
+    const grouped = groupDataByCountry(data);
+    renderMapWithCounts(countryCounts, grouped);
+});

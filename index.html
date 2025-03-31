@@ -9,74 +9,30 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <div id="role-modal" class="modal">
+        <div class="modal-content">
+            <h2>Select Your Profile</h2>
+            <div class="role-option">
+                <button onclick="selectRole('stakeholder')">Educational Stakeholder</button>
+                <p>(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education. Require user-friendly visualizations, summary reports, and comparative tools to analyse trends and inequalities and support evidence-based decision-making.</p>
+            </div>
+            <div class="role-option">
+                <button onclick="selectRole('researcher')">Researcher</button>
+                <p>(including data analysts) interested in the databases themselves for deeper statistical analysis and academic studies. Need detailed dataset metadata, advanced filtering, and access information to facilitate data discovery for national and cross-national longitudinal studies.</p>
+            </div>
+        </div>
+    </div>
     <h1>LINEup School Data Explorer - An Open-Source Map to Longitudinal Databases in Europe</h1>
 
-    <button id="auth-container">Register/Login</button>
-    <!-- <a href="/auth.html" class="register-login">Register/Login</a> -->
-    
-    <div id="user-info" style="display: none;">
-        <p>Welcome, <span id="user-name"></span>!</p>
-        <button id="logout-btn">Logout</button>
-    </div>    
-
-    <div id="advanced-tools" style="display:none;">
-        <h2>Advanced Researcher Tools</h2>
-        <p>Access metadata, filtering options, and raw dataset links.</p>
+    <div id="role-display-container">
+        <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
+        <button onclick="changeRole()">Change Role</button>
+        <div id="role-description-box" style="display: none;"></div>
     </div>
-    
-
-    <!-- Search and Filtering UI -->
-    <div class="filter-container">
-        <input type="text" id="searchInput" placeholder="Search...">
-        
-        <select id="filterCountry">
-            <option value="all">Select all</option>
-        </select>
-        
-        <select id="filterEducation">
-            <option value="">School education</option>
-            <option value="ISCED 1">ISCED 1</option>
-            <option value="ISCED 2">ISCED 2</option>
-            <option value="ISCED 3">ISCED 3</option>
-        </select>
-        
-        <select id="filterDataAvailability">
-            <option value="">Data availability</option>
-            <option value="Open">Open</option>
-            <option value="Restricted">Restricted</option>
-            <option value="Request">On Request</option>
-        </select>
-        
-        <button onclick="searchData()">Search</button>
-        
-        <!-- Aggiungi accanto alla barra di ricerca -->
-        <input type="file" id="fileInput" accept=".xlsx" multiple>
-        <button onclick="uploadFiles()">Upload Files</button>
-    </div>
-
-
     
     <div id="map"></div>
     <script src="assets/script.js"></script>
-    <script>
-        var _paq = window._paq || [];
-        _paq.push(["trackPageView"]);
-        _paq.push(["enableLinkTracking"]);
-        (function() {
-            var u="https://your-matomo-instance.com/";
-            _paq.push(["setTrackerUrl", u+"matomo.php"]);
-            _paq.push(["setSiteId", "1"]);
-            var d=document, g=d.createElement("script"), s=d.getElementsByTagName("script")[0];
-            g.async=true; g.src=u+"matomo.js"; s.parentNode.insertBefore(g,s);
-        })();
-    </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'YOUR_GA_ID');
-    </script>
+    
 </body>
 </html>
 
