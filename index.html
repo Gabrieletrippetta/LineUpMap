@@ -22,12 +22,31 @@
             </div>
         </div>
     </div>
+    
     <h1>LINEup School Data Explorer - An Open-Source Map to Longitudinal Databases in Europe</h1>
 
     <div id="role-display-container">
         <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
         <button onclick="changeRole()">Change Role</button>
         <div id="role-description-box" style="display: none;"></div>
+    </div>
+
+    <!-- PANNELLO SHOW ALL DATATBASES -->
+    <div id="dbpanel">
+        <div class="dbpanel-header">
+            <h2 id="panel-country-title"></h2>
+            <button onclick="closeDbPanel()">✖</button>
+        </div>
+        <div id="dbpanel-content"></div>
+    </div>
+
+    <!-- PANNELLO CON INFORMAZIONI SUI DATABASE -->
+    <div id="db-modal" class="db-modal">
+        <div class="db-modal-content">
+            <button class="db-modal-close" onclick="closeDbModal()">✖</button>
+            <h2 id="modal-country-title"></h2>
+            <div id="modal-db-list"></div>
+        </div>
     </div>
     
     <div id="map"></div>

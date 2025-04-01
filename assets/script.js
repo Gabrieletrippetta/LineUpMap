@@ -1,43 +1,17 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // Mostra modale se non è stato ancora scelto un ruolo
-    const userRole = localStorage.getItem("userRole");
-    if (!userRole) {
-        document.getElementById("role-modal").style.display = "flex";
-    } else {
-        document.getElementById("role-display-container").style.display = "block";
-        updateRoleDisplay(userRole);
-        console.log("Ruolo selezionato:", userRole);
-        // Qui in futuro potrai condizionare la logica in base al ruolo
-    }    
-    
-    const token = localStorage.getItem("token");
-    
-    if (token) {
-        fetch("http://localhost:3000/profile", {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${token}` }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.user) {
-                document.getElementById("auth-container").style.display = "none"; // Nasconde il pulsante Register/Login
-                document.getElementById("user-info").style.display = "block";
-                document.getElementById("user-name").innerText = data.user.username;
-                
-                // Se l'utente è un ricercatore, mostra gli strumenti avanzati
-                if (data.user.role === "researcher") {
-                    document.getElementById("advanced-tools").style.display = "block";
-                }
+
+function getField(entry, ...possibleKeys) {
+    for (let key of possibleKeys) {
+        for (let actualKey of Object.keys(entry)) {
+            if (actualKey.trim().toLowerCase() === key.trim().toLowerCase()) {
+                const val = entry[actualKey];
+                if (val && val !== "-" && val !== "null") return val;
             }
-        })
-        .catch(error => {
-            console.error("Error verifying token:", error);
-            logout();
-        });
+        }
     }
-    // Aggiungere evento per il pulsante logout
-    document.getElementById("logout-btn").addEventListener("click", logout);
-});
+    return "N/A";
+}
+
+// SCELTA DELL'UTENTE
 
 const roleDescriptions = {
     stakeholder: "(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education. Require user-friendly visualizations, summary reports, and comparative tools to analyse trends and inequalities and support evidence-based decision-making.",
@@ -78,12 +52,14 @@ function selectRole(role) {
     updateRoleDisplay(role);
 }
 
-var map = L.map('map').setView([54.5260, 14.5551], 4);
+// MAPPA
+
+var map = L.map('map').setView([54.5260, 14.5551], 4.4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-var countries = { "AT": [47.5162, 14.5501], "BE": [50.8503, 4.3517], "BG": [42.7339, 25.4858], "HR": [45.1, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.8153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 8.2275], "UK": [53.3781, -1.436] };
+var countries = { "AT": [47.5162, 14.5501], "BE": [50.6203, 4.3517], "BG": [42.7339, 25.4858], "HR": [43.6, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.5153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 7.2275], "GB": [53.3781, -1.436] };
 
 var markers = {};
 
@@ -96,305 +72,7 @@ Object.keys(countries).forEach(country => {
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
     });
-    var marker = L.marker(countries[country], {icon: customIcon}).addTo(map);
-    
-    // Imposta popup iniziale con "No data for ${country}"
-    marker.bindPopup(`<b>${country}</b><br><i>No data for ${country}</i>`); 
-    
-    // Salva il marker per aggiornamenti futuri
-    markers[country] = marker;
-    
-    marker.on('click', function() {
-        if (!marker || typeof marker.bindPopup !== 'function') {
-            console.error(`Errore: il marker di ${country} non è valido`, marker);
-            return;
-        }
-        // showPopup(marker, country, countryData[country] || []);
-    });
 });
-
-document.addEventListener("DOMContentLoaded", function() {
-    let countrySelect = document.getElementById('filterCountry');
-    
-    // Aggiunge le opzioni al select
-    Object.keys(countries).forEach(country => {
-        let option = document.createElement('option');
-        option.value = country;
-        option.textContent = country;
-        countrySelect.appendChild(option);
-    });
-    
-    countrySelect.addEventListener('change', function() {
-        if (this.value === 'all') {
-            this.selectedIndex = 0; 
-        }
-    });
-});
-
-function searchData() {
-    let query = document.getElementById('searchInput').value.toLowerCase();
-    let countryFilter = document.getElementById('filterCountry').value;
-    let educationFilter = document.getElementById('filterEducation').value;
-    let dataAvailabilityFilter = document.getElementById('filterDataAvailability').value;
-    
-    let searchParams = new URLSearchParams({
-        q: query,
-        country: countryFilter,
-        education: educationFilter,
-        availability: dataAvailabilityFilter
-    });
-    
-    fetch(`http://localhost:3000/search?${searchParams.toString()}`)
-    .then(response => response.json())
-    .then(results => {
-        if (results.length === 0) {
-            alert("Nessun dato trovato per la ricerca: " + query);
-            return;
-        }
-        results.forEach(result => {
-            fetchAndShowChart(result.country, result.file);
-        });
-    })
-    .catch(err => console.error("Error in data search:", err));
-}
-
-let popupRow = 0;
-let popupColumn = 0;
-const maxPopupsPerColumn = 3;
-
-let openPopups = []; // Array che tiene traccia delle posizioni dei popup aperti
-const popupWidth = 420;
-const popupHeight = 260;
-const margin = 20; // Margine tra i popup
-
-function createChartPopup(country, csvData, csvFile) {
-    let popup = document.createElement('div');
-    popup.classList.add('chart-popup');
-    
-    // Dimensioni massime dello schermo
-    let maxX = window.innerWidth - popupWidth - margin;
-    let maxY = window.innerHeight - popupHeight - margin;
-    
-    // Trova una posizione libera
-    let left = 50, top = 50;
-    let positionFound = false;
-    
-    for (let y = 50; y <= maxY; y += popupHeight + margin) {
-        for (let x = 50; x <= maxX; x += popupWidth + margin) {
-            let overlaps = openPopups.some(p => Math.abs(p.left - x) < popupWidth && Math.abs(p.top - y) < popupHeight);
-            if (!overlaps) {
-                left = x;
-                top = y;
-                positionFound = true;
-                break;
-            }
-        }
-        if (positionFound) break;
-    }
-    
-    // Se lo schermo è pieno, imposta il popup in una posizione casuale disponibile
-    if (!positionFound) {
-        left = Math.random() * (maxX - 50) + 50;
-        top = Math.random() * (maxY - 50) + 50;
-    }
-    
-    popup.style.left = `${left}px`;
-    popup.style.top = `${top}px`;
-    
-    openPopups.push({ left, top, element: popup });
-    
-    let closeButton = document.createElement('button');
-    closeButton.classList.add('close-btn');
-    closeButton.innerText = '✖';
-    closeButton.style.float = 'right';
-    closeButton.onclick = () => {
-        popup.remove();
-        openPopups = openPopups.filter(p => p.element !== popup); // Libera la posizione
-    };
-    
-    let title = document.createElement('h3');
-    let fileTitle = csvFile.replace(".csv", "")
-    title.innerText = `${country} Data - ${fileTitle}`;
-    
-    //Select per cambiare tipo di grafico
-    let chartTypeSelect = document.createElement('select');
-    chartTypeSelect.innerHTML = `
-                <option value="bar">Bar</option>
-                <option value="line">Line</option>
-                <option value="pie">Pie</option>
-                <option value="scatter">Scatter</option>
-                <option value="bubble">Bubble</option>
-            `;
-    chartTypeSelect.style.marginBottom ="10px";
-    
-    let canvasWrapper = document.createElement('div');
-    let canvas = document.createElement('canvas');
-    canvasWrapper.appendChild(canvas);
-    
-    popup.appendChild(closeButton);
-    popup.appendChild(title);
-    popup.appendChild(chartTypeSelect);
-    popup.appendChild(canvasWrapper);
-    document.body.appendChild(popup);
-    
-    let ctx = canvas.getContext('2d');
-    let chart = createChart(ctx, csvData, "line"); // Grafico di default
-    
-    // Cambia il grafico quando si seleziona un nuovo tipo
-    chartTypeSelect.addEventListener("change", () => {
-        chart.destroy(); // Rimuove il vecchio grafico
-        chart = createChart(ctx, csvData, chartTypeSelect.value); // Crea il nuovo grafico con il tipo selezionato
-    });
-    
-    makePopupDraggable(popup);
-}
-
-//Questa funzione genera il grafico nel formato selezionato
-function createChart(ctx, csvData, chartType) {
-    let labels = csvData.map(row => Object.keys(row)[0]);
-    let values = csvData.map(row => parseFloat(Object.values(row)[1]) || 0);
-    
-    return new Chart(ctx, {
-        type: chartType, 
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Value",
-                data: values,
-                borderColor: 'blue',
-                backgroundColor: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
-
-function makePopupDraggable(popup) {
-    let offsetX, offsetY, isDragging = false;
-    popup.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        offsetX = e.clientX - popup.offsetLeft;
-        offsetY = e.clientY - popup.offsetTop;
-        popup.style.zIndex = 1001;
-    });
-    document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            popup.style.left = `${e.clientX - offsetX}px`;
-            popup.style.top = `${e.clientY - offsetY}px`;
-        }
-    });
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        popup.style.zIndex = 1000;
-    });
-}
-
-function fetchAndShowChart(country, csvFile) {
-    fetch(`http://localhost:3000/data/${country}/${csvFile}`)
-    .then(response => response.json())
-    .then(csvData => {
-        if (!csvData.length) {
-            alert("Il file CSV è vuoto.");
-            return;
-        }
-        createChartPopup(country, csvData, csvFile);
-    })
-    .catch(err => console.error("Errore nel caricamento CSV:", err));
-}
-
-function updateChart(canvas, csvData) {
-    new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: csvData.map(row => Object.keys(row)[0]),
-            datasets: [{
-                label: "Valori",
-                data: csvData.map(row => parseFloat(Object.values(row)[1]) || 0),
-                borderColor: 'blue',
-                fill: false
-            }]
-        }
-    });
-}
-
-// Funzione per aggiornare il popup di un marker
-function updateMarkerPopup(marker, countryCode, names) {
-    let popupContent = `<b>${countryCode}</b><br>`;
-    
-    if (names.length === 0) {
-        popupContent += `<i>No data for ${countryCode}</i>`;
-    } else {
-        popupContent += `<div id="nameList-${countryCode}" style="display: flex; flex-wrap: wrap; gap: 8px;">`;
-        names.slice(0, 3).forEach(name => {
-            popupContent += `<button class="name-button">${name}</button>`;
-        });
-        popupContent += `</div>`;
-        
-        if (names.length > 3) {
-            popupContent += `
-                        <button id="showAll-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', true)">Show all</button>
-                        <button id="hide-${countryCode}" onclick="showAllNames('${countryCode}', '${encodeURIComponent(JSON.stringify(names))}', false)" style="display:none;">Hide</button>
-                    `;
-        }
-    }
-    
-    marker.bindPopup(popupContent);
-}
-
-function showAllNames(countryCode, encodedNames, showAll) {
-    let names = JSON.parse(decodeURIComponent(encodedNames));
-    let nameList = document.getElementById(`nameList-${countryCode}`);
-    let showAllButton = document.getElementById(`showAll-${countryCode}`);
-    let hideButton = document.getElementById(`hide-${countryCode}`);
-    
-    nameList.innerHTML = ""; // Pulisce la lista
-    
-    if (showAll) {
-        names.forEach(name => {
-            nameList.innerHTML += `<button class="name-button">${name}</button>`;
-        });
-        showAllButton.style.display = "none";
-        hideButton.style.display = "inline-block";
-    } else {
-        names.slice(0, 3).forEach(name => {
-            nameList.innerHTML += `<button class="name-button">${name}</button>`;
-        });
-        showAllButton.style.display = "inline-block";
-        hideButton.style.display = "none";
-    }
-}
-
-function showPopup(marker, country, names) {
-    if (!marker || typeof marker.bindPopup !== 'function') {
-        console.error(`Errore: Il marker per ${country} non è valido`, marker);
-        return;
-    }
-    
-    let popupContent = `<b>${country}</b><br>`;
-    if (!Array.isArray(names) || names.length === 0) {
-        popupContent += `<i>No data for ${country}</i>`;
-    } else {
-        popupContent += "<ul>";
-        names.forEach(name => {
-            popupContent += `<li><button class="name-button" onclick="fetchAndShowChart('${country}', '${name}')">${name}</button></li>`;
-        });
-        popupContent += "</ul>";
-    }
-    
-    marker.bindPopup(popupContent).openPopup();
-}
-
-const userRole = localStorage.getItem("userRole");
-if (!userRole) {
-    document.getElementById("role-modal").style.display = "flex";
-} else {
-    document.getElementById("role-display-container").style.display = "block";
-    updateRoleDisplay(userRole);
-}
 
 //CREA NUMERI PER OGNI PIN DELLA MAPPA
 
@@ -431,16 +109,14 @@ function groupDataByCountry(data) {
         if (match) {
             let code = match[0];
             if (!grouped[code]) grouped[code] = [];
-            grouped[code].push({
-                name: row["Name"] || "-",
-                acronym: row["Acronymum"] || "-",
-                sample: row["Sample Level"] || "-"
-            });
+            grouped[code].push(row);  // 👈 passiamo tutto l'oggetto originale
         }
     });
     
     return grouped;
 }
+
+const countryEntryStore = {};  // Variabile globale
 
 function renderMapWithCounts(counts, groupedData) {
     Object.keys(countries).forEach(code => {
@@ -454,7 +130,6 @@ function renderMapWithCounts(counts, groupedData) {
             </svg>
             <span class="pin-count">${count}</span>
             </div>`;
-
         
         const icon = L.divIcon({
             className: '',
@@ -467,28 +142,355 @@ function renderMapWithCounts(counts, groupedData) {
         
         const marker = L.marker(latlng, { icon }).addTo(map);
         markers[code] = marker;
-
+        
         const entries = groupedData[code] || [];
-        const popupContent = entries.length
-            ? `<b>${code}</b><br>` + entries.map(e =>
-                    `<div><b>${e.name}</b><br><i>${e.acronym}</i><br>Sample: ${e.sample}</div><hr>`
-                ).join("")
-            : `<b>${code}</b><br><i>No data available</i>`;
-
+        countryEntryStore[code] = entries;  // 🔒 Salva dati per uso nei click handler
+        
+        let popupContent = `<b>${code}</b><br>`;
+        
+        if (entries.length === 0) {
+            popupContent += `<i>No data available</i>`;
+        } else {
+            popupContent += `<div id="entryList-${code}" style="display: block;">`;
+            entries.slice(0, 3).forEach(e => {
+                const name = getField(e, "Name");
+                const acronym = getField(e, "Acronymum");
+                popupContent += `<div><b>${name}</b><br><i>${acronym}</i></div><hr>`;
+            });
+            popupContent += `</div>`;
+            
+            const encodedCode = encodeURIComponent(code);
+            
+            popupContent += `
+                <button class="expand-button" onclick="zoomToCountry('${encodedCode}'); openDbModal('${encodedCode}')">
+                    Show more
+                </button>
+                <button onclick="showCountryDetailsInPanel('${encodedCode}')">
+                    Show all databases
+                </button>
+            `;
+        }
+        
         marker.bindPopup(popupContent);
-
         marker.on("mouseover", () => marker.openPopup());
-        marker.on("mouseout", () => marker.closePopup());
     });
+    
     console.log("COUNTS:", counts);
-    console.log("GROUPED:", grouped);
-
+    console.log("GROUPED:", groupedData);
 }
 
-fetch("/data/mapping_data.json") 
-.then(response => response.json())
+function toggleEntries(code, encodedEntries, showAll) {
+    const entries = JSON.parse(decodeURIComponent(encodedEntries));
+    const list = document.getElementById(`entryList-${code}`);
+    const showBtn = document.getElementById(`showMore-${code}`);
+    const hideBtn = document.getElementById(`hideMore-${code}`);
+    
+    list.innerHTML = "";
+    if (showAll) {
+        entries.forEach(e => {
+            list.innerHTML += `
+                <div>
+                    <b>${getField(e, "Name")}</b><br>
+                    <i>${getField(e, "Acronymum")}</i><br>
+                </div><hr>`;
+        });
+        showBtn.style.display = "none";
+        hideBtn.style.display = "inline-block";
+    } else {
+        entries.slice(0, 3).forEach(e => {
+            list.innerHTML += `
+                <div>
+                    <b>${getField(e, "Name")}</b><br>
+                    <i>${getField(e, "Acronymum")}</i><br>
+                </div><hr>`;
+        });
+        showBtn.style.display = "inline-block";
+        hideBtn.style.display = "none";
+    }
+}
+
+let mappingData = null;
+let geojsonLoaded = false;
+
+fetch("./assets/europe.geojson")
+.then(res => {
+    if (!res.ok) throw new Error("Errore nel caricamento di europe.geojson");
+    return res.json();
+})
 .then(data => {
-    const countryCounts = countEntriesByCountry(data);
-    const grouped = groupDataByCountry(data);
+    console.log("GeoJSON caricato", data);
+    data.features.forEach(f => {
+        const code = f.properties.ISO2;
+        countryBorders[code] = f;
+    });
+    console.log("Confini caricati per codici ISO_A2:", Object.keys(countryBorders));
+    geojsonLoaded = true;
+    if (mappingData) {
+        console.log("Chiamo initMap da geojson");
+        initMap();
+    }
+})
+.catch(err => console.error("Errore nel caricamento dei confini:", err));
+
+
+fetch("/data/mapping_data.json")
+.then(response => {
+    if (!response.ok) throw new Error("Errore nel caricamento di mapping_data.json");
+    return response.json();
+})
+.then(data => {
+    console.log("Mapping data caricato", data);
+    mappingData = data;
+    if (geojsonLoaded) {
+        console.log("Chiamo initMap da mappingData");
+        initMap();
+    }
+})
+.catch(error => console.error("Errore nel caricamento dei dati mappa:", error));
+
+
+function initMap() {
+    const countryCounts = countEntriesByCountry(mappingData);
+    const grouped = groupDataByCountry(mappingData);
     renderMapWithCounts(countryCounts, grouped);
+}
+
+
+// SHOW ALL DATABASES PANEL
+
+function showCountryDetailsInPanel(code, entries) {
+    const panelEntries = countryEntryStore[code] || [];
+    const panel = document.getElementById("dbpanel");
+    const title = document.getElementById("panel-country-title");
+    const content = document.getElementById("dbpanel-content");
+    
+    title.textContent = `Databases in ${code}`;
+    content.innerHTML = "";
+    
+    panelEntries.forEach(entry => {
+        const entryDiv = document.createElement("div");
+        entryDiv.innerHTML = `
+            <b>Name:</b> ${getField(entry, "Name")}<br>
+            <b>Acronym:</b> ${getField(entry, "Acronymum")}<br>
+        `;
+        content.appendChild(entryDiv);
+    });
+    
+    panel.classList.add("show");
+}
+
+
+function closeDbPanel() {
+    document.getElementById("dbpanel").classList.remove("show");
+}
+
+// SHOW MORE INFO ON DB
+
+function openDbModal(countryCode) {
+    const modalEntries = countryEntryStore[countryCode] || [];
+    const modal = document.getElementById("db-modal");
+    const title = document.getElementById("modal-country-title");
+    const container = document.getElementById("modal-db-list");
+    
+    title.textContent = `Databases in ${countryCode}`;
+    container.innerHTML = "";
+    
+    const role = localStorage.getItem("userRole");
+    console.log("Ruolo scelto: ", role);
+    
+    modalEntries.forEach(entry => {
+        const dbDiv = document.createElement("div");
+        dbDiv.className = "db-entry";
+        
+        const name = getField(entry, "Name");
+        const acronym = getField(entry, "Acronymum");
+        const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
+        const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
+        const startingYear = getField(entry, "Starting Year ");
+        const endingYear = getField(entry, "Ending Year ");
+        
+        const purposes = Object.entries(entry)
+        .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
+        .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
+        .join(", ") || "N/A";
+        
+        const sampleTypes = Object.entries(entry)
+        .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
+        .map(([key, val]) => val)
+        .join(", ") || "N/A";
+        
+        let access = getField(entry, "Data Accessibility");
+        if (access === "Other") {
+            access = getField(entry, "Data Accessibility [Other]");
+        }
+        if (!access || access === "-") {
+            access = "N/A";
+        }
+        
+        if (role === "researcher") {
+            const sampleLevel = getField(entry, "Sample Level");
+            
+            // Skill Assessed
+            let skills = Object.entries(entry)
+            .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
+            .map(([k, v]) => {
+                if (k.includes("Other Skills")) {
+                    const other = getField(entry, "Type of Skills Analysed [Other Skills]");
+                    return other !== "N/A" ? other : v;
+                }
+                return v;
+            }).join(", ") || "N/A";
+            
+            // Assessment Type
+            let assessment = getField(entry, "Assessment Type");
+            if (assessment === "Other") {
+                assessment = getField(entry, "Assessment Type [Other]");
+            }
+            
+            // Data Linkability
+            const linkability = Object.entries(entry)
+            .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
+            .map(([_, v]) => v)
+            .join(", ") || "N/A";
+            
+            // Microdata Accessibility
+            let microdataDisplay = "";
+            const microdataLinks = Object.entries(entry)
+            .filter(([key, val]) =>
+                key.startsWith("Access to Micro-Data") &&
+            typeof val === "string"
+            )
+            .map(([_, val]) => {
+                const match = val.match(/https?:\/\/[^\s"]+/);
+                return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
+            });
+        
+        if (microdataLinks.length > 0) {
+            microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
+        }
+        
+        // Website or links
+        let linkInfo = getField(entry, "Data Accessibility");
+        if (linkInfo === "Other") {
+            linkInfo = getField(entry, "Data Accessibility [Other]");
+        }
+        // Access logic: link or microdata fallback
+        let accessLabel = "Access to Micro-Data";
+        let accessDisplay = "N/A";
+        
+        let rawAccess = getField(entry, "Data Accessibility");
+        if (rawAccess === "Other") {
+            rawAccess = getField(entry, "Data Accessibility [Other]");
+        }
+        
+        if (rawAccess && rawAccess.includes("http")) {
+            const match = rawAccess.match(/https?:\/\/[^\s"]+/);
+            if (match) {
+                accessLabel = "Website and/or Direct Links to Data or Data Owners";
+                accessDisplay = `<a href="${match[0]}" target="_blank">${match[0]}</a>`;
+            } else {
+                accessLabel = "Website and/or Direct Links to Data or Data Owners";
+                accessDisplay = rawAccess;
+            }
+        } else {
+            // fallback a microdata accessibility
+            const microdata = Object.entries(entry)
+            .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
+            .map(([_, v]) => v)
+            .join(", ") || "N/A";
+            accessDisplay = microdata;
+        }
+        
+        
+        // Variables Collected (placeholder)
+        const variables = "";
+        dbDiv.innerHTML = `
+                <b>Name:</b> ${name}<br>
+                <b>Acronym:</b> ${acronym}<br>
+                <b>Purpose of Data Collection:</b> ${purposes}<br>
+                <b>Target Population:</b> ${sampleTypes}<br>
+                <b>Time of Data Collection:</b> ${duration}<br>
+                <b>Frequency:</b> ${frequency}<br>
+                <b>Starting Year:</b> ${startingYear}<br>
+                <b>Ending Year: </b> ${endingYear}<br>
+                <b>Access Information:</b> ${access}<br>
+                <b>Sample & Representativeness:</b> ${sampleLevel}<br>
+                <b>Skill Assessed:</b> ${skills}<br>
+                <b>Assessment Type:</b> ${assessment}<br>
+                <b>Data Linkability:</b> ${linkability}<br>
+                <b>Variables Collected:</b> ${variables}<br>
+                ${accessDisplay.includes("http") ? microdataDisplay : ""}
+                <b>${accessLabel}</b> ${accessDisplay}<br>
+            `;
+    } else {
+        dbDiv.innerHTML = `
+                <b>Name:</b> ${name}<br>
+                <b>Acronym:</b> ${acronym}<br>
+                <b>Type of Longitudinal Data:</b> ${getField(entry, "Individual Level Longitudinal Design", "Longitudinal")}<br>
+                <b>Purpose of Data Collection:</b> ${purposes}<br>
+                <b>Target Population:</b> ${sampleTypes}<br>
+                <b>Time of Data Collection:</b> ${duration}<br>
+                <b>Frequency:</b> ${frequency}<br>
+                <b>Starting Year:</b> ${startingYear}<br>
+                <b>Ending Year: </b> ${endingYear}<br>
+                <b>Access Information:</b> ${access}
+            `;
+    }
+    
+    container.appendChild(dbDiv);
 });
+
+modal.classList.add("show");
+}
+
+function closeDbModal() {
+    document.getElementById("db-modal").classList.remove("show");
+    
+    // Rimuove evidenziazione confine
+    if (highlightedLayer) {
+        map.removeLayer(highlightedLayer);
+        highlightedLayer = null;
+    }
+    
+    // Torna alla vista iniziale della mappa (Europa)
+    map.setView([54.5260, 14.5551], 4.4);
+}
+
+// MAP BORDERS
+
+let countryBorders = {};
+
+// Funzione per evidenziare e zoomare su un paese
+let highlightedLayer = null;
+
+function zoomToCountry(code) {
+    const feature = countryBorders[code];
+    if (!feature) {
+        console.warn('Confini non trovati per il codice paese:', code);
+        return;
+    }
+    
+    // Rimuovi l'evidenziazione precedente, se presente
+    if (highlightedLayer) {
+        map.removeLayer(highlightedLayer);
+    }
+    
+    // Aggiungi il nuovo layer evidenziato
+    highlightedLayer = L.geoJSON(feature, {
+        style: {
+            color: '#ff6600', //Colore del bordo
+            weight: 3,
+            fillOpacity: 0.2
+        }
+    }).addTo(map);
+    
+    // Ottieni i confini del paese e centra la mappa
+    const bounds = highlightedLayer.getBounds();
+    const center = bounds.getCenter();
+    const offsetCenter = L.latLng(center.lat, center.lng - 3); // Regola questo valore per spostare la mappa a sinistra
+    
+    map.fitBounds(bounds, {
+        paddingTopLeft: [0, 0],
+        paddingBottomRight: [window.innerWidth * 0.55, 0] // La mappa occuperà il 55% a sinistra
+    });
+}
