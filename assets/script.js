@@ -437,9 +437,11 @@ function openDbModal(countryCode) {
             `;
     }
     
+
     container.appendChild(dbDiv);
 });
 
+closeDbPanel();
 modal.classList.add("show");
 }
 
@@ -494,3 +496,48 @@ function zoomToCountry(code) {
         paddingBottomRight: [window.innerWidth * 0.55, 0] // La mappa occuperà il 55% a sinistra
     });
 }
+
+// FORM CONTACT US
+
+document.addEventListener('DOMContentLoaded', function () {
+    const contactTab = document.getElementById('contact-tab');
+    const contactPanel = document.getElementById('contact-panel');
+    const closePanel = document.getElementById('close-panel');
+    const form = document.getElementById('contact-form');
+
+    contactTab.addEventListener('click', function () {
+        contactPanel.classList.add('show');
+    });
+
+    closePanel.addEventListener('click', function () {
+        contactPanel.classList.remove('show');
+    });
+
+    document.addEventListener('click', function (event) {
+        if (
+            !contactPanel.contains(event.target) &&
+            !contactTab.contains(event.target)
+        ) {
+            contactPanel.classList.remove('show');
+        }
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const message = form.message.value.trim();
+
+        if (!message) {
+            alert("Please write your feedback.");
+            return;
+        }
+
+        // Simulazione invio
+        console.log("Anonymous feedback submitted:", { message });
+
+        alert("Thank you for your feedback!");
+
+        form.reset();
+    });
+});
+

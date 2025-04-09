@@ -9,6 +9,30 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <!-- Linguetta verticale "Contact Us" -->
+    <div id="contact-tab" class="contact-tab">Contact Us</div>
+    
+    <!-- Pannello del modulo di contatto -->
+    <div id="contact-panel" class="contact-panel">
+        <div class="contact-panel-header">
+            
+            <button id="close-panel" class="close-panel">&times;</button>
+            <div class="contact-panel-description">
+                <p>You can:</p>
+                <ul class="contact-panel-list">
+                    <li>Suggest updates and corrections to database descriptions, ensuring that information remains current and accurate.</li>
+                    <li>Submit new databases that meet the selection criteria, expanding coverage and improving database availability.</li>
+                    <li>Share research outputs and publications based on the databases, creating a knowledge hub that showcases the impact of longitudinal data in education research and policy.</li>
+                </ul>
+            </div>
+        </div>
+        <form id="contact-form" class="contact-form">
+            <textarea id="message" name="message" placeholder="Write here your Feedback(suggestions, corrections, improvements, outdated info, questions)" rows="21" required></textarea>
+            
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    
     <div id="role-modal" class="modal">
         <div class="modal-content">
             <h2>Select Your Profile</h2>
@@ -24,13 +48,13 @@
     </div>
     
     <h1>LINEup School Data Explorer - An Open-Source Map to Longitudinal Databases in Europe</h1>
-
+    
     <div id="role-display-container">
         <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
         <button onclick="changeRole()">Change Role</button>
         <div id="role-description-box" style="display: none;"></div>
     </div>
-
+    
     <!-- PANNELLO SHOW ALL DATATBASES -->
     <div id="dbpanel">
         <div class="dbpanel-header">
@@ -39,7 +63,7 @@
         </div>
         <div id="dbpanel-content"></div>
     </div>
-
+    
     <!-- PANNELLO CON INFORMAZIONI SUI DATABASE -->
     <div id="db-modal" class="db-modal">
         <div class="db-modal-content">
