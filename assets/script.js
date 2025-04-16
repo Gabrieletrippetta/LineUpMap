@@ -14,8 +14,8 @@ function getField(entry, ...possibleKeys) {
 // SCELTA DELL'UTENTE
 
 const roleDescriptions = {
-    stakeholder: "(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education. Require user-friendly visualizations, summary reports, and comparative tools to analyse trends and inequalities and support evidence-based decision-making.",
-    researcher: "(including data analysts) interested in the databases themselves for deeper statistical analysis and academic studies. Need detailed dataset metadata, advanced filtering, and access information to facilitate data discovery for national and cross-national longitudinal studies."
+    stakeholder: "(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education.",
+    researcher: "(including data analysts) interested in the datasets themselves for deeper statistical analysis and academic studies."
 };
 
 function updateRoleDisplay(role) {
@@ -162,12 +162,14 @@ function renderMapWithCounts(counts, groupedData) {
             const encodedCode = encodeURIComponent(code);
             
             popupContent += `
-                <button class="expand-button" onclick="zoomToCountry('${encodedCode}'); openDbModal('${encodedCode}')">
-                    Show more
-                </button>
-                <button onclick="showCountryDetailsInPanel('${encodedCode}')">
-                    Show all databases
-                </button>
+                <div class="popup-buttons">
+                    <button class="show-button" onclick="showCountryDetailsInPanel('${encodedCode}')">
+                        Show all
+                    </button>
+                    <button class="expand-button" onclick="zoomToCountry('${encodedCode}'); openDbModal('${encodedCode}')">
+                        Show more
+                    </button>
+                </div>
             `;
         }
         
@@ -233,7 +235,7 @@ fetch("./assets/europe.geojson")
 .catch(err => console.error("Errore nel caricamento dei confini:", err));
 
 
-fetch("/data/mapping_data.json")
+fetch("./data/mapping_data.json")
 .then(response => {
     if (!response.ok) throw new Error("Errore nel caricamento di mapping_data.json");
     return response.json();
@@ -255,35 +257,6 @@ function initMap() {
     renderMapWithCounts(countryCounts, grouped);
 }
 
-
-// SHOW ALL DATABASES PANEL
-
-function showCountryDetailsInPanel(code, entries) {
-    const panelEntries = countryEntryStore[code] || [];
-    const panel = document.getElementById("dbpanel");
-    const title = document.getElementById("panel-country-title");
-    const content = document.getElementById("dbpanel-content");
-    
-    title.textContent = `Databases in ${code}`;
-    content.innerHTML = "";
-    
-    panelEntries.forEach(entry => {
-        const entryDiv = document.createElement("div");
-        entryDiv.innerHTML = `
-            <b>Name:</b> ${getField(entry, "Name")}<br>
-            <b>Acronym:</b> ${getField(entry, "Acronymum")}<br>
-        `;
-        content.appendChild(entryDiv);
-    });
-    
-    panel.classList.add("show");
-}
-
-
-function closeDbPanel() {
-    document.getElementById("dbpanel").classList.remove("show");
-}
-
 // SHOW MORE INFO ON DB
 
 function openDbModal(countryCode) {
@@ -292,7 +265,7 @@ function openDbModal(countryCode) {
     const title = document.getElementById("modal-country-title");
     const container = document.getElementById("modal-db-list");
     
-    title.textContent = `Databases in ${countryCode}`;
+    title.textContent = `Datasets in ${countryCode}`;
     container.innerHTML = "";
     
     const role = localStorage.getItem("userRole");
@@ -445,6 +418,35 @@ closeDbPanel();
 modal.classList.add("show");
 }
 
+// SHOW ALL DATABASES PANEL
+
+function showCountryDetailsInPanel(code) {
+    const panelEntries = countryEntryStore[code] || [];
+    const panel = document.getElementById("dbpanel");
+    const title = document.getElementById("panel-country-title");
+    const content = document.getElementById("dbpanel-content");
+
+    title.textContent = `Datasets in ${code}`;
+    content.innerHTML = "";
+
+    panelEntries.forEach((entry, index) => {
+        const entryDiv = document.createElement("div");
+        entryDiv.innerHTML = `
+            <b>Name:</b> ${getField(entry, "Name")}<br>
+            <b>Acronym:</b> ${getField(entry, "Acronymum")}<br>
+            <button class="expand-button" onclick="openSingleDbModal('${code}', ${index})">Show more</button>
+        `;
+        content.appendChild(entryDiv);
+    });
+
+    panel.classList.add("show");
+}
+
+function closeDbPanel() {
+    document.getElementById("dbpanel").classList.remove("show");
+}
+
+
 function closeDbModal() {
     document.getElementById("db-modal").classList.remove("show");
     
@@ -456,6 +458,57 @@ function closeDbModal() {
     
     // Torna alla vista iniziale della mappa (Europa)
     map.setView([54.5260, 14.5551], 4.4);
+}
+
+function openSingleDbModal(code, index) {
+    const entry = countryEntryStore[code]?.[index];
+    if (!entry) return;
+
+    const modal = document.getElementById("db-modal");
+    const title = document.getElementById("modal-country-title");
+    const container = document.getElementById("modal-db-list");
+
+    title.textContent = `Detailed Info - ${getField(entry, "Name")}`;
+    container.innerHTML = "";
+
+    const dbDiv = document.createElement("div");
+    dbDiv.className = "db-entry";
+
+    const role = localStorage.getItem("userRole");
+    const name = getField(entry, "Name");
+    const acronym = getField(entry, "Acronymum");
+    const purposes = Object.entries(entry)
+        .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
+        .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
+        .join(", ") || "N/A";
+
+    if (role === "researcher") {
+        const sampleLevel = getField(entry, "Sample Level");
+        const skills = Object.entries(entry)
+            .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
+            .map(([k, v]) => v).join(", ") || "N/A";
+        const linkability = getField(entry, "Data Linkability at Individual Level");
+        const access = getField(entry, "Data Accessibility");
+
+        dbDiv.innerHTML = `
+            <b>Name:</b> ${name}<br>
+            <b>Acronym:</b> ${acronym}<br>
+            <b>Purpose:</b> ${purposes}<br>
+            <b>Skill Assessed:</b> ${skills}<br>
+            <b>Sample Level:</b> ${sampleLevel}<br>
+            <b>Data Linkability:</b> ${linkability}<br>
+            <b>Access:</b> ${access}<br>
+        `;
+    } else {
+        dbDiv.innerHTML = `
+            <b>Name:</b> ${name}<br>
+            <b>Acronym:</b> ${acronym}<br>
+            <b>Purpose:</b> ${purposes}<br>
+        `;
+    }
+
+    container.appendChild(dbDiv);
+    modal.classList.add("show");
 }
 
 // MAP BORDERS

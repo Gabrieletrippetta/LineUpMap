@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>LINEup School Data Explorer - An Open-Source Map to Longitudinal Databases in Europe</title>
+    <meta charset="UTF-8">
+    <title>LINEup School Data Explorer - An Open-Source Map to Longitudinal Datasets in Europe</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,7 +11,7 @@
 </head>
 <body>
     <!-- Linguetta verticale "Contact Us" -->
-    <div id="contact-tab" class="contact-tab">Contact Us</div>
+    <div id="contact-tab" class="contact-tab">CALL TO ACTION</div>
     
     <!-- Pannello del modulo di contatto -->
     <div id="contact-panel" class="contact-panel">
@@ -20,9 +21,9 @@
             <div class="contact-panel-description">
                 <p>You can:</p>
                 <ul class="contact-panel-list">
-                    <li>Suggest updates and corrections to database descriptions, ensuring that information remains current and accurate.</li>
-                    <li>Submit new databases that meet the selection criteria, expanding coverage and improving database availability.</li>
-                    <li>Share research outputs and publications based on the databases, creating a knowledge hub that showcases the impact of longitudinal data in education research and policy.</li>
+                    <li>Suggest updates and corrections to dataset descriptions, ensuring that information remains current and accurate.</li>
+                    <li>Submit new datasets that meet the selection criteria, expanding coverage and improving dataset availability.</li>
+                    <li>Share research outputs and publications based on the datasets, creating a knowledge hub that showcases the impact of longitudinal data in education research and policy.</li>
                 </ul>
             </div>
         </div>
@@ -33,47 +34,63 @@
         </form>
     </div>
     
-    <div id="role-modal" class="modal">
-        <div class="modal-content">
-            <h2>Select Your Profile</h2>
-            <div class="role-option">
-                <button onclick="selectRole('stakeholder')">Educational Stakeholder</button>
-                <p>(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education. Require user-friendly visualizations, summary reports, and comparative tools to analyse trends and inequalities and support evidence-based decision-making.</p>
+    <header>
+        <h1>LINEup School Data Explorer</h1>
+        <h2>An Open-Source Map to Longitudinal Datasets in Europe</h2>
+    </header>
+
+    <main>
+        <div id="role-modal" class="modal">
+            <div class="modal-content">
+                <h3>Select Your Profile</h3>
+                <div class="role-option">
+                    <button onclick="selectRole('stakeholder')">Educational Stakeholder</button>
+                    <p>(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education.</p>
+                </div>
+                <div class="role-option">
+                    <button onclick="selectRole('researcher')">Researcher</button>
+                    <p>(including data analysts) interested in the datasets themselves for deeper statistical analysis and academic studies.</p>
+                </div>
             </div>
-            <div class="role-option">
-                <button onclick="selectRole('researcher')">Researcher</button>
-                <p>(including data analysts) interested in the databases themselves for deeper statistical analysis and academic studies. Need detailed dataset metadata, advanced filtering, and access information to facilitate data discovery for national and cross-national longitudinal studies.</p>
+        </div>
+
+        <div class="functions">
+            <div class="filter-container">
+                <input type="text" id="search-input" placeholder="Search by name or acronym...">
+            
+                <button onclick="applyFilters()">Search</button>
+
+                
+            </div>
+            
+            <div id="role-display-container">
+                <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
+                <button onclick="changeRole()">Change Role</button>
+                <div id="role-description-box" style="display: none;"></div>
             </div>
         </div>
-    </div>
-    
-    <h1>LINEup School Data Explorer - An Open-Source Map to Longitudinal Databases in Europe</h1>
-    
-    <div id="role-display-container">
-        <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
-        <button onclick="changeRole()">Change Role</button>
-        <div id="role-description-box" style="display: none;"></div>
-    </div>
-    
-    <!-- PANNELLO SHOW ALL DATATBASES -->
-    <div id="dbpanel">
-        <div class="dbpanel-header">
-            <h2 id="panel-country-title"></h2>
-            <button onclick="closeDbPanel()">✖</button>
+        
+        <!-- PANNELLO SHOW ALL DATATBASES -->
+        <div id="dbpanel">
+            <div class="dbpanel-header">
+                <h2 id="panel-country-title"></h2>
+                <button onclick="closeDbPanel()">✖</button>
+            </div>
+            <div id="dbpanel-content"></div>
         </div>
-        <div id="dbpanel-content"></div>
-    </div>
-    
-    <!-- PANNELLO CON INFORMAZIONI SUI DATABASE -->
-    <div id="db-modal" class="db-modal">
-        <div class="db-modal-content">
-            <button class="db-modal-close" onclick="closeDbModal()">✖</button>
-            <h2 id="modal-country-title"></h2>
-            <div id="modal-db-list"></div>
+        
+        <!-- PANNELLO CON INFORMAZIONI SUI DATABASE -->
+        <div id="db-modal" class="db-modal">
+            <div class="db-modal-content">
+                <button class="db-modal-close" onclick="closeDbModal()">✖</button>
+                <h2 id="modal-country-title"></h2>
+                <div id="modal-db-list"></div>
+            </div>
         </div>
-    </div>
-    
-    <div id="map"></div>
+        
+        <div id="map"></div>
+    </main>
+
     <script src="assets/script.js"></script>
     
 </body>
