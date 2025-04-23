@@ -4,7 +4,7 @@ body {
 }
 
 #map { 
-    height: 80.7vh; 
+    height: 75.3vh; 
 }
 
 .chart-popup {
@@ -210,13 +210,6 @@ button:hover {
     background-color: #0a5c2d; /* Verde leggermente più chiaro */
 }
 
-.functions {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-around;
-}
-
 #role-display-container {
     text-align: center;
     margin-bottom: 10px;
@@ -386,7 +379,7 @@ button:hover {
     font-size: medium;
     transform: translateY(-50%) rotate(-90deg);
     transform-origin: left top;
-    background-color: orangered;
+    background-color: #F75E25;
     color: #fff;
     font-weight: bold;
     padding: 6px 14px;
@@ -418,17 +411,6 @@ button:hover {
     left: 0;
 }
 
-/* Header del pannello */
-.contact-panel-header {
-    background-color: #007bff;
-    color: white;
-    padding: 15px 20px;
-    position: relative;
-    text-align: center;
-    font-weight: bold;
-    font-size: 18px;
-}
-
 .close-panel {
     position: absolute;
     top: 10px;
@@ -436,15 +418,18 @@ button:hover {
     background: none;
     border: none;
     font-size: 22px;
-    color: #007bff;
+    color: #7C9E3D;
     cursor: pointer;
     background-color: white;
+    margin-right: 6px;
 }
 
 .contact-panel-description{
-    padding: 15px; 
+    margin: 0;
+    padding: 10px;
     font-size: 14px; 
     line-height: 1.5;
+    background-color: #7C9E3D;
 }
 
 /* .contact-panel-list {
@@ -492,4 +477,60 @@ button:hover {
 
 .contact-form button:hover {
     background-color: #0056b3;
+}
+
+/* Filter area */
+
+#filter-area {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    z-index: 999;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+}
+
+.custom-dropdown {
+    position: relative;
+}
+
+.dropdown-toggle {
+    padding: 10px 35px;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    bottom: 100%; /* verso l'alto */
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    display: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.custom-dropdown.show .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
 }

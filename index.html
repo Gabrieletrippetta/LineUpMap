@@ -15,23 +15,15 @@
     
     <!-- Pannello del modulo di contatto -->
     <div id="contact-panel" class="contact-panel">
-        <div class="contact-panel-header">
-            
-            <button id="close-panel" class="close-panel">&times;</button>
-            <div class="contact-panel-description">
-                <p>You can:</p>
-                <ul class="contact-panel-list">
-                    <li>Suggest updates and corrections to dataset descriptions, ensuring that information remains current and accurate.</li>
-                    <li>Submit new datasets that meet the selection criteria, expanding coverage and improving dataset availability.</li>
-                    <li>Share research outputs and publications based on the datasets, creating a knowledge hub that showcases the impact of longitudinal data in education research and policy.</li>
-                </ul>
-            </div>
-        </div>
-        <form id="contact-form" class="contact-form">
-            <textarea id="message" name="message" placeholder="Write here your Feedback(suggestions, corrections, improvements, outdated info, questions)" rows="21" required></textarea>
-            
-            <button type="submit">Send</button>
-        </form>
+        <button id="close-panel" class="close-panel">&times;</button>
+        <iframe
+            src="https://form.jotform.com/251081340365045"
+            width="100%"
+            height="100%"
+            frameborder="0"
+            style="border:none;">
+        </iframe>
+        <p class="contact-panel-description">Prefer to get in touch directly? <br> Contact us at <a href="mailto:indirizzo@email.com">indirizzo email</a></p>
     </div>
     
     <header>
@@ -54,20 +46,10 @@
             </div>
         </div>
 
-        <div class="functions">
-            <div class="filter-container">
-                <input type="text" id="search-input" placeholder="Search by name or acronym...">
-            
-                <button onclick="applyFilters()">Search</button>
-
-                
-            </div>
-            
-            <div id="role-display-container">
-                <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
-                <button onclick="changeRole()">Change Role</button>
-                <div id="role-description-box" style="display: none;"></div>
-            </div>
+        <div id="role-display-container">
+            <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
+            <button onclick="changeRole()">Change Role</button>
+            <div id="role-description-box" style="display: none;"></div>
         </div>
         
         <!-- PANNELLO SHOW ALL DATATBASES -->
@@ -89,6 +71,46 @@
         </div>
         
         <div id="map"></div>
+
+        <div id="filter-area">
+            <input type="text" id="search-input" placeholder="Search by name or acronym...">
+        
+            <div class="custom-dropdown">
+                <button class="dropdown-toggle">Filter 1 ⬆</button>
+                <div class="dropdown-menu">
+                    <label><input type="checkbox" value="Option 1A"> Option 1A</label>
+                    <label><input type="checkbox" value="Option 1B"> Option 1B</label>
+                    <label><input type="checkbox" value="Option 1C"> Option 1C</label>
+                    <label><input type="checkbox" value="Option 1D"> Option 1D</label>
+                    <label><input type="checkbox" value="Option 1E"> Option 1E</label>
+                </div>
+            </div>
+        
+            <div class="custom-dropdown">
+                <button class="dropdown-toggle">Filter 2 ⬆</button>
+                <div class="dropdown-menu">
+                    <label><input type="checkbox" value="Option 2A"> Option 2A</label>
+                    <label><input type="checkbox" value="Option 2B"> Option 2B</label>
+                    <label><input type="checkbox" value="Option 2C"> Option 2C</label>
+                    <label><input type="checkbox" value="Option 2D"> Option 2D</label>
+                    <label><input type="checkbox" value="Option 2E"> Option 2E</label>
+                </div>
+            </div>
+        
+            <div class="custom-dropdown">
+                <button class="dropdown-toggle">Filter 3 ⬆</button>
+                <div class="dropdown-menu">
+                    <label><input type="checkbox" value="Option 3A"> Option 3A</label>
+                    <label><input type="checkbox" value="Option 3B"> Option 3B</label>
+                    <label><input type="checkbox" value="Option 3C"> Option 3C</label>
+                    <label><input type="checkbox" value="Option 3D"> Option 3D</label>
+                    <label><input type="checkbox" value="Option 3E"> Option 3E</label>
+                </div>
+            </div>
+        
+            <button onclick="applyFilters()">Search</button>
+        </div>
+        
     </main>
 
     <script src="assets/script.js"></script>
