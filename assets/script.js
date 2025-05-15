@@ -59,7 +59,43 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-var countries = { "AT": [47.5162, 14.5501], "BE": [50.6203, 4.3517], "BG": [42.7339, 25.4858], "HR": [43.6, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.5153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 7.2275], "GB": [53.3781, -1.436] };
+// var countries = { "AT": [47.5162, 14.5501], "BE": [50.6203, 4.3517], "BG": [42.7339, 25.4858], "HR": [43.6, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.5153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 7.2275], "GB": [53.3781, -1.436] };
+
+var countries = {
+    "Austria": [47.5162, 14.5501],
+    "Belgium": [50.6203, 4.3517],
+    "Bulgaria": [42.7339, 25.4858],
+    "Croatia": [43.6, 15.2],
+    "Cyprus": [35.1264, 33.4299],
+    "Czech Republic": [49.8175, 15.4729],
+    "Denmark": [56.2639, 9.5018],
+    "Estonia": [58.5953, 25.0136],
+    "Finland": [61.9241, 25.7482],
+    "France": [46.6034, 1.8883],
+    "Germany": [51.1657, 10.4515],
+    "Greece": [39.0742, 21.8243],
+    "Hungary": [47.1625, 19.5033],
+    "Ireland": [53.4129, -8.2439],
+    "Italy": [41.8719, 12.5674],
+    "Latvia": [56.8796, 24.6032],
+    "Lithuania": [55.1694, 23.8813],
+    "Luxembourg": [49.5153, 6.1296],
+    "Malta": [35.9375, 14.3754],
+    "Netherlands": [52.1326, 5.2913],
+    "Poland": [51.9194, 19.1451],
+    "Portugal": [39.3999, -8.2245],
+    "Romania": [45.9432, 24.9668],
+    "Slovakia": [48.669, 19.699],
+    "Slovenia": [46.1512, 14.9955],
+    "Spain": [40.4637, -3.7492],
+    "Sweden": [60.1282, 16.0435],
+    "Iceland": [64.9631, -19.0208],
+    "Liechtenstein": [47.166, 9.5554],
+    "Norway": [60.472, 8.4689],
+    "Switzerland": [46.8182, 7.2275],
+    "United Kingdom": [53.3781, -1.436]
+};
+
 
 var markers = {};
 
@@ -76,43 +112,94 @@ Object.keys(countries).forEach(country => {
 
 //CREA NUMERI PER OGNI PIN DELLA MAPPA
 
+// function countEntriesByCountry(data) {
+//     const counts = {};
+    
+//     data.forEach(row => {
+//         let rawCountry = row["Country"];
+//         if (rawCountry) {
+//             let code = rawCountry.match(/\b[A-Z]{2}\b/); // estrae sigla come IT, DE
+//             console.log("raw:" + rawCountry);
+//             if (code) {
+//                 let countryCode = code[0];
+//                 counts[countryCode] = (counts[countryCode] || 0) + 1;
+//             }
+//         }
+//     });
+    
+//     // Aggiunge i paesi mancanti con valore 0
+//     Object.keys(countries).forEach(code => {
+//         if (!counts[code]) {
+//             counts[code] = 0;
+//         }
+//     });
+    
+//     return counts;
+// }
+
 function countEntriesByCountry(data) {
     const counts = {};
-    
+
+    // Inizializza tutti i paesi a 0
+    Object.keys(countries).forEach(countryName => {
+        counts[countryName] = 0;
+    });
+
     data.forEach(row => {
         let rawCountry = row["Country"];
         if (rawCountry) {
-            let code = rawCountry.match(/\b[A-Z]{2}\b/); // estrae sigla come IT, DE
-            if (code) {
-                let countryCode = code[0];
-                counts[countryCode] = (counts[countryCode] || 0) + 1;
+            // Prova a trovare un nome di paese completo nei dati (case insensitive)
+            for (let countryName of Object.keys(countries)) {
+                const regex = new RegExp(`\\b${countryName}\\b`, 'i'); // 'i' = case-insensitive
+                if (regex.test(rawCountry)) {
+                    counts[countryName]++;
+                    break; // una volta trovato, passa al prossimo record
+                }
             }
         }
     });
-    
-    // Aggiunge i paesi mancanti con valore 0
-    Object.keys(countries).forEach(code => {
-        if (!counts[code]) {
-            counts[code] = 0;
-        }
-    });
-    
+
     return counts;
 }
 
+// function groupDataByCountry(data) {
+//     const grouped = {};
+    
+//     data.forEach(row => {
+//         let rawCountry = row["Country"];
+//         let match = rawCountry && rawCountry.match(/\b[A-Z]{2}\b/);
+//         console.log("match: " + match);
+//         if (match) {
+//             let code = match[0];
+//             if (!grouped[code]) grouped[code] = [];
+//             grouped[code].push(row);  // 👈 passiamo tutto l'oggetto originale
+//         }
+//     });
+    
+//     return grouped;
+// }
+
 function groupDataByCountry(data) {
     const grouped = {};
-    
+
+    // Inizializza il gruppo per ogni paese anche se vuoto (opzionale)
+    Object.keys(countries).forEach(countryName => {
+        grouped[countryName] = [];
+    });
+
     data.forEach(row => {
         let rawCountry = row["Country"];
-        let match = rawCountry && rawCountry.match(/\b[A-Z]{2}\b/);
-        if (match) {
-            let code = match[0];
-            if (!grouped[code]) grouped[code] = [];
-            grouped[code].push(row);  // 👈 passiamo tutto l'oggetto originale
+        if (rawCountry) {
+            for (let countryName of Object.keys(countries)) {
+                const regex = new RegExp(`\\b${countryName}\\b`, 'i'); // case insensitive
+                if (regex.test(rawCountry)) {
+                    grouped[countryName].push(row); // 👈 mantiene tutto l'oggetto originale
+                    break;
+                }
+            }
         }
     });
-    
+
     return grouped;
 }
 
