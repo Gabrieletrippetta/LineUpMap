@@ -96,6 +96,40 @@ var countries = {
     "United Kingdom": [53.3781, -1.436]
 };
 
+const countryNameToISO2 = {
+    "Austria": "AT",
+    "Belgium": "BE",
+    "Bulgaria": "BG",
+    "Croatia": "HR",
+    "Cyprus": "CY",
+    "Czech Republic": "CZ",
+    "Denmark": "DK",
+    "Estonia": "EE",
+    "Finland": "FI",
+    "France": "FR",
+    "Germany": "DE",
+    "Greece": "GR",
+    "Hungary": "HU",
+    "Ireland": "IE",
+    "Italy": "IT",
+    "Latvia": "LV",
+    "Lithuania": "LT",
+    "Luxembourg": "LU",
+    "Malta": "MT",
+    "Netherlands": "NL",
+    "Poland": "PL",
+    "Portugal": "PT",
+    "Romania": "RO",
+    "Slovakia": "SK",
+    "Slovenia": "SI",
+    "Spain": "ES",
+    "Sweden": "SE",
+    "Iceland": "IS",
+    "Liechtenstein": "LI",
+    "Norway": "NO",
+    "Switzerland": "CH",
+    "United Kingdom": "GB"
+};
 
 var markers = {};
 
@@ -336,6 +370,7 @@ fetch("./data/mapping_data.json")
     }
 })
 .catch(error => console.error("Errore nel caricamento dei dati mappa:", error));
+window.mappingDataReady = true;
 
 
 function initMap() {
@@ -690,10 +725,11 @@ let countryBorders = {};
 // Funzione per evidenziare e zoomare su un paese
 let highlightedLayer = null;
 
-function zoomToCountry(code) {
-    const feature = countryBorders[code];
+function zoomToCountry(codeOrName) {
+    const iso2 = countryNameToISO2[codeOrName] || codeOrName;
+    const feature = countryBorders[iso2];
     if (!feature) {
-        console.warn('Confini non trovati per il codice paese:', code);
+        console.warn('Confini non trovati per il codice paese:', codeOrName);
         return;
     }
     
@@ -728,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const contactTab = document.getElementById('contact-tab');
     const contactPanel = document.getElementById('contact-panel');
     const closePanel = document.getElementById('close-panel');
-    const form = document.getElementById('contact-form');
+    
 
     contactTab.addEventListener('click', function () {
         contactPanel.classList.add('show');
@@ -738,32 +774,6 @@ document.addEventListener('DOMContentLoaded', function () {
         contactPanel.classList.remove('show');
     });
 
-    document.addEventListener('click', function (event) {
-        if (
-            !contactPanel.contains(event.target) &&
-            !contactTab.contains(event.target)
-        ) {
-            contactPanel.classList.remove('show');
-        }
-    });
-
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const message = form.message.value.trim();
-
-        if (!message) {
-            alert("Please write your feedback.");
-            return;
-        }
-
-        // Simulazione invio
-        console.log("Anonymous feedback submitted:", { message });
-
-        alert("Thank you for your feedback!");
-
-        form.reset();
-    });
 });
 
 document.querySelectorAll('.dropdown-toggle').forEach(button => {
@@ -785,17 +795,15 @@ document.addEventListener('click', function (e) {
     }
 });
 
-function applyFilters() {
-    const search = document.getElementById('search-input').value.trim().toLowerCase();
+document.getElementById("search-input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+        applyFilters();
+    }
+});
 
-    const selectedValues = [];
-    document.querySelectorAll('.dropdown-menu input[type="checkbox"]:checked').forEach(cb => {
-        selectedValues.push(cb.value);
-    });
-
-    console.log("Search:", search);
-    console.log("Selected filter values:", selectedValues);
-
-    // Applica qui la logica sui dati filtrati...
-}
-
+window.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+        closeDbModal();
+        closeDbPanel();
+    }
+});
