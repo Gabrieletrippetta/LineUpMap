@@ -274,8 +274,8 @@ function renderMapWithCounts(counts, groupedData) {
         } else {
             popupContent += `<div id="entryList-${code}" style="display: block;">`;
             entries.slice(0, 3).forEach(e => {
-                const name = getField(e, "Name");
-                const acronym = getField(e, "Acronymum");
+                const name = getField(e, "Dataset Name");
+                const acronym = getField(e, "Dataset Acronym");
                 popupContent += `<div><b>${name}</b><br><i>${acronym}</i></div><hr>`;
             });
             popupContent += `</div>`;
@@ -313,8 +313,8 @@ function toggleEntries(code, encodedEntries, showAll) {
         entries.forEach(e => {
             list.innerHTML += `
                 <div>
-                    <b>${getField(e, "Name")}</b><br>
-                    <i>${getField(e, "Acronymum")}</i><br>
+                    <b>${getField(e, "Dataset Name")}</b><br>
+                    <i>${getField(e, "Dataset Acronym")}</i><br>
                 </div><hr>`;
         });
         showBtn.style.display = "none";
@@ -323,8 +323,8 @@ function toggleEntries(code, encodedEntries, showAll) {
         entries.slice(0, 3).forEach(e => {
             list.innerHTML += `
                 <div>
-                    <b>${getField(e, "Name")}</b><br>
-                    <i>${getField(e, "Acronymum")}</i><br>
+                    <b>${getField(e, "Dataset Name")}</b><br>
+                    <i>${getField(e, "Dataset Acronym")}</i><br>
                 </div><hr>`;
         });
         showBtn.style.display = "inline-block";
@@ -397,8 +397,8 @@ function openDbModal(countryCode) {
         const dbDiv = document.createElement("div");
         dbDiv.className = "db-entry";
         
-        const name = getField(entry, "Name");
-        const acronym = getField(entry, "Acronymum");
+        const name = getField(entry, "Dataset Name");
+        const acronym = getField(entry, "Dataset Acronym");
         const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
         const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
         const startingYear = getField(entry, "Starting Year ");
@@ -556,9 +556,11 @@ function showCountryDetailsInPanel(code) {
     panelEntries.forEach((entry, index) => {
         const entryDiv = document.createElement("div");
         entryDiv.innerHTML = `
-            <b>Name:</b> ${getField(entry, "Name")}<br>
-            <b>Acronym:</b> ${getField(entry, "Acronymum")}<br>
-            <button class="expand-button" onclick="openSingleDbModal('${code}', ${index})">Show more</button>
+            <b>Name:</b> ${getField(entry, "Dataset Name")}<br>
+            <b>Acronym:</b> ${getField(entry, "Dataset Acronym")}<br>
+            <br>
+            ${getField(entry, "Short Description")}<br>
+            <button class="expand-button" onclick="zoomToCountry('${code}'); openSingleDbModal('${code}', ${index})">Show more</button>
         `;
         content.appendChild(entryDiv);
     });
@@ -592,15 +594,15 @@ function openSingleDbModal(code, index) {
     const title = document.getElementById("modal-country-title");
     const container = document.getElementById("modal-db-list");
 
-    title.textContent = `Detailed Info - ${getField(entry, "Name")}`;
+    title.textContent = `Detailed Info - ${getField(entry, "Dataset Name")}`;
     container.innerHTML = "";
 
     const dbDiv = document.createElement("div");
     dbDiv.className = "db-entry";
 
     const role = localStorage.getItem("userRole");
-    const name = getField(entry, "Name");
-    const acronym = getField(entry, "Acronymum");
+    const name = getField(entry, "Dataset Name");
+    const acronym = getField(entry, "Dataset Acronym");
     const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
     const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
     const startingYear = getField(entry, "Starting Year ");
