@@ -14,9 +14,8 @@ function getSearchFilters() {
 function filterMappingData(data, filters) {
     console.log("Filtraggio attivo su: ", filters);
     return data.filter(entry => {
-        const name = getField(entry, "Name").toLowerCase();
-        const acronym = getField(entry, "Acronymum").toLowerCase();
-        const country = entry["Country"]?.toLowerCase() || "";
+        const name = getField(entry, "Dataset Name").toLowerCase();
+        const acronym = getField(entry, "Dataset Acronym").toLowerCase();
         
         const matchesSearch = !filters.search || name.includes(filters.search) || acronym.includes(filters.search);
         
@@ -62,12 +61,17 @@ function applyFilters() {
         const div = document.createElement("div");
         div.className = "db-entry";
 
-        const name = getField(entry, "Name");
-        const acronym = getField(entry, "Acronymum");
+        const country = getField(entry, "Country");
+        const name = getField(entry, "Dataset Name");
+        const acronym = getField(entry, "Dataset Acronym");
+        const description = getField(entry, "Short Description");
 
         div.innerHTML = `
+            <b>Country:</b> ${country}<br>
             <b>Name:</b> ${name}<br>
             <b>Acronym:</b> ${acronym}<br>
+            <br>
+            ${description}<br>
             <button class="expand-button" onclick="openFilteredDbModal(${index})">Show more</button>
         `;
         modalContent.appendChild(div);
@@ -94,8 +98,8 @@ function openFilteredDbModal(index) {
     dbDiv.className = "db-entry";
 
     const role = localStorage.getItem("userRole");
-    const name = getField(entry, "Name");
-    const acronym = getField(entry, "Acronymum");
+    const name = getField(entry, "Dataset Name");
+    const acronym = getField(entry, "Dataset Acronym");
     const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
     const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
     const startingYear = getField(entry, "Starting Year ");
