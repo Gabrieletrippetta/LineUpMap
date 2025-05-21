@@ -379,6 +379,18 @@ function initMap() {
     renderMapWithCounts(countryCounts, grouped);
 }
 
+// EXTRACT IN SQUARE BRACKETS CONTENT
+function extractBracketedValues(entry, prefix) {
+    const result = [];
+    for (const key in entry) {
+        if (key.startsWith(prefix) && entry[key].trim().toLowerCase() === "yes") {
+            const match = key.match(/\[([^\]]+)\]/);
+            if (match) result.push(match[1]);
+        }
+    }
+    return result;
+}
+
 // SHOW MORE INFO ON DB
 
 function openDbModal(countryCode) {
@@ -399,10 +411,20 @@ function openDbModal(countryCode) {
         
         const name = getField(entry, "Dataset Name");
         const acronym = getField(entry, "Dataset Acronym");
-        const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
-        const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
-        const startingYear = getField(entry, "Starting Year ");
-        const endingYear = getField(entry, "Ending Year ");
+        const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
+        const responsibleDisplay = responsibleOrgs.length > 0 ? responsibleOrgs.join(", ") : "N/A";
+        const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+        const longitudinalDisplay = longitudinalTypes.length > 0 ? longitudinalTypes.join(", ") : "N/A";
+        const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
+        const purposesDisplay = purposesList.length > 0 ? purposesList.join(", ") : "N/A";
+        const focusList = extractBracketedValues(entry, "Focus [");
+        const focusDisplay = focusList.length > 0 ? focusList.join(", ") : "N/A";
+        const frequency = getField(entry, "Data Collection Frequency");
+        console.log("FREQUENCY", frequency);
+        const duration = getField(entry, "Data Collection Duration (Years)");
+        console.log("DURATION", duration);
+        const startingYear = getField(entry, "Starting Year");
+        const endingYear = getField(entry, "Ending Year");
         
         const purposes = Object.entries(entry)
         .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
@@ -502,10 +524,12 @@ function openDbModal(countryCode) {
         dbDiv.innerHTML = `
                 <b>Name:</b> ${name}<br>
                 <b>Acronym:</b> ${acronym}<br>
-                <b>Purpose of Data Collection:</b> ${purposes}<br>
-                <b>Target Population:</b> ${sampleTypes}<br>
-                <b>Time of Data Collection:</b> ${duration}<br>
-                <b>Frequency:</b> ${frequency}<br>
+                <b>Responsible Organizations:</b> ${responsibleDisplay}<br>
+                <b>Purpose of Data Collection:</b> ${purposesDisplay}<br>
+                <b>Type of Longitudinal Data:</b> ${longitudinalDisplay}<br>
+                <b>Focus:</b> ${focusDisplay}<br>
+                <b>Data Collection Frequency:</b> ${frequency}<br>
+                <b>Data Collection Duration:</b> ${duration}<br>
                 <b>Starting Year:</b> ${startingYear}<br>
                 <b>Ending Year: </b> ${endingYear}<br>
                 <b>Access Information:</b> ${access}<br>
@@ -521,11 +545,12 @@ function openDbModal(countryCode) {
         dbDiv.innerHTML = `
                 <b>Name:</b> ${name}<br>
                 <b>Acronym:</b> ${acronym}<br>
-                <b>Type of Longitudinal Data:</b> ${getField(entry, "Individual Level Longitudinal Design", "Longitudinal")}<br>
-                <b>Purpose of Data Collection:</b> ${purposes}<br>
-                <b>Target Population:</b> ${sampleTypes}<br>
-                <b>Time of Data Collection:</b> ${duration}<br>
-                <b>Frequency:</b> ${frequency}<br>
+                <b>Responsible Organizations:</b> ${responsibleDisplay}<br>
+                <b>Purpose of Data Collection:</b> ${purposesDisplay}<br>
+                <b>Type of Longitudinal Data:</b> ${longitudinalDisplay}<br>
+                <b>Focus:</b> ${focusDisplay}<br>
+                <b>Data Collection Frequency:</b> ${frequency}<br>
+                <b>Data Collection Duration:</b> ${duration}<br>
                 <b>Starting Year:</b> ${startingYear}<br>
                 <b>Ending Year: </b> ${endingYear}<br>
                 <b>Access Information:</b> ${access}
