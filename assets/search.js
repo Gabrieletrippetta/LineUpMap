@@ -14,8 +14,8 @@ function getSearchFilters() {
 function filterMappingData(data, filters) {
     console.log("Filtraggio attivo su: ", filters);
     return data.filter(entry => {
-        const name = getField(entry, "Dataset Name").toLowerCase();
-        const acronym = getField(entry, "Dataset Acronym").toLowerCase();
+        const name = getField(entry, "Name").toLowerCase();
+        const acronym = getField(entry, "Acronym").toLowerCase();
         
         const matchesSearch = !filters.search || name.includes(filters.search) || acronym.includes(filters.search);
         
@@ -62,8 +62,8 @@ function applyFilters() {
         div.className = "db-entry";
 
         const country = getField(entry, "Country");
-        const name = getField(entry, "Dataset Name");
-        const acronym = getField(entry, "Dataset Acronym");
+        const name = getField(entry, "Name");
+        const acronym = getField(entry, "Acronym");
         const description = getField(entry, "Short Description");
 
         div.innerHTML = `
@@ -98,8 +98,8 @@ function openFilteredDbModal(index) {
     dbDiv.className = "db-entry";
 
     const role = localStorage.getItem("userRole");
-    const name = getField(entry, "Dataset Name");
-    const acronym = getField(entry, "Dataset Acronym");
+    const name = getField(entry, "Name");
+    const acronym = getField(entry, "Acronym");
     const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
     const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
     const startingYear = getField(entry, "Starting Year ");
