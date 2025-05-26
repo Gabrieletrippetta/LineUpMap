@@ -47,6 +47,7 @@
         </div>
 
         <div id="role-display-container">
+            <button id="toggle-view-button" onclick="toggleView()">List View</button>
             <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
             <button onclick="changeRole()">Change Role</button>
             <div id="role-description-box" style="display: none;"></div>
@@ -72,8 +73,10 @@
         
         <div id="map"></div>
 
+        <div id="list-view" style="display: none; padding: 20px;"></div>
+
         <div id="filter-area">
-            <input type="text" id="search-input" placeholder="Search by name or acronym...">
+            <input type="text" id="search-input" placeholder="">
         
             <div class="custom-dropdown">
                 <button class="dropdown-toggle">Main Filters ⬆</button>

@@ -54,7 +54,20 @@ function selectRole(role) {
 
 // MAPPA
 
-var map = L.map('map').setView([54.5260, 14.5551], 4.4);
+var currentZoom = 4.4;
+var map = L.map('map', {
+    center: [54.5260, 14.5551],
+    zoom: currentZoom,
+    minZoom: 3,
+    worldCopyJump: false,
+    zoomControl: false,
+    maxBounds: [
+        [25, -20],  // Sud-ovest (lat, lon)
+        [75, 50]    // Nord-est (lat, lon)
+    ],
+    maxBoundsViscosity: 1.0
+});
+// var map = L.map('map').setView([54.5260, 14.5551], 4.4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
@@ -364,6 +377,11 @@ fetch("./data/mapping_data.json")
 .then(data => {
     console.log("Mapping data caricato", data);
     mappingData = data;
+    // ✅ Imposta il placeholder dinamico nel campo di ricerca
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+        searchInput.placeholder = `Search among ${mappingData.length} datasets`;
+    }
     if (geojsonLoaded) {
         console.log("Chiamo initMap da mappingData");
         initMap();
@@ -834,3 +852,55 @@ window.addEventListener("keydown", function(e) {
         closeDbPanel();
     }
 });
+
+// List view button
+function toggleView() {
+    const mapDiv = document.getElementById("map");
+    const listDiv = document.getElementById("list-view");
+    const button = document.getElementById("toggle-view-button");
+
+    if (mapDiv.style.display !== "none") {
+        // Passa alla vista lista
+        mapDiv.style.display = "none";
+        listDiv.style.display = "block";
+        button.innerText = "Map View";
+        listDiv.style.paddingLeft = "45px";
+        renderListView();
+    } else {
+        // Torna alla mappa
+        listDiv.style.display = "none";
+        mapDiv.style.display = "block";
+        button.innerText = "List View";
+    }
+}
+
+function renderListView() {
+    if (!mappingData) return;
+
+    const grouped = groupDataByCountry(mappingData);
+    const listDiv = document.getElementById("list-view");
+    listDiv.innerHTML = ""; // Pulisce prima
+
+    Object.keys(grouped).forEach(country => {
+        const entries = grouped[country];
+        if (entries.length === 0) return;
+
+        const section = document.createElement("section");
+        section.innerHTML = `<h3>${country} (${entries.length})</h3>`;
+
+        entries.forEach((entry, index) => {
+            const div = document.createElement("div");
+            div.className = "db-entry";
+            div.innerHTML = `
+                <b>Name:</b> ${getField(entry, "Name")}<br>
+                <b>Acronym:</b> ${getField(entry, "Acronym")}<br>
+                <p>${getField(entry, "Short Description")}</p>
+                <button class="expand-button" onclick="openSingleDbModal('${country}', ${index})">Show more</button>
+            `;
+            section.appendChild(div);
+        });
+
+        listDiv.appendChild(section);
+    });
+}
+

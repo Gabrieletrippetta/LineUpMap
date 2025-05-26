@@ -16,8 +16,20 @@ function filterMappingData(data, filters) {
     return data.filter(entry => {
         const name = getField(entry, "Name").toLowerCase();
         const acronym = getField(entry, "Acronym").toLowerCase();
+        const description = getField(entry, "Short Description").toLowerCase();
+        const responsibleRaw = getField(entry, "Responsible Organization", "Responsible Organization [Public authority]", "Responsible Organization [University or Public Research Centre]", "Responsible Organization [Private organization]");
+        const responsibleText = typeof responsibleRaw === "string" ? responsibleRaw.toLowerCase() : "";
         
-        const matchesSearch = !filters.search || name.includes(filters.search) || acronym.includes(filters.search);
+        const searchTerms = filters.search.split(/\s+/).filter(Boolean); // divide in parole
+        const allTermsMatch = (text) => 
+        searchTerms.every(term => text.includes(term));
+
+        const matchesSearch = !filters.search || (
+            allTermsMatch(name) ||
+            allTermsMatch(acronym) ||
+            allTermsMatch(description) ||
+            allTermsMatch(responsibleText)
+        );
         
         const matchesDropdowns = filters.selectedFilters.length === 0 || filters.selectedFilters.every(val => {
             return Object.values(entry).some(v => v && typeof v === "string" && v.toLowerCase().includes(val.toLowerCase()));
