@@ -29,6 +29,12 @@
     <header>
         <h1>LINEup School Data Explorer</h1>
         <h2>An Open-Source Map to Longitudinal Datasets in Europe</h2>
+        <div id="role-display-container">
+            <button id="toggle-view-button" onclick="toggleView()">List View</button>
+            <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
+            <button onclick="changeRole()">Change Role</button>
+            <div id="role-description-box" style="display: none;"></div>
+        </div>
     </header>
 
     <main>
@@ -44,13 +50,6 @@
                     <p>(including data analysts) interested in the datasets themselves for deeper statistical analysis and academic studies.</p>
                 </div>
             </div>
-        </div>
-
-        <div id="role-display-container">
-            <button id="toggle-view-button" onclick="toggleView()">List View</button>
-            <span id="current-role" onmouseover="showRoleDescription()" onmouseout="hideRoleDescription()"></span>
-            <button onclick="changeRole()">Change Role</button>
-            <div id="role-description-box" style="display: none;"></div>
         </div>
         
         <!-- PANNELLO SHOW ALL DATATBASES -->
@@ -75,43 +74,61 @@
 
         <div id="list-view" style="display: none; padding: 20px;"></div>
 
-        <div id="filter-area">
-            <input type="text" id="search-input" placeholder="">
-        
-            <div class="custom-dropdown">
-                <button class="dropdown-toggle">Main Filters ⬆</button>
-                <div class="dropdown-menu">
-                    <label><input type="checkbox" value="Option 1A"> Option 1A</label>
-                    <label><input type="checkbox" value="Option 1B"> Option 1B</label>
-                    <label><input type="checkbox" value="Option 1C"> Option 1C</label>
-                    <label><input type="checkbox" value="Option 1D"> Option 1D</label>
-                    <label><input type="checkbox" value="Option 1E"> Option 1E</label>
+        <!-- <div id="filter-area"> -->
+        <div id="filter-toggle-tab">SHOW FILTERS</div>
+
+            <div id="filter-area" class="collapsed">    
+            
+                <div id="main-filter-float-panel" class="filter-float-panel">
+                    <div class="filter-panel-header">
+                        <span id="filter-panel-title">Filter Options</span>
+                        <button id="close-filter-panel">✖</button>
+                    </div>
+                    <div id="filter-panel-content"></div>
                 </div>
-            </div>
-        
-            <div class="custom-dropdown">
-                <button class="dropdown-toggle">Advanced Filters ⬆</button>
-                <div class="dropdown-menu">
-                    <label><input type="checkbox" value="Option 2A"> Option 2A</label>
-                    <label><input type="checkbox" value="Option 2B"> Option 2B</label>
-                    <label><input type="checkbox" value="Option 2C"> Option 2C</label>
-                    <label><input type="checkbox" value="Option 2D"> Option 2D</label>
-                    <label><input type="checkbox" value="Option 2E"> Option 2E</label>
+    
+                <input type="text" id="search-input" placeholder="">
+            
+                <div class="custom-dropdown" id="main-filters-dropdown">
+                    <button class="dropdown-toggle">Main Filters ⬆</button>
+                    <div class="dropdown-menu">
+                        <div id="main-filter-labels">
+                            <div class="main-filter-label" data-filter="Country">Country</div>
+                            <div class="main-filter-label" data-filter="Type of Longitudinal Data">Type of Longitudinal Data</div>
+                            <div class="main-filter-label" data-filter="Data Collection Focus">Data Collection Focus</div>
+                            <div class="main-filter-label" data-filter="Data Collection Purpose">Data Collection Purpose</div>
+                            <div class="main-filter-label" data-filter="Data Collection Frequency">Data Collection Frequency</div>
+                            <div class="main-filter-label" data-filter="Sample Level">Sample Level</div>
+                            <div class="main-filter-label" data-filter="Access to Micro Data">Access to Micro Data</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        
-            <div class="custom-dropdown">
-                <button class="dropdown-toggle">Data Variables ⬆</button>
-                <div class="dropdown-menu">
-                    <label><input type="checkbox" value="Option 3A"> Option 3A</label>
-                    <label><input type="checkbox" value="Option 3B"> Option 3B</label>
-                    <label><input type="checkbox" value="Option 3C"> Option 3C</label>
-                    <label><input type="checkbox" value="Option 3D"> Option 3D</label>
-                    <label><input type="checkbox" value="Option 3E"> Option 3E</label>
+            
+                <div class="custom-dropdown">
+                    <button class="dropdown-toggle">Advanced Filters ⬆</button>
+                    <div class="dropdown-menu">
+                        <label><input type="checkbox" value="Option 2A"> Option 2A</label>
+                        <label><input type="checkbox" value="Option 2B"> Option 2B</label>
+                        <label><input type="checkbox" value="Option 2C"> Option 2C</label>
+                        <label><input type="checkbox" value="Option 2D"> Option 2D</label>
+                        <label><input type="checkbox" value="Option 2E"> Option 2E</label>
+                    </div>
                 </div>
+            
+                <div class="custom-dropdown">
+                    <button class="dropdown-toggle">Data Variables ⬆</button>
+                    <div class="dropdown-menu">
+                        <label><input type="checkbox" value="Option 3A"> Option 3A</label>
+                        <label><input type="checkbox" value="Option 3B"> Option 3B</label>
+                        <label><input type="checkbox" value="Option 3C"> Option 3C</label>
+                        <label><input type="checkbox" value="Option 3D"> Option 3D</label>
+                        <label><input type="checkbox" value="Option 3E"> Option 3E</label>
+                    </div>
+                </div>
+            
+                <button onclick="applyFilters()">Search</button>
             </div>
-        
-            <button onclick="applyFilters()">Search</button>
+
         </div>
 
     </main>

@@ -54,11 +54,11 @@ function selectRole(role) {
 
 // MAPPA
 
-var currentZoom = 4.4;
+var currentZoom = 3;
 var map = L.map('map', {
     center: [54.5260, 14.5551],
     zoom: currentZoom,
-    minZoom: 3,
+    minZoom: 4.2,
     worldCopyJump: false,
     zoomControl: false,
     maxBounds: [
@@ -156,33 +156,6 @@ Object.keys(countries).forEach(country => {
         shadowSize: [41, 41]
     });
 });
-
-//CREA NUMERI PER OGNI PIN DELLA MAPPA
-
-// function countEntriesByCountry(data) {
-//     const counts = {};
-    
-//     data.forEach(row => {
-//         let rawCountry = row["Country"];
-//         if (rawCountry) {
-//             let code = rawCountry.match(/\b[A-Z]{2}\b/); // estrae sigla come IT, DE
-//             console.log("raw:" + rawCountry);
-//             if (code) {
-//                 let countryCode = code[0];
-//                 counts[countryCode] = (counts[countryCode] || 0) + 1;
-//             }
-//         }
-//     });
-    
-//     // Aggiunge i paesi mancanti con valore 0
-//     Object.keys(countries).forEach(code => {
-//         if (!counts[code]) {
-//             counts[code] = 0;
-//         }
-//     });
-    
-//     return counts;
-// }
 
 function countEntriesByCountry(data) {
     const counts = {};
@@ -361,6 +334,7 @@ fetch("./assets/europe.geojson")
     });
     console.log("Confini caricati per codici ISO_A2:", Object.keys(countryBorders));
     geojsonLoaded = true;
+    checkIfReady();
     if (mappingData) {
         console.log("Chiamo initMap da geojson");
         initMap();
@@ -377,6 +351,9 @@ fetch("./data/mapping_data.json")
 .then(data => {
     console.log("Mapping data caricato", data);
     mappingData = data;
+    window.filteredDataForSearch = data;
+    checkIfReady();
+    setupMainFilterInteraction(mappingData);
     // ✅ Imposta il placeholder dinamico nel campo di ricerca
     const searchInput = document.getElementById("search-input");
     if (searchInput) {
@@ -395,6 +372,9 @@ function initMap() {
     const countryCounts = countEntriesByCountry(mappingData);
     const grouped = groupDataByCountry(mappingData);
     renderMapWithCounts(countryCounts, grouped);
+    setupMainFilterInteraction(data);
+    setupMainFilterInteraction(mappingData);
+
 }
 
 // EXTRACT IN SQUARE BRACKETS CONTENT
@@ -809,7 +789,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const contactTab = document.getElementById('contact-tab');
     const contactPanel = document.getElementById('contact-panel');
     const closePanel = document.getElementById('close-panel');
-    
 
     contactTab.addEventListener('click', function () {
         contactPanel.classList.add('show');
@@ -903,4 +882,140 @@ function renderListView() {
         listDiv.appendChild(section);
     });
 }
+
+// Crea filtri Main Filters
+
+// document.addEventListener("DOMContentLoaded", function () {
+//     if (typeof mappingData !== "undefined") {
+//         createMainFilterOptions(mappingData);
+//     } else {
+//         fetch("assets/mapping_data.json")
+//             .then(res => res.json())
+//             .then(json => {
+//                 window.mappingData = json;
+//                 createMainFilterOptions(json);
+//             });
+//     }
+// });
+
+function extractUniqueValues(data, fieldName) {
+    const set = new Set();
+    data.forEach(entry => {
+        const val = getField(entry, fieldName);
+        if (val && val !== "N/A") set.add(val);
+    });
+    return Array.from(set).sort();
+}
+
+function extractByPrefix(data, prefix) {
+    const values = new Set();
+    data.forEach(entry => {
+        Object.keys(entry).forEach(key => {
+            if (key.startsWith(prefix) && entry[key].toLowerCase() === "yes") {
+                const match = key.match(/\[([^\]]+)\]/);
+                if (match) values.add(match[1]);
+            }
+        });
+    });
+    return Array.from(values).sort();
+}
+
+function setupMainFilterInteraction(data) {
+    const panel = document.getElementById("main-filter-float-panel");
+    const panelTitle = document.getElementById("filter-panel-title");
+    const panelContent = document.getElementById("filter-panel-content");
+    const closeBtn = document.getElementById("close-filter-panel");
+
+    const filters = {
+        "Country": Object.keys(groupDataByCountry(data)),
+        "Type of Longitudinal Data": extractByPrefix(data, "Type of Longitudinal Data"),
+        "Data Collection Focus": extractByPrefix(data, "Data Collection Focus"),
+        "Data Collection Purpose": extractByPrefix(data, "Data Collection Purpose"),
+        "Data Collection Frequency": extractUniqueValues(data, "Data Collection Frequency "),
+        "Sample Level": extractUniqueValues(data, "Sample Level"),
+        "Access to Micro Data": extractUniqueValues(data, "Access to Micro Data")
+    };
+
+    document.querySelectorAll(".main-filter-label").forEach(label => {
+        label.addEventListener("click", () => {
+            const filterName = label.dataset.filter;
+            const values = filters[filterName] || [];
+            const inputType = (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(filterName)) ? "radio" : "checkbox";
+            const inputName = filterName.replace(/\s+/g, "_");
+
+            panelTitle.textContent = filterName;
+            panelContent.innerHTML = "";
+
+            values.forEach(opt => {
+                const id = `${inputName}_${opt.replace(/\W+/g, "_")}`;
+                panelContent.innerHTML += `
+                    <label for="${id}">
+                        <input type="${inputType}" name="${inputName}" value="${opt}" id="${id}" class="main-filter-option">
+                        ${opt}
+                    </label><br>
+                `;
+            });
+
+            // Mostra il pannello
+            panel.style.display = "block";
+            panel.style.left = `${label.getBoundingClientRect().right + 10}px`;
+            panel.style.top = `${label.getBoundingClientRect().top}px`;
+        });
+    }); 
+
+    closeBtn.addEventListener("click", () => {
+        panel.style.display = "none";
+    });
+}
+
+
+function findMatchingKey(data, label) {
+  const keys = Object.keys(data[0]);
+  return keys.find(k => k.trim().toLowerCase() === label.trim().toLowerCase());
+}
+
+
+function applyCountryFilter(selectedCountries) {
+  // Aggiorna i pin sulla mappa
+  const filteredData = mappingData.filter(entry =>
+    selectedCountries.includes(entry["Country"])
+  );
+
+  const countryCounts = countEntriesByCountry(filteredData);
+  const grouped = groupDataByCountry(filteredData);
+
+  renderMapWithCounts(countryCounts, grouped);
+
+  // Salva i dati filtrati per la ricerca
+  window.filteredDataForSearch = filteredData;
+}
+
+
+function checkIfReady() {
+    if (geojsonLoaded && mappingData) {
+        console.log("✔ Tutto caricato. Chiamo initMap.");
+        initMap();
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const filterArea = document.getElementById("filter-area");
+    const filterTab = document.getElementById("filter-toggle-tab");
+
+    let isExpanded = false;
+
+    filterTab.addEventListener("click", () => {
+        isExpanded = !isExpanded;
+        if (isExpanded) {
+            filterArea.classList.remove("collapsed");
+            filterArea.classList.add("expanded");
+            filterTab.innerText = "HIDE FILTERS";
+        } else {
+            filterArea.classList.remove("expanded");
+            filterArea.classList.add("collapsed");
+            filterTab.innerText = "SHOW FILTERS";
+        }
+    });
+});
+
 
