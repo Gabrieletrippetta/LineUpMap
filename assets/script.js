@@ -354,6 +354,7 @@ fetch("./data/mapping_data.json")
     window.filteredDataForSearch = data;
     checkIfReady();
     setupMainFilterInteraction(mappingData);
+    setupMainFilterDropdownToggle();
     // ✅ Imposta il placeholder dinamico nel campo di ricerca
     const searchInput = document.getElementById("search-input");
     if (searchInput) {
@@ -372,7 +373,6 @@ function initMap() {
     const countryCounts = countEntriesByCountry(mappingData);
     const grouped = groupDataByCountry(mappingData);
     renderMapWithCounts(countryCounts, grouped);
-    setupMainFilterInteraction(data);
     setupMainFilterInteraction(mappingData);
 
 }
@@ -804,6 +804,7 @@ document.querySelectorAll('.dropdown-toggle').forEach(button => {
     button.addEventListener('click', function () {
         const parent = this.parentElement;
         parent.classList.toggle('show');
+        
 
         // Chiude gli altri dropdown
         document.querySelectorAll('.custom-dropdown').forEach(drop => {
@@ -885,6 +886,22 @@ function renderListView() {
 
 // Crea filtri Main Filters
 
+function setupMainFilterDropdownToggle() {
+    const dropdown = document.getElementById("main-filters-dropdown");
+    const menu = document.getElementById("main-filters-menu");
+
+    const toggleButton = dropdown.querySelector(".dropdown-toggle");
+    
+    toggleButton.addEventListener("click", () => {
+        if (menu.style.display === "flex") {
+            menu.style.display = "none";
+        } else {
+            menu.style.display = "flex";
+        }
+    });
+}
+
+
 // document.addEventListener("DOMContentLoaded", function () {
 //     if (typeof mappingData !== "undefined") {
 //         createMainFilterOptions(mappingData);
@@ -894,6 +911,7 @@ function renderListView() {
 //             .then(json => {
 //                 window.mappingData = json;
 //                 createMainFilterOptions(json);
+//                 setupMainFilterDropdownToggle();
 //             });
 //     }
 // });
@@ -928,50 +946,44 @@ function setupMainFilterInteraction(data) {
 
     const filters = {
         "Country": Object.keys(groupDataByCountry(data)),
-        "Type of Longitudinal Data": extractByPrefix(data, "Type of Longitudinal Data"),
-        "Data Collection Focus": extractByPrefix(data, "Data Collection Focus"),
-        "Data Collection Purpose": extractByPrefix(data, "Data Collection Purpose"),
-        "Data Collection Frequency": extractUniqueValues(data, "Data Collection Frequency "),
+        "Type of Longitudinal Data": extractByPrefix(data, "Type of Longitudinal Data ["),
+        "Data Collection Focus": extractByPrefix(data, "Data Collection Focus ["),
+        "Data Collection Purpose": extractByPrefix(data, "Data Collection Purpose ["),
+        "Data Collection Frequency": extractUniqueValues(data, "Data Collection Frequency"),
         "Sample Level": extractUniqueValues(data, "Sample Level"),
-        "Access to Micro Data": extractUniqueValues(data, "Access to Micro Data")
+        "Access to Micro Data": extractByPrefix(data, "Access to Micro-Data [")
     };
 
     document.querySelectorAll(".main-filter-label").forEach(label => {
         label.addEventListener("click", () => {
-            const filterName = label.dataset.filter;
-            const values = filters[filterName] || [];
-            const inputType = (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(filterName)) ? "radio" : "checkbox";
-            const inputName = filterName.replace(/\s+/g, "_");
+            const selected = label.getAttribute("data-filter");
+            const options = filters[selected] || [];
 
-            panelTitle.textContent = filterName;
+            panelTitle.textContent = selected;
             panelContent.innerHTML = "";
 
-            values.forEach(opt => {
-                const id = `${inputName}_${opt.replace(/\W+/g, "_")}`;
-                panelContent.innerHTML += `
-                    <label for="${id}">
-                        <input type="${inputType}" name="${inputName}" value="${opt}" id="${id}" class="main-filter-option">
-                        ${opt}
-                    </label><br>
+            options.forEach(opt => {
+                const id = `${selected}-${opt}`.replace(/\s+/g, '-').toLowerCase();
+                const checkbox = document.createElement("label");
+                checkbox.setAttribute("for", id);
+                checkbox.innerHTML = `
+                    <input type="checkbox" id="${id}" value="${opt}"> ${opt}
                 `;
+                panelContent.appendChild(checkbox);
             });
 
-            // Mostra il pannello
             panel.style.display = "block";
-            panel.style.left = `${label.getBoundingClientRect().right + 10}px`;
-            panel.style.top = `${label.getBoundingClientRect().top}px`;
         });
-    }); 
+    });
 
     closeBtn.addEventListener("click", () => {
         panel.style.display = "none";
     });
 }
 
-
 function findMatchingKey(data, label) {
-  const keys = Object.keys(data[0]);
-  return keys.find(k => k.trim().toLowerCase() === label.trim().toLowerCase());
+    const keys = Object.keys(data[0]);
+    return keys.find(k => k.trim().toLowerCase() === label.trim().toLowerCase());
 }
 
 
@@ -998,24 +1010,6 @@ function checkIfReady() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const filterArea = document.getElementById("filter-area");
-    const filterTab = document.getElementById("filter-toggle-tab");
 
-    let isExpanded = false;
-
-    filterTab.addEventListener("click", () => {
-        isExpanded = !isExpanded;
-        if (isExpanded) {
-            filterArea.classList.remove("collapsed");
-            filterArea.classList.add("expanded");
-            filterTab.innerText = "HIDE FILTERS";
-        } else {
-            filterArea.classList.remove("expanded");
-            filterArea.classList.add("collapsed");
-            filterTab.innerText = "SHOW FILTERS";
-        }
-    });
-});
 
 
