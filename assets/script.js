@@ -342,32 +342,34 @@ fetch("./assets/europe.geojson")
 })
 .catch(err => console.error("Errore nel caricamento dei confini:", err));
 
-
-fetch("./data/mapping_data.json")
-.then(response => {
-    if (!response.ok) throw new Error("Errore nel caricamento di mapping_data.json");
-    return response.json();
-})
-.then(data => {
-    console.log("Mapping data caricato", data);
-    mappingData = data;
-    window.filteredDataForSearch = data;
-    checkIfReady();
-    setupMainFilterInteraction(mappingData);
-    setupMainFilterDropdownToggle();
-    // ✅ Imposta il placeholder dinamico nel campo di ricerca
-    const searchInput = document.getElementById("search-input");
-    console.log("searchinput", searchInput)
-    if (searchInput) {
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("./data/mapping_data.json")
+  .then(response => {
+      if (!response.ok) throw new Error("Errore nel caricamento di mapping_data.json");
+      return response.json();
+  })
+  .then(data => {
+      console.log("Mapping data caricato", data);
+      mappingData = data;
+      window.filteredDataForSearch = data;
+      checkIfReady();
+      setupMainFilterInteraction(mappingData);
+      setupMainFilterDropdownToggle();
+      // ✅ Imposta il placeholder dinamico nel campo di ricerca
+      const searchInput = document.getElementById("search-input");
+      console.log("searchinput", searchInput)
+      if (searchInput && searchInput.value === "") {
+        searchInput.value = ""; // forza reset visivo
         searchInput.placeholder = `Search among ${mappingData.length} datasets`;
-    }
-    if (geojsonLoaded) {
-        console.log("Chiamo initMap da mappingData");
-        initMap();
-    }
-})
-.catch(error => console.error("Errore nel caricamento dei dati mappa:", error));
-window.mappingDataReady = true;
+      }
+      if (geojsonLoaded) {
+          console.log("Chiamo initMap da mappingData");
+          initMap();
+      }
+  })
+  .catch(error => console.error("Errore nel caricamento dei dati mappa:", error));
+  window.mappingDataReady = true;
+});
 
 
 function initMap() {
