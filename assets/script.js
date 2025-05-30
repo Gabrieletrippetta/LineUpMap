@@ -357,6 +357,7 @@ fetch("./data/mapping_data.json")
     setupMainFilterDropdownToggle();
     // ✅ Imposta il placeholder dinamico nel campo di ricerca
     const searchInput = document.getElementById("search-input");
+    console.log("searchinput", searchInput)
     if (searchInput) {
         searchInput.placeholder = `Search among ${mappingData.length} datasets`;
     }
@@ -866,20 +867,36 @@ function renderListView() {
         if (entries.length === 0) return;
 
         const section = document.createElement("section");
-        section.innerHTML = `<h3>${country} (${entries.length})</h3>`;
+        section.classList.add("mb-5");
+
+        // Titolo paese
+        const heading = document.createElement("h3");
+        heading.textContent = `${country} (${entries.length})`;
+        section.appendChild(heading);
+
+        // Contenitore riga
+        const row = document.createElement("div");
+        row.className = "row";
 
         entries.forEach((entry, index) => {
-            const div = document.createElement("div");
-            div.className = "db-entry";
-            div.innerHTML = `
-                <b>Name:</b> ${getField(entry, "Name")}<br>
-                <b>Acronym:</b> ${getField(entry, "Acronym")}<br>
-                <p>${getField(entry, "Short Description")}</p>
-                <button class="expand-button" onclick="openSingleDbModal('${country}', ${index})">Show more</button>
+            const col = document.createElement("div");
+            col.className = "col-6 mb-4";
+
+            col.innerHTML = `
+                <div class="card h-100 shadow-sm d-flex flex-column">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title"><strong>Name: </strong>${getField(entry, "Name")}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted"><strong>Acronym: </strong>${getField(entry, "Acronym")}</h6>
+                        <p class="card-text">${getField(entry, "Short Description")}</p>
+                        <button class="btn btn-success mt-auto" onclick="openSingleDbModal('${country}', ${index})">Show more</button>
+                    </div>
+                </div>
             `;
-            section.appendChild(div);
+
+            row.appendChild(col);
         });
 
+        section.appendChild(row);
         listDiv.appendChild(section);
     });
 }
@@ -939,10 +956,8 @@ function extractByPrefix(data, prefix) {
 }
 
 function setupMainFilterInteraction(data) {
-    const panel = document.getElementById("main-filter-float-panel");
-    const panelTitle = document.getElementById("filter-panel-title");
-    const panelContent = document.getElementById("filter-panel-content");
-    const closeBtn = document.getElementById("close-filter-panel");
+    const container = document.getElementById("main-filter-labels");
+    container.innerHTML = ""; // Pulisce il contenuto esistente
 
     const filters = {
         "Country": Object.keys(groupDataByCountry(data)),
@@ -954,32 +969,66 @@ function setupMainFilterInteraction(data) {
         "Access to Micro Data": extractByPrefix(data, "Access to Micro-Data [")
     };
 
-    document.querySelectorAll(".main-filter-label").forEach(label => {
-        label.addEventListener("click", () => {
-            const selected = label.getAttribute("data-filter");
-            const options = filters[selected] || [];
+    Object.entries(filters).forEach(([label, options]) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "filter-group";
 
-            panelTitle.textContent = selected;
-            panelContent.innerHTML = "";
+        const toggle = document.createElement("div");
+        toggle.className = "filter-toggle";
+        toggle.textContent = label;
+        toggle.addEventListener("click", () => {
+            wrapper.classList.toggle("expanded");
+        });
 
-            options.forEach(opt => {
-                const id = `${selected}-${opt}`.replace(/\s+/g, '-').toLowerCase();
-                const checkbox = document.createElement("label");
-                checkbox.setAttribute("for", id);
-                checkbox.innerHTML = `
-                    <input type="checkbox" id="${id}" value="${opt}"> ${opt}
-                `;
-                panelContent.appendChild(checkbox);
+        const content = document.createElement("div");
+        content.className = "filter-options";
+
+        if (label === "Country") {
+            const half = Math.ceil(options.length / 2);
+            const col1 = document.createElement("div");
+            const col2 = document.createElement("div");
+            col1.className = "filter-column";
+            col2.className = "filter-column";
+
+            options.forEach((opt, i) => {
+                const checkbox = createCheckbox(label, opt);
+                if (i < half) col1.appendChild(checkbox);
+                else col2.appendChild(checkbox);
             });
 
-            panel.style.display = "block";
-        });
-    });
+            const row = document.createElement("div");
+            row.className = "filter-row";
+            row.appendChild(col1);
+            row.appendChild(col2);
+            content.appendChild(row);
+        } else {
+            options.forEach(opt => {
+                const checkbox = createCheckbox(label, opt);
+                content.appendChild(checkbox);
+            });
+        }
 
-    closeBtn.addEventListener("click", () => {
-        panel.style.display = "none";
+        wrapper.appendChild(toggle);
+        wrapper.appendChild(content);
+        container.appendChild(wrapper);
     });
 }
+
+function createCheckbox(filterName, value) {
+    const div = document.createElement("div");
+    div.className = "form-check";
+
+    const id = `${filterName}-${value}`.replace(/\s+/g, '-').toLowerCase();
+
+    div.innerHTML = `
+        <input class="form-check-input" type="checkbox" value="${value}" id="${id}" data-filter="${filterName}">
+        <label class="form-check-label" for="${id}">
+            ${value}
+        </label>
+    `;
+    return div;
+}
+
 
 function findMatchingKey(data, label) {
     const keys = Object.keys(data[0]);

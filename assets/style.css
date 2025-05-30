@@ -484,3 +484,43 @@ button:hover {
 }
 
 /* Filter area */
+
+#main-filter-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Contenitore collapsible */
+.filter-group {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.filter-toggle {
+    background-color: #f0f0f0;
+    padding: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.filter-options {
+    display: none;
+    padding: 10px;
+    background-color: white;
+}
+
+.filter-group.expanded .filter-options {
+    display: block;
+}
+
+/* Layout a due colonne per paesi */
+.filter-row {
+    display: flex;
+    gap: 20px;
+}
+
+.filter-column {
+    flex: 1;
+}
