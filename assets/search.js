@@ -93,6 +93,12 @@ function applyFilters() {
 
     // Salva i risultati temporaneamente
     window.filteredResults = filteredData;
+    // 🔽 Mostra solo i pin dei paesi filtrati
+    if (filteredData.length > 0) {
+        const grouped = groupDataByCountry(filteredData);
+        const counts = countEntriesByCountry(filteredData);
+        renderMapWithCounts(counts, grouped);
+    }
 }
 
 function openFilteredDbModal(index) {

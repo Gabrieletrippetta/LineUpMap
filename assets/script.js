@@ -141,7 +141,7 @@ const countryNameToISO2 = {
     "Liechtenstein": "LI",
     "Norway": "NO",
     "Switzerland": "CH",
-    "United Kingdom": "GB"
+    "United Kingdom": "UK"
 };
 
 var markers = {};
@@ -159,28 +159,22 @@ Object.keys(countries).forEach(country => {
 
 function countEntriesByCountry(data) {
     const counts = {};
-
-    // Inizializza tutti i paesi a 0
-    Object.keys(countries).forEach(countryName => {
-        counts[countryName] = 0;
-    });
+    Object.keys(countries).forEach(name => counts[name] = 0);
 
     data.forEach(row => {
-        let rawCountry = row["Country"];
-        if (rawCountry) {
-            // Prova a trovare un nome di paese completo nei dati (case insensitive)
-            for (let countryName of Object.keys(countries)) {
-                const regex = new RegExp(`\\b${countryName}\\b`, 'i'); // 'i' = case-insensitive
-                if (regex.test(rawCountry)) {
-                    counts[countryName]++;
-                    break; // una volta trovato, passa al prossimo record
-                }
+        const match = row["Country"]?.match(/^([A-Z]{2})\s?\(/);
+        if (match) {
+            const iso2 = match[1];
+            const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2)?.[0];
+            if (countryName) {
+                counts[countryName]++;
             }
         }
     });
 
     return counts;
 }
+
 
 // function groupDataByCountry(data) {
 //     const grouped = {};
@@ -201,27 +195,22 @@ function countEntriesByCountry(data) {
 
 function groupDataByCountry(data) {
     const grouped = {};
-
-    // Inizializza il gruppo per ogni paese anche se vuoto (opzionale)
-    Object.keys(countries).forEach(countryName => {
-        grouped[countryName] = [];
-    });
+    Object.keys(countries).forEach(name => grouped[name] = []);
 
     data.forEach(row => {
-        let rawCountry = row["Country"];
-        if (rawCountry) {
-            for (let countryName of Object.keys(countries)) {
-                const regex = new RegExp(`\\b${countryName}\\b`, 'i'); // case insensitive
-                if (regex.test(rawCountry)) {
-                    grouped[countryName].push(row); // 👈 mantiene tutto l'oggetto originale
-                    break;
-                }
+        const match = row["Country"]?.match(/^([A-Z]{2})\s?\(/);  // estrae "UK" da "UK (United Kingdom)"
+        if (match) {
+            const iso2 = match[1];
+            const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2)?.[0];
+            if (countryName) {
+                grouped[countryName].push(row);
             }
         }
     });
 
     return grouped;
 }
+
 
 const countryEntryStore = {};  // Variabile globale
 
@@ -354,12 +343,11 @@ document.addEventListener("DOMContentLoaded", () => {
       window.filteredDataForSearch = data;
       checkIfReady();
       setupMainFilterInteraction(mappingData);
-      setupMainFilterDropdownToggle();
+    //   setupMainFilterDropdownToggle();
       // ✅ Imposta il placeholder dinamico nel campo di ricerca
       const searchInput = document.getElementById("search-input");
       console.log("searchinput", searchInput)
-      if (searchInput && searchInput.value === "") {
-        searchInput.value = ""; // forza reset visivo
+      if (searchInput && searchInput.value.trim() === "") {
         searchInput.placeholder = `Search among ${mappingData.length} datasets`;
       }
       if (geojsonLoaded) {
@@ -848,12 +836,14 @@ function toggleView() {
         listDiv.style.display = "block";
         button.innerText = "Map View";
         listDiv.style.paddingLeft = "45px";
+        document.body.classList.add("list-active");
         renderListView();
     } else {
         // Torna alla mappa
         listDiv.style.display = "none";
         mapDiv.style.display = "block";
         button.innerText = "List View";
+        document.body.classList.add("list-active");
     }
 }
 
@@ -905,20 +895,20 @@ function renderListView() {
 
 // Crea filtri Main Filters
 
-function setupMainFilterDropdownToggle() {
-    const dropdown = document.getElementById("main-filters-dropdown");
-    const menu = document.getElementById("main-filters-menu");
+// function setupMainFilterDropdownToggle() {
+//     const dropdown = document.getElementById("main-filters-dropdown");
+//     const menu = document.getElementById("main-filters-menu");
 
-    const toggleButton = dropdown.querySelector(".dropdown-toggle");
+//     const toggleButton = dropdown.querySelector(".dropdown-toggle");
     
-    toggleButton.addEventListener("click", () => {
-        if (menu.style.display === "flex") {
-            menu.style.display = "none";
-        } else {
-            menu.style.display = "flex";
-        }
-    });
-}
+//     toggleButton.addEventListener("click", () => {
+//         if (menu.style.display === "flex") {
+//             menu.style.display = "none";
+//         } else {
+//             menu.style.display = "flex";
+//         }
+//     });
+// }
 
 
 // document.addEventListener("DOMContentLoaded", function () {
@@ -991,6 +981,15 @@ function setupMainFilterInteraction(data) {
             const col2 = document.createElement("div");
             col1.className = "filter-column";
             col2.className = "filter-column";
+            const row = document.createElement("div");
+            row.className = "filter-row";
+            const selectAllLabel = document.createElement("label");
+            selectAllLabel.innerHTML = `<input type="checkbox" id="select-all-countries"> <strong>Select All</strong><br>`;
+            container.appendChild(selectAllLabel);
+            selectAllLabel.querySelector("input").addEventListener("change", function () {
+                const checkboxes = container.querySelectorAll("input[type='checkbox']:not(#select-all-countries)");
+                checkboxes.forEach(cb => cb.checked = this.checked);
+            });
 
             options.forEach((opt, i) => {
                 const checkbox = createCheckbox(label, opt);
@@ -998,8 +997,6 @@ function setupMainFilterInteraction(data) {
                 else col2.appendChild(checkbox);
             });
 
-            const row = document.createElement("div");
-            row.className = "filter-row";
             row.appendChild(col1);
             row.appendChild(col2);
             content.appendChild(row);
