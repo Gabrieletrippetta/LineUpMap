@@ -983,14 +983,7 @@ function setupMainFilterInteraction(data) {
             col2.className = "filter-column";
             const row = document.createElement("div");
             row.className = "filter-row";
-            const selectAllLabel = document.createElement("label");
-            selectAllLabel.innerHTML = `<input type="checkbox" id="select-all-countries"> <strong>Select All</strong><br>`;
-            container.appendChild(selectAllLabel);
-            selectAllLabel.querySelector("input").addEventListener("change", function () {
-                const checkboxes = container.querySelectorAll("input[type='checkbox']:not(#select-all-countries)");
-                checkboxes.forEach(cb => cb.checked = this.checked);
-            });
-
+            
             options.forEach((opt, i) => {
                 const checkbox = createCheckbox(label, opt);
                 if (i < half) col1.appendChild(checkbox);
