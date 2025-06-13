@@ -338,11 +338,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return response.json();
   })
   .then(data => {
-      console.log("Mapping data caricato", data);
-      mappingData = data;
-      window.filteredDataForSearch = data;
-      checkIfReady();
-      setupMainFilterInteraction(mappingData);
+    console.log("Mapping data caricato", data);
+    mappingData = data;
+    window.filteredDataForSearch = data;
+    checkIfReady();
+    setupMainFilterInteraction(mappingData);
+    setupAdvancedFilterInteraction(mappingData);
+    // setupVariablesFilterInteraction(mappingData);
     //   setupMainFilterDropdownToggle();
       // ✅ Imposta il placeholder dinamico nel campo di ricerca
       const searchInput = document.getElementById("search-input");
@@ -365,7 +367,8 @@ function initMap() {
     const grouped = groupDataByCountry(mappingData);
     renderMapWithCounts(countryCounts, grouped);
     setupMainFilterInteraction(mappingData);
-
+    setupAdvancedFilterInteraction(mappingData);
+    // setupVariablesFilterInteraction(mappingData);
 }
 
 // EXTRACT IN SQUARE BRACKETS CONTENT
@@ -391,6 +394,8 @@ function openDbModal(countryCode) {
     title.textContent = `${modalEntries.length} dataset${modalEntries.length !== 1 ? 's' : ''} in ${countryCode}`;
     container.innerHTML = "";
     
+    document.getElementById("toggle-view-button").classList.add("fixed-top");
+
     const role = localStorage.getItem("userRole");
     console.log("Ruolo scelto: ", role);
     
@@ -557,38 +562,42 @@ modal.classList.add("show");
 // SHOW ALL DATABASES PANEL
 
 function showCountryDetailsInPanel(code) {
-    closeDbModal();
-
+    
     const panelEntries = countryEntryStore[code] || [];
     const panel = document.getElementById("dbpanel");
     const title = document.getElementById("panel-country-title");
     const content = document.getElementById("dbpanel-content");
-
+    
     title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : '' } in ${code}`;
     content.innerHTML = "";
-
+    
+    document.getElementById("toggle-view-button").classList.add("fixed-top");
+    
     panelEntries.forEach((entry, index) => {
         const entryDiv = document.createElement("div");
         entryDiv.innerHTML = `
-            <b>Name:</b> ${getField(entry, "Name")}<br>
-            <b>Acronym:</b> ${getField(entry, "Acronym")}<br>
-            <br>
-            ${getField(entry, "Short Description")}<br>
-            <button class="expand-button" onclick="zoomToCountry('${code}'); openSingleDbModal('${code}', ${index})">Show more</button>
+        <b>Name:</b> ${getField(entry, "Name")}<br>
+        <b>Acronym:</b> ${getField(entry, "Acronym")}<br>
+        <br>
+        ${getField(entry, "Short Description")}<br>
+        <button class="expand-button" onclick="zoomToCountry('${code}'); openSingleDbModal('${code}', ${index})">Show more</button>
         `;
         content.appendChild(entryDiv);
     });
-
+    
+    closeDbModal();
     panel.classList.add("show");
 }
 
 function closeDbPanel() {
     document.getElementById("dbpanel").classList.remove("show");
+    document.getElementById("toggle-view-button").classList.remove("fixed-top");
 }
 
 
 function closeDbModal() {
     document.getElementById("db-modal").classList.remove("show");
+    document.getElementById("toggle-view-button").classList.remove("fixed-top");
     
     // Rimuove evidenziazione confine
     if (highlightedLayer) {
@@ -793,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.querySelectorAll('.dropdown-toggle').forEach(button => {
     button.addEventListener('click', function () {
-        const parent = this.parentElement;
+        const parent = this.nextElementSibling;
         parent.classList.toggle('show');
         
 
@@ -1006,6 +1015,45 @@ function setupMainFilterInteraction(data) {
     });
 }
 
+function setupAdvancedFilterInteraction() {
+    const container = document.getElementById("advanced-filter-labels");
+    container.innerHTML = ""; // Pulisce il contenuto esistente
+
+    const filters = {
+        "School Grades": [],  // da riempire con le tue variabili
+        "Students’ Skills and Achievement": [],
+        "Sample": [],
+        "Linkability": [],
+        "Accessibility": []
+    };
+
+    Object.entries(filters).forEach(([label, options]) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "filter-group";
+
+        const toggle = document.createElement("div");
+        toggle.className = "filter-toggle";
+        toggle.textContent = label;
+        toggle.addEventListener("click", () => {
+            wrapper.classList.toggle("expanded");
+        });
+
+        const content = document.createElement("div");
+        content.className = "filter-options";
+
+        // Per ora options è vuoto, ma qui si popolerà dinamicamente
+        options.forEach(opt => {
+            const checkbox = createCheckbox(label, opt);
+            content.appendChild(checkbox);
+        });
+
+        wrapper.appendChild(toggle);
+        wrapper.appendChild(content);
+        container.appendChild(wrapper);
+    });
+}
+
+
 function createCheckbox(filterName, value) {
     const div = document.createElement("div");
     div.className = "form-check";
@@ -1020,7 +1068,6 @@ function createCheckbox(filterName, value) {
     `;
     return div;
 }
-
 
 function findMatchingKey(data, label) {
     const keys = Object.keys(data[0]);

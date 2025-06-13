@@ -303,7 +303,7 @@ button:hover {
     position: fixed;
     top: 0;
     right: -500px;
-    width: 400px;
+    width: 33.33vw;
     height: 100vh;
     background: #f9f9f9;
     box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
@@ -336,7 +336,7 @@ button:hover {
     position: fixed;
     top: 0;
     right: 0;
-    width: 45vw;
+    width: 33.33vw;
     height: 100vh;
     background-color: #fff;
     box-shadow: -4px 0 12px rgba(0,0,0,0.3);
@@ -481,6 +481,13 @@ button:hover {
 
 .contact-form button:hover {
     background-color: #0056b3;
+}
+
+#toggle-view-button.fixed-top {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 3000;
 }
 
 /* Filter area */

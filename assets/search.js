@@ -1,5 +1,3 @@
-
-
 function getSearchFilters() {
     const search = document.getElementById('search-input').value.trim().toLowerCase();
     
@@ -12,7 +10,6 @@ function getSearchFilters() {
 }
 
 function filterMappingData(data, filters) {
-    console.log("Filtraggio attivo su: ", filters);
     return data.filter(entry => {
         const name = getField(entry, "Name").toLowerCase();
         const acronym = getField(entry, "Acronym").toLowerCase();
@@ -20,9 +17,8 @@ function filterMappingData(data, filters) {
         const responsibleRaw = getField(entry, "Responsible Organization", "Responsible Organization [Public authority]", "Responsible Organization [University or Public Research Centre]", "Responsible Organization [Private organization]");
         const responsibleText = typeof responsibleRaw === "string" ? responsibleRaw.toLowerCase() : "";
         
-        const searchTerms = filters.search.split(/\s+/).filter(Boolean); // divide in parole
-        const allTermsMatch = (text) => 
-        searchTerms.every(term => text.includes(term));
+        const searchTerms = filters.search.split(/\s+/).filter(Boolean);
+        const allTermsMatch = (text) => searchTerms.every(term => text.includes(term));
 
         const matchesSearch = !filters.search || (
             allTermsMatch(name) ||
@@ -39,35 +35,59 @@ function filterMappingData(data, filters) {
     });
 }
 
+function getCountryFromEntry(entry) {
+    const match = entry["Country"]?.match(/^([A-Z]{2})\s?\(/);
+    if (!match) return null;
+    const iso2 = match[1];
+    return Object.entries(countryNameToISO2).find(([name, code]) => code === iso2)?.[0] || null;
+}
+
+function applyCountryFilter(data, selectedCountries) {
+    if (!selectedCountries || selectedCountries.length === 0) return data;
+    return data.filter(entry => {
+        const countryName = getCountryFromEntry(entry);
+        return selectedCountries.includes(countryName);
+    });
+}
+
+function getSelectedCountries() {
+    return [...document.querySelectorAll('input[name="filter-country"]:checked')].map(cb => cb.value);
+}
+
 function applyFilters() {
-    console.log("applyFilters è chiamata")
-    // if (!window.mappingData) return;
-
     const filters = getSearchFilters();
-    const filteredData = filterMappingData(mappingData, filters);
-    console.log("FilteredData:", filteredData);
+    const selectedCountries = getSelectedCountries();
 
-    if (!filters.search && filters.selectedFilters.length === 0) {
-        alert("Please enter a search term or select at least one filter.");
-        return;
+    // 🔍 FILTRO DI RICERCA TESTUALE + CHECKBOX → solo MODALE
+    const nonCountryFiltersUsed = filters.search || filters.selectedFilters.length > 0;
+    if (nonCountryFiltersUsed) {
+        const filteredData = filterMappingData(mappingData, filters);
+        showResultsModal(filteredData);
+        return; // ⛔ Non aggiornare la mappa
     }
 
-    // Mostra il modale
+    // 🌍 FILTRO "COUNTRY" → aggiorna mappa
+    let filtered = allData;
+    filtered = applyCountryFilter(filtered, selectedCountries);
+
+    const grouped = groupDataByCountry(filtered);
+    const counts = countEntriesByCountry(filtered);
+    renderMapWithCounts(counts, grouped);
+}
+
+function showResultsModal(filteredData) {
     const modal = document.getElementById("db-modal");
     const modalContent = document.getElementById("modal-db-list");
     const modalTitle = document.getElementById("modal-country-title");
 
     modalTitle.textContent = "Search Results";
-    modalContent.innerHTML = ""; // Pulisce i risultati precedenti
+    modalContent.innerHTML = "";
     modal.classList.add("show");
-    console.log("✔️ Classe 'show' aggiunta al modale");
-    console.log("Classi attuali:", modal.classList);
 
     if (filteredData.length === 0) {
         modalContent.innerHTML = "<p>No datasets found.</p>";
         return;
     }
-
 
     filteredData.forEach((entry, index) => {
         const div = document.createElement("div");
@@ -81,155 +101,19 @@ function applyFilters() {
         div.innerHTML = `
             <b>Country:</b> ${country}<br>
             <b>Name:</b> ${name}<br>
-            <b>Acronym:</b> ${acronym}<br>
-            <br>
+            <b>Acronym:</b> ${acronym}<br><br>
             ${description}<br>
             <button class="expand-button" onclick="openFilteredDbModal(${index})">Show more</button>
         `;
         modalContent.appendChild(div);
     });
 
-    console.log("applyFilters chiamato, risultati:", filteredData);
-
-    // Salva i risultati temporaneamente
     window.filteredResults = filteredData;
-    // 🔽 Mostra solo i pin dei paesi filtrati
-    if (filteredData.length > 0) {
-        const grouped = groupDataByCountry(filteredData);
-        const counts = countEntriesByCountry(filteredData);
-        renderMapWithCounts(counts, grouped);
-    }
 }
 
-function openFilteredDbModal(index) {
-    const entry = window.filteredResults?.[index];
-    if (!entry) return;
-
-    const modal = document.getElementById("db-modal");
-    const title = document.getElementById("modal-country-title");
-    const container = document.getElementById("modal-db-list");
-
-    title.textContent = `Detailed Info - ${getField(entry, "Name")}`;
-    container.innerHTML = "";
-
-    const dbDiv = document.createElement("div");
-    dbDiv.className = "db-entry";
-
-    const role = localStorage.getItem("userRole");
-    const name = getField(entry, "Name");
-    const acronym = getField(entry, "Acronym");
-    const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
-    const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
-    const startingYear = getField(entry, "Starting Year ");
-    const endingYear = getField(entry, "Ending Year ");
-
-    const purposes = Object.entries(entry)
-        .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
-        .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
-        .join(", ") || "N/A";
-
-    const sampleTypes = Object.entries(entry)
-        .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
-        .map(([_, val]) => val)
-        .join(", ") || "N/A";
-
-    let access = getField(entry, "Data Accessibility");
-    if (access === "Other") access = getField(entry, "Data Accessibility [Other]");
-    if (!access || access === "-") access = "N/A";
-
-    if (role === "researcher") {
-        const sampleLevel = getField(entry, "Sample Level");
-
-        const skills = Object.entries(entry)
-            .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
-            .map(([k, v]) => {
-                if (k.includes("Other Skills")) {
-                    const other = getField(entry, "Type of Skills Analysed [Other Skills]");
-                    return other !== "N/A" ? other : v;
-                }
-                return v;
-            }).join(", ") || "N/A";
-
-        let assessment = getField(entry, "Assessment Type");
-        if (assessment === "Other") {
-            assessment = getField(entry, "Assessment Type [Other]");
-        }
-
-        const linkability = Object.entries(entry)
-            .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
-            .map(([_, v]) => v)
-            .join(", ") || "N/A";
-
-        let microdataDisplay = "";
-        const microdataLinks = Object.entries(entry)
-            .filter(([key, val]) => key.startsWith("Access to Micro-Data") && typeof val === "string")
-            .map(([_, val]) => {
-                const match = val.match(/https?:\/\/[^\s"]+/);
-                return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
-            });
-
-        if (microdataLinks.length > 0) {
-            microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
-        }
-
-        let accessLabel = "Access to Micro-Data";
-        let accessDisplay = "N/A";
-
-        let rawAccess = getField(entry, "Data Accessibility");
-        if (rawAccess === "Other") rawAccess = getField(entry, "Data Accessibility [Other]");
-
-        if (rawAccess && rawAccess.includes("http")) {
-            const match = rawAccess.match(/https?:\/\/[^\s"]+/);
-            if (match) {
-                accessLabel = "Website and/or Direct Links to Data or Data Owners";
-                accessDisplay = `<a href="${match[0]}" target="_blank">${match[0]}</a>`;
-            } else {
-                accessLabel = "Website and/or Direct Links to Data or Data Owners";
-                accessDisplay = rawAccess;
-            }
-        } else {
-            const microdata = Object.entries(entry)
-                .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
-                .map(([_, v]) => v)
-                .join(", ") || "N/A";
-            accessDisplay = microdata;
-        }
-
-        const variables = "";
-
-        dbDiv.innerHTML = `
-            <b>Name:</b> ${name}<br>
-            <b>Acronym:</b> ${acronym}<br>
-            <b>Purpose of Data Collection:</b> ${purposes}<br>
-            <b>Target Population:</b> ${sampleTypes}<br>
-            <b>Time of Data Collection:</b> ${duration}<br>
-            <b>Frequency:</b> ${frequency}<br>
-            <b>Starting Year:</b> ${startingYear}<br>
-            <b>Ending Year: </b> ${endingYear}<br>
-            <b>Access Information:</b> ${access}<br>
-            <b>Sample & Representativeness:</b> ${sampleLevel}<br>
-            <b>Skill Assessed:</b> ${skills}<br>
-            <b>Assessment Type:</b> ${assessment}<br>
-            <b>Data Linkability:</b> ${linkability}<br>
-            <b>Variables Collected:</b> ${variables}<br>
-            ${accessDisplay.includes("http") ? microdataDisplay : ""}
-            <b>${accessLabel}</b> ${accessDisplay}<br>
-        `;
-    } else {
-        dbDiv.innerHTML = `
-            <b>Name:</b> ${name}<br>
-            <b>Acronym:</b> ${acronym}<br>
-            <b>Type of Longitudinal Data:</b> ${getField(entry, "Individual Level Longitudinal Design", "Longitudinal")}<br>
-            <b>Purpose of Data Collection:</b> ${purposes}<br>
-            <b>Target Population:</b> ${sampleTypes}<br>
-            <b>Time of Data Collection:</b> ${duration}<br>
-            <b>Frequency:</b> ${frequency}<br>
-            <b>Starting Year:</b> ${startingYear}<br>
-            <b>Ending Year: </b> ${endingYear}<br>
-            <b>Access Information:</b> ${access}
-        `;
+document.addEventListener('DOMContentLoaded', () => {
+    const searchBtn = document.querySelector('.btn-success.w-100');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', applyFilters);
     }
-
-    container.appendChild(dbDiv);
-}
-
+});
