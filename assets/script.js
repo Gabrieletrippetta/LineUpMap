@@ -1012,6 +1012,10 @@ function setupMainFilterInteraction(data) {
         wrapper.appendChild(toggle);
         wrapper.appendChild(content);
         container.appendChild(wrapper);
+
+        // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        //     cb.addEventListener("change", applyFilters);
+        // });
     });
 }
 
@@ -1096,6 +1100,20 @@ function checkIfReady() {
         console.log("✔ Tutto caricato. Chiamo initMap.");
         initMap();
     }
+}
+
+function clearAllFilters() {
+    // Deseleziona tutte le checkbox
+    document.querySelectorAll('#filter-area input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+
+    // Svuota la textbox di ricerca
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = "";
+
+    // Applica filtri "vuoti" per ripristinare tutto
+    applyFilters();
 }
 
 

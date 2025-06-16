@@ -333,9 +333,10 @@ button:hover {
 /* pannello show more */
 
 .db-modal {
+    visibility: hidden;
     position: fixed;
     top: 0;
-    right: 0;
+    right: 50;
     width: 33.33vw;
     height: 100vh;
     background-color: #fff;
@@ -348,7 +349,9 @@ button:hover {
 }
 
 .db-modal.show {
-    transform: translateX(0%);
+    visibility: visible;
+    right: 50;
+    transform: translateX(100%);
 }
 
 .db-modal-content {
