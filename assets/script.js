@@ -121,7 +121,7 @@ const countryNameToISO2 = {
     "Finland": "FI",
     "France": "FR",
     "Germany": "DE",
-    "Greece": "GR",
+    "Greece": "EL",
     "Hungary": "HU",
     "Ireland": "IE",
     "Italy": "IT",
@@ -162,10 +162,11 @@ function countEntriesByCountry(data) {
     Object.keys(countries).forEach(name => counts[name] = 0);
 
     data.forEach(row => {
-        const match = row["Country"]?.match(/^([A-Z]{2})\s?\(/);
+        const match = row["Country"]?.match(/^([A-Z\/]+)\s?\(/);
         if (match) {
             const iso2 = match[1];
-            const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2)?.[0];
+            const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2 || iso2.includes(code) || code.includes(iso2))?.[0];
+
             if (countryName) {
                 counts[countryName]++;
             }
@@ -198,10 +199,11 @@ function groupDataByCountry(data) {
     Object.keys(countries).forEach(name => grouped[name] = []);
 
     data.forEach(row => {
-        const match = row["Country"]?.match(/^([A-Z]{2})\s?\(/);  // estrae "UK" da "UK (United Kingdom)"
+        const match = row["Country"]?.match(/^([A-Z\/]+)\s?\(/);  // estrae "UK" da "UK (United Kingdom)"
         if (match) {
             const iso2 = match[1];
-            const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2)?.[0];
+            const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2 || iso2.includes(code) || code.includes(iso2))?.[0];
+
             if (countryName) {
                 grouped[countryName].push(row);
             }
@@ -273,8 +275,8 @@ function renderMapWithCounts(counts, groupedData) {
         marker.on("mouseover", () => marker.openPopup());
     });
     
-    console.log("COUNTS:", counts);
-    console.log("GROUPED:", groupedData);
+    // console.log("COUNTS:", counts);
+    // console.log("GROUPED:", groupedData);
 }
 
 function toggleEntries(code, encodedEntries, showAll) {
@@ -332,33 +334,33 @@ fetch("./assets/europe.geojson")
 .catch(err => console.error("Errore nel caricamento dei confini:", err));
 
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("./data/mapping_data.json")
-  .then(response => {
-      if (!response.ok) throw new Error("Errore nel caricamento di mapping_data.json");
-      return response.json();
-  })
-  .then(data => {
-    console.log("Mapping data caricato", data);
-    mappingData = data;
-    window.filteredDataForSearch = data;
-    checkIfReady();
-    setupMainFilterInteraction(mappingData);
-    setupAdvancedFilterInteraction(mappingData);
-    // setupVariablesFilterInteraction(mappingData);
-    //   setupMainFilterDropdownToggle();
-      // ✅ Imposta il placeholder dinamico nel campo di ricerca
-      const searchInput = document.getElementById("search-input");
-      console.log("searchinput", searchInput)
-      if (searchInput && searchInput.value.trim() === "") {
-        searchInput.placeholder = `Search among ${mappingData.length} datasets`;
-      }
-      if (geojsonLoaded) {
-          console.log("Chiamo initMap da mappingData");
-          initMap();
-      }
-  })
-  .catch(error => console.error("Errore nel caricamento dei dati mappa:", error));
-  window.mappingDataReady = true;
+    fetch("./data/mapping_data.json")
+    .then(response => {
+        if (!response.ok) throw new Error("Errore nel caricamento di mapping_data.json");
+        return response.json();
+    })
+    .then(data => {
+        console.log("Mapping data caricato", data);
+        mappingData = data;
+        window.filteredDataForSearch = data;
+        checkIfReady();
+        setupMainFilterInteraction(mappingData);
+        setupAdvancedFilterInteraction(mappingData);
+        // setupVariablesFilterInteraction(mappingData);
+        //   setupMainFilterDropdownToggle();
+        // ✅ Imposta il placeholder dinamico nel campo di ricerca
+        const searchInput = document.getElementById("search-input");
+        console.log("searchinput", searchInput)
+        if (searchInput && searchInput.value.trim() === "") {
+            searchInput.placeholder = `Search among ${mappingData.length} datasets`;
+        }
+        if (geojsonLoaded) {
+            console.log("Chiamo initMap da mappingData");
+            initMap();
+        }
+    })
+    .catch(error => console.error("Errore nel caricamento dei dati mappa:", error));
+    window.mappingDataReady = true;
 });
 
 
@@ -935,26 +937,93 @@ function renderListView() {
 // });
 
 function extractUniqueValues(data, fieldName) {
+    const order = ["Yes", "No"]
     const set = new Set();
     data.forEach(entry => {
         const val = getField(entry, fieldName);
-        if (val && val !== "N/A") set.add(val);
+        if (val && val !== "N/A" && val.toLowerCase() !== "not clear") {
+            set.add(val);
+        }    
     });
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => {
+        const indexA = order.indexOf(a);
+        const indexB = order.indexOf(b);
+        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
 }
 
 function extractByPrefix(data, prefix) {
     const values = new Set();
     data.forEach(entry => {
         Object.keys(entry).forEach(key => {
-            if (key.startsWith(prefix) && entry[key].toLowerCase() === "yes") {
+            if (!key.includes("[") || !key.includes("]")) return; // Ignora chiavi senza parentesi
+            
+            const value = entry[key];
+            if (key.startsWith(prefix) && value && value.toString().toLowerCase() === "yes") {
                 const match = key.match(/\[([^\]]+)\]/);
-                if (match) values.add(match[1]);
+                if (match) {
+                    const extracted = match[1].trim();
+                    if (extracted.toLowerCase() !== "not clear"){
+                        values.add(extracted);
+                    }
+                }
             }
         });
     });
     return Array.from(values).sort();
 }
+
+function extractGrades(data) {
+    const order = [
+        "First", "Second", "Third", "Fourth", "Fifth", "Sixth",
+        "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth"
+    ];
+
+    const values = new Set();
+    data.forEach(entry => {
+        Object.keys(entry).forEach(key => {
+            if (key.startsWith("School Grades Included [")) {
+                const match = key.match(/\[([^\]]+)\]/);
+                if (match) values.add(match[1]);
+            }
+        });
+    });
+    return Array.from(values).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
+function extractSubOptionsIfMainIsYes(data, baseFieldName) {
+    const values = new Set();
+
+    data.forEach(entry => {
+        const mainKey = Object.keys(entry).find(k =>
+            k.trim().toLowerCase() === baseFieldName.trim().toLowerCase()
+        );
+
+        if (mainKey && entry[mainKey]?.toLowerCase() === "yes") {
+            Object.keys(entry).forEach(key => {
+                // Tolgo lo spazio superfluo qui ↓
+                if (
+                    key.trim().toLowerCase().startsWith(baseFieldName.trim().toLowerCase() + " [") &&
+                    entry[key]?.toLowerCase() === "yes"
+                ) {
+                    const match = key.match(/\[([^\]]+)\]/);
+                    if (match) {
+                        const extracted = match[1].trim();
+                        if (extracted.toLowerCase() !== "not clear") {
+                            values.add(extracted);
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    return Array.from(values).sort();
+}
+
 
 function setupMainFilterInteraction(data) {
     const container = document.getElementById("main-filter-labels");
@@ -967,7 +1036,7 @@ function setupMainFilterInteraction(data) {
         "Data Collection Purpose": extractByPrefix(data, "Data Collection Purpose ["),
         "Data Collection Frequency": extractUniqueValues(data, "Data Collection Frequency"),
         "Sample Level": extractUniqueValues(data, "Sample Level"),
-        "Access to Micro Data": extractByPrefix(data, "Access to Micro-Data [")
+        "Access to Micro Data": extractUniqueValues(data, "Access to Micro Data")
     };
 
     Object.entries(filters).forEach(([label, options]) => {
@@ -992,7 +1061,7 @@ function setupMainFilterInteraction(data) {
             col2.className = "filter-column";
             const row = document.createElement("div");
             row.className = "filter-row";
-            
+
             options.forEach((opt, i) => {
                 const checkbox = createCheckbox(label, opt);
                 if (i < half) col1.appendChild(checkbox);
@@ -1002,12 +1071,21 @@ function setupMainFilterInteraction(data) {
             row.appendChild(col1);
             row.appendChild(col2);
             content.appendChild(row);
+        } else if (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(label)) {
+            // Usa radio button
+            options.forEach(opt => {
+                const radio = createCheckbox(label, opt, true); // Passa true per radio
+                content.appendChild(radio);
+            });
         } else {
+            // Tutti gli altri filtri usano checkbox
             options.forEach(opt => {
                 const checkbox = createCheckbox(label, opt);
                 content.appendChild(checkbox);
             });
         }
+
+        enableRadioDeselect();
 
         wrapper.appendChild(toggle);
         wrapper.appendChild(content);
@@ -1019,16 +1097,19 @@ function setupMainFilterInteraction(data) {
     });
 }
 
-function setupAdvancedFilterInteraction() {
+function setupAdvancedFilterInteraction(data) {
     const container = document.getElementById("advanced-filter-labels");
     container.innerHTML = ""; // Pulisce il contenuto esistente
 
     const filters = {
-        "School Grades": [],  // da riempire con le tue variabili
-        "Students’ Skills and Achievement": [],
-        "Sample": [],
-        "Linkability": [],
-        "Accessibility": []
+        "School Grades": extractGrades(data),
+        "Information on ECEC or Pre-Primary Education": extractUniqueValues(data, "Information on ECEC or Pre-Primary Education"),
+        "Students Followed After School Education": extractUniqueValues(data, "Students Followed After School Education"),
+        "Type of Skills Analysed": extractByPrefix(data, "Type of Skills Analysed ["),
+        "Measure Type": extractByPrefix(data, "Measure Type ["),
+        "Sample Type": extractByPrefix(data, "Sample Type ["),
+        "Sample Unit": extractByPrefix(data, "Sample Unit ["),
+        "Data Linkability At Individual Level": extractSubOptionsIfMainIsYes(data, "Data Linkability At Individual Level")
     };
 
     Object.entries(filters).forEach(([label, options]) => {
@@ -1045,32 +1126,86 @@ function setupAdvancedFilterInteraction() {
         const content = document.createElement("div");
         content.className = "filter-options";
 
-        // Per ora options è vuoto, ma qui si popolerà dinamicamente
-        options.forEach(opt => {
-            const checkbox = createCheckbox(label, opt);
-            content.appendChild(checkbox);
-        });
+        if (label === "School Grades") {
+            const half = Math.ceil(options.length / 2);
+            const col1 = document.createElement("div");
+            const col2 = document.createElement("div");
+            col1.className = "filter-column";
+            col2.className = "filter-column";
+            const row = document.createElement("div");
+            row.className = "filter-row";
+
+            options.forEach((opt, i) => {
+                const checkbox = createCheckbox(label, opt);
+                if (i < half) col1.appendChild(checkbox);
+                else col2.appendChild(checkbox);
+            });
+
+            row.appendChild(col1);
+            row.appendChild(col2);
+            content.appendChild(row);
+        } else if (["Information on ECEC or Pre-Primary Education", "Students Followed After School Education", "Data Linkability At Individual Level"].includes(label)) {
+            // Usa radio button
+            options.forEach(opt => {
+                const radio = createCheckbox(label, opt, true); // Passa true per radio
+                content.appendChild(radio);
+            });
+        } else {
+            // Tutti gli altri filtri usano checkbox
+            options.forEach(opt => {
+                const checkbox = createCheckbox(label, opt);
+                content.appendChild(checkbox);
+            });
+        }
+
+        enableRadioDeselect();
 
         wrapper.appendChild(toggle);
         wrapper.appendChild(content);
         container.appendChild(wrapper);
+
+        // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        //     cb.addEventListener("change", applyFilters);
+        // });
     });
 }
 
-
-function createCheckbox(filterName, value) {
+function createCheckbox(filterName, value, isRadio = false) {
     const div = document.createElement("div");
     div.className = "form-check";
+    const inputType = isRadio ? "radio" : "checkbox";
+    const nameAttr = isRadio ? `name="filter-${filterName.replace(/\s+/g, '-').toLowerCase()}"` : "";
 
     const id = `${filterName}-${value}`.replace(/\s+/g, '-').toLowerCase();
 
     div.innerHTML = `
-        <input class="form-check-input" type="checkbox" value="${value}" id="${id}" data-filter="${filterName}">
+        <input class="form-check-input" type="${inputType}" value="${value}" id="${id}" data-filter="${filterName}" ${nameAttr}>
         <label class="form-check-label" for="${id}">
             ${value}
         </label>
     `;
     return div;
+}
+
+function enableRadioDeselect() {
+    const radios = document.querySelectorAll('input[type="radio"]');
+    radios.forEach(radio => {
+        radio.addEventListener("mousedown", function (e) {
+            if (this.checked) {
+                this.dataset.wasChecked = "true";
+            } else {
+                this.dataset.wasChecked = "false";
+            }
+        });
+
+        radio.addEventListener("click", function (e) {
+            if (this.dataset.wasChecked === "true") {
+                e.preventDefault(); // previene il comportamento normale
+                this.checked = false;
+                this.dispatchEvent(new Event("change")); // triggera i filtri
+            }
+        });
+    });
 }
 
 function findMatchingKey(data, label) {
@@ -1103,18 +1238,15 @@ function checkIfReady() {
 }
 
 function clearAllFilters() {
-    // Deseleziona tutte le checkbox
-    document.querySelectorAll('#filter-area input[type="checkbox"]').forEach(cb => {
-        cb.checked = false;
-    });
+    // Deseleziona tutti i checkbox e radio
+    const inputs = document.querySelectorAll('#filter-area input[type="checkbox"], #filter-area input[type="radio"]');
+    inputs.forEach(input => input.checked = false);
 
-    // Svuota la textbox di ricerca
+    // Svuota input di ricerca
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
-
-    // Applica filtri "vuoti" per ripristinare tutto
-    applyFilters();
 }
+
 
 
 

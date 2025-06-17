@@ -70,12 +70,12 @@ function applyFilters() {
     const filters = getSearchFilters();
     const selectedCountries = getSelectedCountries();
 
-    const selectedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+    const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked, input[type="radio"]:checked');
     const selectedGroupedFilters = {};
 
-    selectedCheckboxes.forEach(cb => {
-        const group = cb.dataset.filter;
-        const value = cb.value;
+    selectedInputs.forEach(input => {
+        const group = input.dataset.filter;
+        const value = input.value;
         if (!group || !value) return;
         if (!selectedGroupedFilters[group]) selectedGroupedFilters[group] = [];
         selectedGroupedFilters[group].push(value);
