@@ -89,36 +89,53 @@
                 <!-- MAIN FILTERS: sempre visibili -->
                 <div class="mb-4">
                     <h5>Main Filters</h5>
-                    <div id="main-filter-labels" class="mb-2 main-fitler-container">
-                        <!-- <div class="main-filter-label" data-filter="Country">Country</div>
-                        <div class="main-filter-label" data-filter="Type of Longitudinal Data">Type of Longitudinal Data</div>
-                        <div class="main-filter-label" data-filter="Data Collection Focus">Data Collection Focus</div>
-                        <div class="main-filter-label" data-filter="Data Collection Purpose">Data Collection Purpose</div>
-                        <div class="main-filter-label" data-filter="Data Collection Frequency">Data Collection Frequency</div>
-                        <div class="main-filter-label" data-filter="Sample Level">Sample Level</div>
-                        <div class="main-filter-label" data-filter="Access to Micro Data">Access to Micro Data</div> -->
+                    <div id="main-filter-labels" class="mb-2 main-filter-container">
+                        
                     </div>
                 </div>
 
                 <!-- COLLAPSIBLE FILTER GROUPS -->
                 <div class="accordion" id="filterAccordion">
 
-                <!-- Advanced Filters -->
-                <div class="mb-4">
-                    <h5>Advanced Filters</h5>
-                    <div id="advanced-filter-labels" class="mb-2 main-fitler-container">
+                    <!-- Advanced Filters -->
+                    <div class="mb-4">
+                        <div class="accordion-item">
+                            <h5 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="panelsStayOpen-collapseAdvanced">
+                                    Advanced Filters
+                                </button>
+                            </h5>
 
+                            <div id="collapseAdvanced" class="accordion-collapse collapse" >
+                                <div class="accordion-body">
+                                    <div id="advanced-filter-labels" class="mb-2 main-fitler-container">
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
+                    <!-- Data Variables -->
+                    <div class="mb-4">
+                        <div class="accordion-item">
+                            <h5 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseData" aria-expanded="false" aria-controls="panelsStayOpen-collapseData">
+                                    Data Variables
+                                </button>
+                            </h5>
 
-                <!-- Data Variables -->
-                <div class="mb-4">
-                    <h5>Data Variables</h5>
-                    <div id="advanced-filter-labels" class="mb-2 main-fitler-container">
+                            <div id="collapseData" class="accordion-collapse collapse" >
+                                <div class="accordion-body">
+                                    <div id="data-variables-labels" class="mb-2 main-fitler-container">
 
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
                 </div>
 

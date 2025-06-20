@@ -11,45 +11,63 @@ function getField(entry, ...possibleKeys) {
     return "N/A";
 }
 
-// SCELTA DELL'UTENTE
+//! SCELTA DELL'UTENTE
 
-const roleDescriptions = {
-    stakeholder: "(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education.",
-    researcher: "(including data analysts) interested in the datasets themselves for deeper statistical analysis and academic studies."
-};
+// const roleDescriptions = {
+//     stakeholder: "(including policymakers, institutions, NGOs, and ministries of education) interested in accessible insights and research findings derived from longitudinal data on school education.",
+//     researcher: "(including data analysts) interested in the datasets themselves for deeper statistical analysis and academic studies."
+// };
 
-function updateRoleDisplay(role) {
-    const roleSpan = document.getElementById("current-role");
-    const roleBox = document.getElementById("role-description-box");
+// function updateRoleDisplay(role) {
+//     const roleSpan = document.getElementById("current-role");
+//     const roleBox = document.getElementById("role-description-box");
     
-    console.log("updateRoleDisplay() chiamato con:", role);
+//     console.log("updateRoleDisplay() chiamato con:", role);
     
-    if (role === "stakeholder") {
-        roleSpan.innerText = "Educational Stakeholder";
-        roleBox.innerText = roleDescriptions.stakeholder;
-    } else if (role === "researcher") {
-        roleSpan.innerText = "Researcher";
-        roleBox.innerText = roleDescriptions.researcher;
-    }
-}
+//     if (role === "stakeholder") {
+//         roleSpan.innerText = "Educational Stakeholder";
+//         roleBox.innerText = roleDescriptions.stakeholder;
+//     } else if (role === "researcher") {
+//         roleSpan.innerText = "Researcher";
+//         roleBox.innerText = roleDescriptions.researcher;
+//     }
+// }
 
-function showRoleDescription() {
-    document.getElementById("role-description-box").style.display = "block";
-}
+// function showRoleDescription() {
+//     document.getElementById("role-description-box").style.display = "block";
+// }
 
-function hideRoleDescription() {
-    document.getElementById("role-description-box").style.display = "none";
-}
+// function hideRoleDescription() {
+//     document.getElementById("role-description-box").style.display = "none";
+// }
 
-function changeRole() {
-    document.getElementById("role-modal").style.display = "flex";
-}
+// function changeRole() {
+//     document.getElementById("role-modal").style.display = "flex";
+// }
 
-function selectRole(role) {
-    localStorage.setItem("userRole", role);
-    document.getElementById("role-modal").style.display = "none";
-    document.getElementById("role-display-container").style.display = "block";
-    updateRoleDisplay(role);
+// function selectRole(role) {
+//     localStorage.setItem("userRole", role);
+//     document.getElementById("role-modal").style.display = "none";
+//     document.getElementById("role-display-container").style.display = "block";
+//     updateRoleDisplay(role);
+// }
+
+function populateCountryFilter() {
+    const container = document.getElementById("main-filter-labels");
+    const countries = new Set();
+
+    mappingData.forEach(entry => {
+        const match = entry["Country"]?.match(/\(([^)]+)\)/);
+        if (match) countries.add(match[1]);
+    });
+
+    const html = [...countries].sort().map(country => {
+        return `<label><input type="checkbox" name="filter-country" value="${country}"> ${country}</label>`;
+    }).join("<br>");
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    container.appendChild(wrapper);
 }
 
 // MAPPA
@@ -217,6 +235,9 @@ function groupDataByCountry(data) {
 const countryEntryStore = {};  // Variabile globale
 
 function renderMapWithCounts(counts, groupedData) {
+    // Rimuove tutti i marker esistenti
+    Object.values(markers).forEach(marker => map.removeLayer(marker));
+    markers = {};
     Object.keys(countries).forEach(code => {
         const count = counts[code] || 0;
         const latlng = countries[code];
@@ -342,10 +363,12 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(data => {
         console.log("Mapping data caricato", data);
         mappingData = data;
+        populateCountryFilter();
         window.filteredDataForSearch = data;
         checkIfReady();
         setupMainFilterInteraction(mappingData);
         setupAdvancedFilterInteraction(mappingData);
+        setupDataVariablesInteraction(mappingData);
         // setupVariablesFilterInteraction(mappingData);
         //   setupMainFilterDropdownToggle();
         // ✅ Imposta il placeholder dinamico nel campo di ricerca
@@ -370,6 +393,7 @@ function initMap() {
     renderMapWithCounts(countryCounts, grouped);
     setupMainFilterInteraction(mappingData);
     setupAdvancedFilterInteraction(mappingData);
+    setupDataVariablesInteraction(mappingData);
     // setupVariablesFilterInteraction(mappingData);
 }
 
@@ -1085,16 +1109,18 @@ function setupMainFilterInteraction(data) {
             });
         }
 
-        enableRadioDeselect();
-
+        
         wrapper.appendChild(toggle);
         wrapper.appendChild(content);
         container.appendChild(wrapper);
-
+        
         // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        //     cb.addEventListener("change", applyFilters);
-        // });
-    });
+            //     cb.addEventListener("change", applyFilters);
+            // });
+        });
+
+        enableRadioDeselect();
+
 }
 
 function setupAdvancedFilterInteraction(data) {
@@ -1126,7 +1152,7 @@ function setupAdvancedFilterInteraction(data) {
         const content = document.createElement("div");
         content.className = "filter-options";
 
-        if (label === "School Grades") {
+        if (label.toLowerCase().includes("school grades")) {
             const half = Math.ceil(options.length / 2);
             const col1 = document.createElement("div");
             const col2 = document.createElement("div");
@@ -1158,51 +1184,166 @@ function setupAdvancedFilterInteraction(data) {
             });
         }
 
+        
+        wrapper.appendChild(toggle);
+        wrapper.appendChild(content);
+        container.appendChild(wrapper);
+        
+        // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            //     cb.addEventListener("change", applyFilters);
+            // });
+        });
+
         enableRadioDeselect();
+
+}
+
+function setupDataVariablesInteraction(data) {
+    const container = document.getElementById("data-variables-labels");
+    container.innerHTML = ""; // pulisce il contenuto esistente
+
+    const groupedFields = {
+        "Students' Information": [
+            { label: "Student Gender", value: extractUniqueValues(data, "Student Gender") },
+            { label: "Student Age", value: extractUniqueValues(data, "Student Age") },
+            { label: "Student Citizenship", value: extractUniqueValues(data, "Student Citizenship") },
+            { label: "Student Foreign Birth Country", value: extractUniqueValues(data, "Student Foreign Birth Country") },
+            { label: "Student Specific Birth Country", value: extractUniqueValues(data, "Student Specific Birth Country") },
+            { label: "Student Town of Residence", value: extractUniqueValues(data, "Student Town of Residence") },
+            { label: "Student Province of Residence", value: extractUniqueValues(data, "Student Province of Residence") },
+            { label: "Student Region of Residence", value: extractUniqueValues(data, "Student Region of Residence") },
+            { label: "Student Belonging to a Recognized Ethnic Minority", value: extractUniqueValues(data, "Student Belonging to a Recognized Ethnic Minority") },
+            { label: "Student ECEC Attendance", value: extractUniqueValues(data, "Student ECEC Attendance") },
+            { label: "Student Previous Grade Retention", value: extractUniqueValues(data, "Student Previous Grade Retention") },
+            { label: "Student Learning Impairments", value: extractUniqueValues(data, "Student Learning Impairments") },
+            { label: "Student Physical Impairments", value: extractUniqueValues(data, "Student Physical Impairments") },
+            { label: "Student School Attitude or Motivation", value: extractUniqueValues(data, "Student School Attitude or Motivation") },
+            { label: "Student Assigned Teacher Grades", value: extractUniqueValues(data, "Student Assigned Teacher Grades") },
+            { label: "Student Allowance/Scholarship", value: extractUniqueValues(data, "Student Allowance/Scholarship") }
+        ],
+        "Household's Information": [
+            { label: "Number of Parents", value: extractUniqueValues(data, "Number of Parents") },
+            { label: "Presence of Stepparents", value: extractUniqueValues(data, "Presence of Stepparents") },
+            { label: "Siblings", value: extractUniqueValues(data, "Siblings") },
+            { label: "Parental Working Status", value: extractUniqueValues(data, "Parental Working Status") },
+            { label: "Parental Occupation", value: extractUniqueValues(data, "Parental Occupation") },
+            { label: "Parental Education", value: extractUniqueValues(data, "Parental Education") },
+            { label: "Parental Education Level (ISCED)", value: extractUniqueValues(data, "Parental Education Level (ISCED)") },
+            { label: "Parental Migratory Background", value: extractUniqueValues(data, "Parental Migratory Background") },
+            { label: "Parents Age", value: extractUniqueValues(data, "Parents Age") },
+            { label: "Parents Place of Birth", value: extractUniqueValues(data, "Parents Place of Birth") },
+            { label: "Parental Income or Wealth", value: extractUniqueValues(data, "Parental Income or Wealth") },
+            { label: "Parental Host Country’s Language Proficiency", value: extractUniqueValues(data, "Parental Host Country’s Language Proficiency") },
+            { label: "Number of Books", value: extractUniqueValues(data, "Number of Books") },
+            { label: "Number of Digital Devices", value: extractUniqueValues(data, "Number of Digital Devices") },
+            { label: "Ownership of the Apartment/House", value: extractUniqueValues(data, "Ownership of the Apartment/House") }
+        ],
+        "Teachers' Information": [
+            { label: "Teacher Age", value: extractUniqueValues(data, "Teacher Age") },
+            { label: "Teacher Gender", value: extractUniqueValues(data, "Teacher Gender") },
+            { label: "Teacher Seniority", value: extractUniqueValues(data, "Teacher Seniority") },
+            { label: "Teacher Educational Degree", value: extractUniqueValues(data, "Teacher Educational Degree") },
+            { label: "Teacher Contract Type", value: extractUniqueValues(data, "Teacher Contract Type") },
+            { label: "Student-Teacher Linkability", value: extractUniqueValues(data, "Student-Teacher Linkability") }
+        ],
+        "School/Class Information": [
+            { label: "School Geo Referencing", value: extractUniqueValues(data, "School Geo Referencing") },
+            { label: "School Type", value: extractUniqueValues(data, "School Type") },
+            { label: "School Track", value: extractUniqueValues(data, "School Track") },
+            { label: "School Size", value: extractUniqueValues(data, "School Size") },
+            { label: "Class Size", value: extractUniqueValues(data, "Class Size") },
+            { label: "School Composition", value: extractUniqueValues(data, "School Composition") },
+            { label: "Class Composition", value: extractUniqueValues(data, "Class Composition") }
+        ]
+    };
+
+    Object.entries(groupedFields).forEach(([label, fields]) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "filter-group";
+
+        const toggle = document.createElement("div");
+        toggle.className = "filter-toggle";
+        toggle.textContent = label;
+        toggle.addEventListener("click", () => {
+            wrapper.classList.toggle("expanded");
+        });
+
+        const content = document.createElement("div");
+        content.className = "filter-options";
+
+        const uniqueVars = new Set();
+
+        data.forEach(entry => {
+            fields.forEach(field => {
+                const fieldName = field.label;
+                if (entry[fieldName] && entry[fieldName].toLowerCase() !== "no" && entry[fieldName].toLowerCase() !== "n/a" && entry[fieldName] !== "-") {
+                    uniqueVars.add(fieldName);
+                }
+            });
+        });
+
+        Array.from(uniqueVars).sort().forEach(varName => {
+    const labelEl = document.createElement("label");
+    labelEl.className = "checkbox-label";
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = varName;
+    input.dataset.filter = varName; // 🔑 fondamentale per far funzionare la ricerca
+
+    labelEl.appendChild(input);
+    labelEl.append(` ${varName}`);
+    content.appendChild(labelEl);
+});
 
         wrapper.appendChild(toggle);
         wrapper.appendChild(content);
         container.appendChild(wrapper);
-
-        // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        //     cb.addEventListener("change", applyFilters);
-        // });
     });
+
+    enableRadioDeselect();
+
 }
 
-function createCheckbox(filterName, value, isRadio = false) {
-    const div = document.createElement("div");
-    div.className = "form-check";
-    const inputType = isRadio ? "radio" : "checkbox";
-    const nameAttr = isRadio ? `name="filter-${filterName.replace(/\s+/g, '-').toLowerCase()}"` : "";
+function createCheckbox(groupLabel, optionLabel, isRadio = false) {
+    const label = document.createElement("label");
+    label.className = "checkbox-label";
 
-    const id = `${filterName}-${value}`.replace(/\s+/g, '-').toLowerCase();
+    const input = document.createElement("input");
+    input.type = isRadio ? "radio" : "checkbox";
+    input.value = optionLabel;
+    input.dataset.filter = groupLabel; 
 
-    div.innerHTML = `
-        <input class="form-check-input" type="${inputType}" value="${value}" id="${id}" data-filter="${filterName}" ${nameAttr}>
-        <label class="form-check-label" for="${id}">
-            ${value}
-        </label>
-    `;
-    return div;
+    if (isRadio) {
+        input.className = "form-check-input"; // ✅ serve per stile quadrato
+        input.name = groupLabel; // 🔑 per gruppi esclusivi
+    }
+
+    label.classList.add("filter-options")
+    label.appendChild(input);
+    label.append(` ${optionLabel}`);
+    return label;
 }
 
 function enableRadioDeselect() {
-    const radios = document.querySelectorAll('input[type="radio"]');
-    radios.forEach(radio => {
-        radio.addEventListener("mousedown", function (e) {
-            if (this.checked) {
-                this.dataset.wasChecked = "true";
+    let lastChecked = {};
+
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener("mousedown", e => {
+            const name = radio.name;
+            if (radio.checked) {
+                lastChecked[name] = radio;
             } else {
-                this.dataset.wasChecked = "false";
+                lastChecked[name] = null;
             }
         });
 
-        radio.addEventListener("click", function (e) {
-            if (this.dataset.wasChecked === "true") {
-                e.preventDefault(); // previene il comportamento normale
-                this.checked = false;
-                this.dispatchEvent(new Event("change")); // triggera i filtri
+        radio.addEventListener("click", e => {
+            const name = radio.name;
+            if (lastChecked[name] === radio) {
+                radio.checked = false;
+                lastChecked[name] = null;
+                e.preventDefault();
             }
         });
     });
@@ -1216,17 +1357,19 @@ function findMatchingKey(data, label) {
 
 function applyCountryFilter(selectedCountries) {
   // Aggiorna i pin sulla mappa
-  const filteredData = mappingData.filter(entry =>
-    selectedCountries.includes(entry["Country"])
-  );
+    const filteredData = mappingData.filter(entry => {
+    const match = entry["Country"]?.match(/\(([^)]+)\)/);
+    const countryName = match ? match[1] : "";
+    return selectedCountries.includes(countryName);
+});
 
-  const countryCounts = countEntriesByCountry(filteredData);
-  const grouped = groupDataByCountry(filteredData);
+    const countryCounts = countEntriesByCountry(filteredData);
+    const grouped = groupDataByCountry(filteredData);
 
-  renderMapWithCounts(countryCounts, grouped);
+    renderMapWithCounts(countryCounts, grouped);
 
-  // Salva i dati filtrati per la ricerca
-  window.filteredDataForSearch = filteredData;
+    // Salva i dati filtrati per la ricerca
+    window.filteredDataForSearch = filteredData;
 }
 
 
@@ -1246,8 +1389,3 @@ function clearAllFilters() {
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
 }
-
-
-
-
-

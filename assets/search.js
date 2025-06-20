@@ -36,11 +36,22 @@ function filterMappingData(data, filters) {
 }
 
 function getCountryFromEntry(entry) {
-    const match = entry["Country"]?.match(/^([A-Z]{2})\s?\(/);
-    if (!match) return null;
-    const iso2 = match[1];
-    return Object.entries(countryNameToISO2).find(([name, code]) => code === iso2)?.[0] || null;
+    const raw = entry["Country"];
+    if (!raw) return null;
+
+    // Cerca ISO2 in formato "AT (Austria)" o "AT/DE (Austria, Germany)"
+    const isoMatch = raw.match(/^([A-Z]{2,})(?:\/[A-Z]{2})*/);
+    if (!isoMatch) return null;
+
+    const isoCodes = isoMatch[0].split('/');
+    for (let iso of isoCodes) {
+        const found = Object.entries(countryNameToISO2).find(([name, code]) => code === iso || iso.includes(code));
+        if (found) return found[0]; // nome nazione (es. "Austria")
+    }
+
+    return null;
 }
+
 
 function applyCountryFilter(data, selectedCountries) {
     if (!selectedCountries || selectedCountries.length === 0) return data;
@@ -51,19 +62,19 @@ function applyCountryFilter(data, selectedCountries) {
 }
 
 function getSelectedCountries() {
-    return [...document.querySelectorAll('input[name="filter-country"]:checked')].map(cb => cb.value);
+    return [...document.querySelectorAll('input[data-filter="Country"]:checked')].map(cb => cb.value);
 }
 
 // Ricerca per checkbox (es. Type of Longitudinal Data)
 function filterByCheckbox(groupLabel, selectedOptions) {
-  const results = jsonData.filter((entry) => {
-    return selectedOptions.some((option) => {
-      const key = `${groupLabel} [${option}]`;
-      return entry[key]?.toLowerCase() === "yes";
+    const results = jsonData.filter((entry) => {
+        return selectedOptions.some((option) => {
+        const key = `${groupLabel} [${option}]`;
+        return entry[key]?.toLowerCase() === "yes";
+        });
     });
-  });
 
-  showResultsModal(results, `Filter: ${groupLabel}`);
+    showResultsModal(results, `Filter: ${groupLabel}`);
 }
 
 function applyFilters() {
@@ -86,13 +97,21 @@ function applyFilters() {
 
     const filtered = mappingData.filter(entry => {
         if (selectedCountries.length > 0) {
-            const countryMatch = entry.Country?.match(/\(([^)]+)\)/); // prende ciò che è tra parentesi
-            const countryName = countryMatch ? countryMatch[1] : "";
+            const raw = entry["Country"];
+            let countryName = "";
+
+            if (raw?.includes("(")) {
+                const match = raw.match(/\(([^)]+)\)/); // UK (United Kingdom)
+                countryName = match ? match[1] : raw;
+            } else {
+                countryName = raw;
+            }
 
             if (!selectedCountries.includes(countryName)) {
                 return false;
             }
         }
+
         const name = getField(entry, "Name").toLowerCase();
         const acronym = getField(entry, "Acronym").toLowerCase();
         const description = getField(entry, "Short Description").toLowerCase();
@@ -110,8 +129,14 @@ function applyFilters() {
         );
 
         // comportamento filtri AND (fa vedere solo i risultati che corrispondono alle ricerche, affina la ricerca)
-        const matchesGrouped = Object.entries(selectedGroupedFilters).every(([group, values]) => {
+        const matchesGrouped = Object.entries(selectedGroupedFilters)
+            .filter(([group]) => group !== "Country")
+            .every(([group, values]) => {
             return values.every(val => {
+                // match diretto per data variables (che sono nel formato "Student Gender")
+                if (entry[group] && entry[group].toLowerCase() === "yes") return true;
+
+                // fallback standard
                 const extendedKey = `${group} [${val}]`;
                 const simpleKey = group;
 
@@ -122,7 +147,7 @@ function applyFilters() {
             });
         });
 
-        // comportamento filtri OR (fa vedere tutti i risultati)
+        //? comportamento filtri OR (fa vedere tutti i risultati)
         // const matchesGrouped = Object.entries(selectedGroupedFilters).every(([group, values]) => {
         //     return values.some(val => {
         //         const extendedKey = `${group} [${val}]`;
@@ -145,38 +170,17 @@ function applyFilters() {
         return matchesSearch && matchesGrouped;
     });
 
-    // Se c'è testo o checkbox selezionato, mostra modale
+    // Altrimenti mostra solo mappa (es. filtri paese)
     if (filters.search || Object.keys(selectedGroupedFilters).length > 0) {
         showResultsModal(filtered);
+    } else {
+        // Se non ci sono parole chiave o altri filtri, aggiorna la mappa con il filtro paese
+        const countryFiltered = applyCountryFilter(mappingData, selectedCountries);
+        const grouped = groupDataByCountry(countryFiltered);
+        const counts = countEntriesByCountry(countryFiltered);
+        renderMapWithCounts(counts, grouped);
     }
-
-    // Altrimenti mostra solo mappa (es. filtri paese)
-    let countryFiltered = applyCountryFilter(mappingData, selectedCountries);
-    const grouped = groupDataByCountry(countryFiltered);
-    const counts = countEntriesByCountry(countryFiltered);
-    renderMapWithCounts(counts, grouped);
 }
-
-// function applyFilters() {
-//     const filters = getSearchFilters();
-//     const selectedCountries = getSelectedCountries();
-
-//     // 🔍 FILTRO DI RICERCA TESTUALE + CHECKBOX → solo MODALE
-//     const nonCountryFiltersUsed = filters.search || filters.selectedFilters.length > 0;
-//     if (nonCountryFiltersUsed) {
-//         const filteredData = filterMappingData(mappingData, filters);
-//         showResultsModal(filteredData);
-//         return; // ⛔ Non aggiornare la mappa
-//     }
-
-//     // 🌍 FILTRO "COUNTRY" → aggiorna mappa
-//     let filtered = allData;
-//     filtered = applyCountryFilter(filtered, selectedCountries);
-
-//     const grouped = groupDataByCountry(filtered);
-//     const counts = countEntriesByCountry(filtered);
-//     renderMapWithCounts(counts, grouped);
-// }
 
 function showResultsModal(filteredData) {
     const modal = document.getElementById("db-modal");
