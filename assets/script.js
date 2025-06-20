@@ -965,7 +965,7 @@ function extractUniqueValues(data, fieldName) {
     const set = new Set();
     data.forEach(entry => {
         const val = getField(entry, fieldName);
-        if (val && val !== "N/A" && val.toLowerCase() !== "not clear") {
+        if (val && val !== "N/A" && val.toLowerCase() !== "not clear" && val.toLowerCase() !== "no info") {
             set.add(val);
         }    
     });
@@ -1095,12 +1095,12 @@ function setupMainFilterInteraction(data) {
             row.appendChild(col1);
             row.appendChild(col2);
             content.appendChild(row);
-        } else if (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(label)) {
-            // Usa radio button
-            options.forEach(opt => {
-                const radio = createCheckbox(label, opt, true); // Passa true per radio
-                content.appendChild(radio);
-            });
+        // } else if (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(label)) {
+        //     // Usa radio button
+        //     options.forEach(opt => {
+        //         const radio = createCheckbox(label, opt, true); // Passa true per radio
+        //         content.appendChild(radio);
+        //     });
         } else {
             // Tutti gli altri filtri usano checkbox
             options.forEach(opt => {
@@ -1119,7 +1119,6 @@ function setupMainFilterInteraction(data) {
             // });
         });
 
-        enableRadioDeselect();
 
 }
 
@@ -1128,7 +1127,7 @@ function setupAdvancedFilterInteraction(data) {
     container.innerHTML = ""; // Pulisce il contenuto esistente
 
     const filters = {
-        "School Grades": extractGrades(data),
+        "School Grades Included": extractGrades(data),
         "Information on ECEC or Pre-Primary Education": extractUniqueValues(data, "Information on ECEC or Pre-Primary Education"),
         "Students Followed After School Education": extractUniqueValues(data, "Students Followed After School Education"),
         "Type of Skills Analysed": extractByPrefix(data, "Type of Skills Analysed ["),
@@ -1170,12 +1169,6 @@ function setupAdvancedFilterInteraction(data) {
             row.appendChild(col1);
             row.appendChild(col2);
             content.appendChild(row);
-        } else if (["Information on ECEC or Pre-Primary Education", "Students Followed After School Education", "Data Linkability At Individual Level"].includes(label)) {
-            // Usa radio button
-            options.forEach(opt => {
-                const radio = createCheckbox(label, opt, true); // Passa true per radio
-                content.appendChild(radio);
-            });
         } else {
             // Tutti gli altri filtri usano checkbox
             options.forEach(opt => {
@@ -1194,7 +1187,6 @@ function setupAdvancedFilterInteraction(data) {
             // });
         });
 
-        enableRadioDeselect();
 
 }
 
@@ -1301,8 +1293,6 @@ function setupDataVariablesInteraction(data) {
         container.appendChild(wrapper);
     });
 
-    enableRadioDeselect();
-
 }
 
 function createCheckbox(groupLabel, optionLabel, isRadio = false) {
@@ -1323,30 +1313,6 @@ function createCheckbox(groupLabel, optionLabel, isRadio = false) {
     label.appendChild(input);
     label.append(` ${optionLabel}`);
     return label;
-}
-
-function enableRadioDeselect() {
-    let lastChecked = {};
-
-    document.querySelectorAll('input[type="radio"]').forEach(radio => {
-        radio.addEventListener("mousedown", e => {
-            const name = radio.name;
-            if (radio.checked) {
-                lastChecked[name] = radio;
-            } else {
-                lastChecked[name] = null;
-            }
-        });
-
-        radio.addEventListener("click", e => {
-            const name = radio.name;
-            if (lastChecked[name] === radio) {
-                radio.checked = false;
-                lastChecked[name] = null;
-                e.preventDefault();
-            }
-        });
-    });
 }
 
 function findMatchingKey(data, label) {
@@ -1388,4 +1354,30 @@ function clearAllFilters() {
     // Svuota input di ricerca
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
+    updateSelectedFiltersDisplay();
+}
+
+function showSelectedFiltersModal() {
+    const modalBody = document.getElementById("selected-filters-modal-body");
+    const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked, input[type="radio"]:checked');
+
+    if (selectedInputs.length === 0) {
+        modalBody.innerHTML = "<p class='text-muted'>No filters selected.</p>";
+    } else {
+        const items = Array.from(selectedInputs).map(input => {
+            const group = input.dataset.filter || "Group";
+            const value = input.value;
+            return `<div><strong>${group}</strong>: ${value}</div>`;
+        }).join("");
+        modalBody.innerHTML = items;
+    }
+
+    const myModal = new bootstrap.Modal(document.getElementById('selectedFiltersModal'));
+    myModal.show();
+}
+
+function updateSelectedFiltersDisplay() {
+    const countSpan = document.getElementById("selected-filters-count");
+    const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked, input[type="radio"]:checked');
+    countSpan.textContent = selectedInputs.length;
 }

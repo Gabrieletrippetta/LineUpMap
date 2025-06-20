@@ -130,11 +130,11 @@ function applyFilters() {
             allTermsMatch(responsibleText)
         );
 
-        // comportamento filtri AND (fa vedere solo i risultati che corrispondono alle ricerche, affina la ricerca)
+        // filtraggio applicato con values.some (OR)
         const matchesGrouped = Object.entries(selectedGroupedFilters)
             .filter(([group]) => group !== "Country")
             .every(([group, values]) => {
-                return values.every(val => {
+                return values.some(val => {
                     // 1. Chiave diretta: group = "Parental Education", val = "for both parents"
                     const directVal = entry[group]?.toLowerCase() || "";
 
@@ -153,27 +153,6 @@ function applyFilters() {
                 });
             });
 
-
-        //? comportamento filtri OR (fa vedere tutti i risultati)
-        // const matchesGrouped = Object.entries(selectedGroupedFilters).every(([group, values]) => {
-        //     return values.some(val => {
-        //         const extendedKey = `${group} [${val}]`;
-        //         const simpleKey = group;
-
-        //         // Caso 1: tipo "Sample Level [Limited to specific regions/areas]" = "Yes"
-        //         if (entry[extendedKey] && entry[extendedKey].toLowerCase() === "yes") {
-        //             return true;
-        //         }
-
-        //         // Caso 2: tipo "Sample Level" = "Limited to specific regions/areas"
-        //         if (entry[simpleKey] && entry[simpleKey].toLowerCase() === val.toLowerCase()) {
-        //             return true;
-        //         }
-
-        //         return false;
-        //     });
-        // });
-
         return matchesSearch && matchesGrouped;
     });
 
@@ -187,6 +166,7 @@ function applyFilters() {
         const counts = countEntriesByCountry(countryFiltered);
         renderMapWithCounts(counts, grouped);
     }
+    updateSelectedFiltersDisplay();
 }
 
 function showResultsModal(filteredData) {
