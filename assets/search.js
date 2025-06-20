@@ -69,13 +69,15 @@ function getSelectedCountries() {
 function filterByCheckbox(groupLabel, selectedOptions) {
     const results = jsonData.filter((entry) => {
         return selectedOptions.some((option) => {
-        const key = `${groupLabel} [${option}]`;
-        return entry[key]?.toLowerCase() === "yes";
+            const key = `${groupLabel} [${option}]`;
+            const val = entry[key]?.toLowerCase();
+            return val && val !== "no"; // accetta qualsiasi cosa tranne "no"
         });
     });
 
     showResultsModal(results, `Filter: ${groupLabel}`);
 }
+
 
 function applyFilters() {
     const filters = getSearchFilters();
@@ -132,20 +134,25 @@ function applyFilters() {
         const matchesGrouped = Object.entries(selectedGroupedFilters)
             .filter(([group]) => group !== "Country")
             .every(([group, values]) => {
-            return values.every(val => {
-                // match diretto per data variables (che sono nel formato "Student Gender")
-                if (entry[group] && entry[group].toLowerCase() === "yes") return true;
+                return values.every(val => {
+                    // 1. Chiave diretta: group = "Parental Education", val = "for both parents"
+                    const directVal = entry[group]?.toLowerCase() || "";
 
-                // fallback standard
-                const extendedKey = `${group} [${val}]`;
-                const simpleKey = group;
+                    // 2. Chiave estesa: es. "Parental Education [for both parents]"
+                    const extendedKey = `${group} [${val}]`;
+                    const extendedVal = entry[extendedKey]?.toLowerCase() || "";
 
-                const extendedMatch = entry[extendedKey] && entry[extendedKey].toLowerCase() === "yes";
-                const simpleMatch = entry[simpleKey] && entry[simpleKey].toLowerCase() === val.toLowerCase();
+                    // 3. Match se valore è "yes", "yes, ...", o contiene la parola chiave
+                    const directMatch =
+                        directVal.startsWith("yes") || directVal.includes(val.toLowerCase());
 
-                return extendedMatch || simpleMatch;
+                    const extendedMatch =
+                        extendedVal.startsWith("yes") || extendedVal.includes(val.toLowerCase());
+
+                    return directMatch || extendedMatch;
+                });
             });
-        });
+
 
         //? comportamento filtri OR (fa vedere tutti i risultati)
         // const matchesGrouped = Object.entries(selectedGroupedFilters).every(([group, values]) => {
@@ -186,8 +193,10 @@ function showResultsModal(filteredData) {
     const modal = document.getElementById("db-modal");
     const modalContent = document.getElementById("modal-db-list");
     const modalTitle = document.getElementById("modal-country-title");
+    const countResult = filteredData.length;
+    console.log(countResult);
 
-    modalTitle.textContent = "Search Results";
+    modalTitle.textContent = `${countResult} Result${countResult === 1 ? "" : "s"}`;
     modalContent.innerHTML = "";
     modal.classList.add("show");
 
