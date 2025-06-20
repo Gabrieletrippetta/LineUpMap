@@ -1,3 +1,32 @@
+centrare un terzo della mappa quando aperti 2/3
+
+Finestra accanto searchbar per sapere quali filtri sono attivi
+
+show more cambiare funzione + uk che non va
+
+
+
+basic information
+
+detailed information per 1
+
+dataset variables per 2
+
+
+
+student followed no info --> togliere
+
+filtri school grades!
+
+
+
+
+
+
+
+
+
+
 mapping quasi finito ovunque, tranne 4
 
 interfaccia che fa query specifiche su Excel
@@ -34,3 +63,8 @@ https://www.covidschooldatahub.com/
 https://www.jotform.com/integrations/jotmap
 # LineUpMap
 # LineUpMap
+
+
+
+
+
