@@ -153,6 +153,7 @@ function applyFilters() {
                 });
             });
 
+            zoomToCountry();
         return matchesSearch && matchesGrouped;
     });
 
@@ -170,46 +171,44 @@ function applyFilters() {
 }
 
 function showResultsModal(filteredData) {
-    const modal = document.getElementById("db-modal");
-    const modalContent = document.getElementById("modal-db-list");
-    const modalTitle = document.getElementById("modal-country-title");
-    const countResult = filteredData.length;
-    console.log(countResult);
-
-    modalTitle.textContent = `${countResult} Result${countResult === 1 ? "" : "s"}`;
-    modalContent.innerHTML = "";
-    modal.classList.add("show");
-
     if (filteredData.length === 0) {
-        modalContent.innerHTML = "<p>No datasets found.</p>";
+        const modal = document.getElementById("db-modal");
+        const modalTitle = document.getElementById("modal-country-title");
+        const modalList = document.getElementById("modal-db-list");
+        modalTitle.textContent = "No datasets found";
+        modalList.innerHTML = "<p>No datasets found.</p>";
+        modal.classList.add("show");
         return;
     }
 
-    filteredData.forEach((entry, index) => {
-        const div = document.createElement("div");
-        div.className = "db-entry";
-
-        const country = getField(entry, "Country");
-        const name = getField(entry, "Name");
-        const acronym = getField(entry, "Acronym");
-        const description = getField(entry, "Short Description");
-
-        div.innerHTML = `
-            <b>Country:</b> ${country}<br>
-            <b>Name:</b> ${name}<br>
-            <b>Acronym:</b> ${acronym}<br><br>
-            ${description}<br>
-            <button class="expand-button" onclick="openFilteredDbModal(${index})">Show more</button>
-        `;
-        modalContent.appendChild(div);
+    // Raggruppa i risultati per codice ISO2 della nazione
+    const grouped = {};
+    filteredData.forEach(entry => {
+        const countryName = getCountryFromEntry(entry);
+        const countryCode = countryNameToISO2[countryName];
+        if (!countryCode) return;
+        if (!grouped[countryCode]) grouped[countryCode] = [];
+        grouped[countryCode].push(entry);
     });
 
-    window.filteredResults = filteredData;
+    // Prendi il primo paese nei risultati
+    const firstCode = Object.keys(grouped)[0];
+    if (!firstCode) return;
+
+    // Salva i risultati nel countryEntryStore
+    countryEntryStore[firstCode] = grouped[firstCode];
+
+    // Chiudi il modale se era aperto
+    closeDbModal();
+
+    // Mostra i risultati nel pannello laterale usando la funzione principale
+    showCountryDetailsInPanel(firstCode);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const searchBtn = document.querySelector('.btn-success.w-100');
-    if (searchBtn) {
-        searchBtn.addEventListener('click', applyFilters);
-    }
+    document.querySelectorAll('button.btn-success').forEach(btn => {
+        if (btn.textContent.includes("Search")) {
+            btn.addEventListener('click', applyFilters);
+        }
+    });
 });

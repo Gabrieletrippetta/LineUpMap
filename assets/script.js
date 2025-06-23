@@ -282,12 +282,10 @@ function renderMapWithCounts(counts, groupedData) {
             
             popupContent += `
                 <div class="popup-buttons">
-                    <button class="show-button" onclick="showCountryDetailsInPanel('${encodedCode}')">
-                        Show all (${count})
+                    <button class="show-button" onclick="zoomToCountry('${encodedCode}'); showCountryDetailsInPanel('${encodedCode}')">
+                        Show all datasets (${count})
                     </button>
-                    <button class="expand-button" onclick="zoomToCountry('${encodedCode}'); openDbModal('${encodedCode}')">
-                        Show more
-                    </button>
+                    
                 </div>
             `;
         }
@@ -588,32 +586,64 @@ modal.classList.add("show");
 // SHOW ALL DATABASES PANEL
 
 function showCountryDetailsInPanel(code) {
-    
     const panelEntries = countryEntryStore[code] || [];
-    const panel = document.getElementById("dbpanel");
-    const title = document.getElementById("panel-country-title");
-    const content = document.getElementById("dbpanel-content");
-    
-    title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : '' } in ${code}`;
+    const panel = document.getElementById("db-modal");
+    const title = document.getElementById("modal-country-title");
+    const content = document.getElementById("modal-db-list");
+
+    title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : ''} in ${code}`;
     content.innerHTML = "";
-    
+
     document.getElementById("toggle-view-button").classList.add("fixed-top");
-    
-    panelEntries.forEach((entry, index) => {
+
+    panelEntries.forEach((entry) => {
+        const name = getField(entry, "Name");
+        const acronym = getField(entry, "Acronym");
+        const description = getField(entry, "Short Description");
+
+        const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
+        const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+        const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
+        const focusList = extractBracketedValues(entry, "Data Collection Focus [");
+
+        const frequency = getField(entry, "Data Collection Frequency");
+        const duration = getField(entry, "Data Collection Duration (Years)");
+        const startingYear = getField(entry, "Starting Year");
+        const endingYear = getField(entry, "Ending Year");
+
+        let sampleLevel = getField(entry, "Sample Level");
+        if (sampleLevel === "Limited to specific regions/areas") {
+            const detail = getField(entry, "Sample Level (Details)");
+            sampleLevel = `${sampleLevel}${detail !== "N/A" ? `: ${detail}` : ""}`;
+        } else if (sampleLevel === "N/A" || sampleLevel === "") {
+            sampleLevel = "N/A";
+        }
+
+
         const entryDiv = document.createElement("div");
         entryDiv.innerHTML = `
-        <b>Name:</b> ${getField(entry, "Name")}<br>
-        <b>Acronym:</b> ${getField(entry, "Acronym")}<br>
-        <br>
-        ${getField(entry, "Short Description")}<br>
-        <button class="expand-button" onclick="zoomToCountry('${code}'); openSingleDbModal('${code}', ${index})">Show more</button>
+            <b>Name:</b> ${name}<br>
+            <b>Acronym:</b> ${acronym}<br><br>
+            ${description}<br><br>
+
+            <b>Responsible Organization(s):</b> ${responsibleOrgs.join(", ") || "N/A"}<br>
+            <b>Type of Longitudinal Data:</b> ${longitudinalTypes.join(", ") || "N/A"}<br>
+            <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
+            <b>Data Collection Focus:</b> ${focusList.join(", ") || "N/A"}<br>
+            <b>Data Collection Frequency:</b> ${frequency}<br>
+            <b>Data Collection Duration (Years):</b> ${duration}<br>
+            <b>Starting Year:</b> ${startingYear}<br>
+            <b>Ending Year:</b> ${endingYear}<br>
+            <b>Sample Level:</b> ${sampleLevel}<br>
         `;
+
         content.appendChild(entryDiv);
     });
-    
+
     closeDbModal();
     panel.classList.add("show");
 }
+
 
 function closeDbPanel() {
     document.getElementById("dbpanel").classList.remove("show");
@@ -1359,7 +1389,7 @@ function clearAllFilters() {
 
 function showSelectedFiltersModal() {
     const modalBody = document.getElementById("selected-filters-modal-body");
-    const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked, input[type="radio"]:checked');
+    const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked');
 
     if (selectedInputs.length === 0) {
         modalBody.innerHTML = "<p class='text-muted'>No filters selected.</p>";
@@ -1378,6 +1408,26 @@ function showSelectedFiltersModal() {
 
 function updateSelectedFiltersDisplay() {
     const countSpan = document.getElementById("selected-filters-count");
-    const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked, input[type="radio"]:checked');
+    const list = document.getElementById("selected-filters-list");
+
+    const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked');
     countSpan.textContent = selectedInputs.length;
+
+    if (!list) return;
+    list.innerHTML = "";
+
+    if (selectedInputs.length === 0) {
+        const li = document.createElement("li");
+        li.className = "list-group-item text-muted";
+        li.textContent = "No filters selected.";
+        list.appendChild(li);
+    } else {
+        selectedInputs.forEach(input => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            const group = input.dataset.filter || "Group";
+            li.textContent = `${group}: ${input.value}`;
+            list.appendChild(li);
+        });
+    }
 }

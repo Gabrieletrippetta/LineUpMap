@@ -308,20 +308,22 @@ button:hover {
 #dbpanel {
     position: fixed;
     top: 0;
-    right: -1000px;
+    left: 66.66vw; /* parte destra della mappa */
     width: 33.33vw;
     height: 100vh;
     background: #f9f9f9;
     box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
     z-index: 1500;
-    transition: right 0.4s ease;
+    transform: translateX(100%);
+    transition: transform 0.4s ease;
     padding: 20px;
 }
 
 #dbpanel.show {
-    right: 0;
+    transform: translateX(0);
 }
+
 
 .dbpanel-header {
     display: flex;
@@ -593,4 +595,12 @@ input[type="radio"].form-check-input:checked::after {
     background-color: #0d6efd; /* quadrato interno blu */
     border-radius: 2px;
     transform: translate(-50%, -50%);
+}
+
+#filter-area {
+    margin: 0;
+    padding: 20px;
+    width: 33.33vw;
+    height: 100vh;
+    overflow-y: auto;
 }

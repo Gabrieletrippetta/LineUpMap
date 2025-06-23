@@ -1,6 +1,6 @@
 centrare un terzo della mappa quando aperti 2/3
 
-Finestra accanto searchbar per sapere quali filtri sono attivi
+FATTO! Finestra accanto searchbar per sapere quali filtri sono attivi
 
 show more cambiare funzione + uk che non va
 

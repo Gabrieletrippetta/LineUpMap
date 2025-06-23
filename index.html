@@ -84,22 +84,30 @@
                         <div class="d-flex gap-2 mb-2">
                             <button id="toggle-view-button" class="btn btn-success btn-sm" onclick="toggleView()">List View</button>
                             <button class="btn btn-success btn-sm" onclick="applyFilters()">Search</button>
+                            <button class="btn btn-outline-success btn-sm" onclick="clearAllFilters()">Clear All Filters</button>
                         </div>
 
                     </div>
                     
                     <!-- Centro: Clear all -->
                     <div class="col text-center d-flex flex-column align-items-center justify-content-evenly">
-                        <div class="dropdown mb-3 position-relative" id="selected-filters-dropdown">
-                            <button class="btn btn-primary btn-sm mt-2" onclick="showSelectedFiltersModal()">
-                                Show Selected Filters (<span id="selected-filters-count">0</span>)
-                            </button>
-                            <ul class="dropdown-menu" id="selected-filters-list">
-                                <!-- Filtri selezionati qui -->
-                            </ul>
+                        <div class="mb-3">
+                            <p>
+                                <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#selectedFiltersCollapse" role="button" aria-expanded="false" aria-controls="selectedFiltersCollapse">
+                                    Selected Filters (<span id="selected-filters-count">0</span>)
+                                </a>
+                            </p>
+                            <div class="collapse" id="selectedFiltersCollapse">
+                                <div class="card card-body p-2">
+                                    <ul class="list-group list-group-flush small mb-0 p-0" id="selected-filters-list">
+                                        No filter selected
+                                        <!-- Filtri selezionati qui -->
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
 
-                        <button class="btn btn-outline-success btn-sm mb-2" onclick="clearAllFilters()">Clear All Filters</button>
+
                     </div>
                     
                     <!-- Destra: vuota o per usi futuri -->
@@ -186,7 +194,8 @@
                 <div id="modal-db-list"></div>
             </div>
         </div>
-        
+    
+
 
         
         <script src="assets/script.js"></script>
