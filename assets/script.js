@@ -596,7 +596,7 @@ function showCountryDetailsInPanel(code) {
 
     document.getElementById("toggle-view-button").classList.add("fixed-top");
 
-    panelEntries.forEach((entry) => {
+    panelEntries.forEach((entry, index) => {
         const name = getField(entry, "Name");
         const acronym = getField(entry, "Acronym");
         const description = getField(entry, "Short Description");
@@ -635,6 +635,16 @@ function showCountryDetailsInPanel(code) {
             <b>Starting Year:</b> ${startingYear}<br>
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
+            <b><a href="#" class="toggle-section" data-target="details-${index}">Show detailed information</a></b><br>
+            <div id="details-${index}" class="collapsible-section" style="display:none;">
+            <p>[detailed info placeholder]</p>
+            </div>
+
+            <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
+            <div id="variables-${index}" class="collapsible-section" style="display:none;">
+            <p>[variables placeholder]</p>
+            </div>
+            <hr>
         `;
 
         content.appendChild(entryDiv);
@@ -642,6 +652,21 @@ function showCountryDetailsInPanel(code) {
 
     closeDbModal();
     panel.classList.add("show");
+    document.querySelectorAll(".toggle-section").forEach(btn => {
+        btn.addEventListener("click", e => {
+            e.preventDefault();
+            const targetId = btn.getAttribute("data-target");
+            const target = document.getElementById(targetId);
+
+            const isVisible = target.style.display === "block";
+            target.style.display = isVisible ? "none" : "block";
+
+            btn.textContent = isVisible
+                ? (btn.textContent.includes("detailed") ? "Show detailed information" : "Show dataset variables")
+                : (btn.textContent.includes("detailed") ? "Collapse detailed information" : "Collapse dataset variables");
+        });
+    });
+
 }
 
 
@@ -1431,3 +1456,4 @@ function updateSelectedFiltersDisplay() {
         });
     }
 }
+

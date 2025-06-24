@@ -171,39 +171,96 @@ function applyFilters() {
 }
 
 function showResultsModal(filteredData) {
+    const modal = document.getElementById("db-modal");
+    const modalTitle = document.getElementById("modal-country-title");
+    const modalList = document.getElementById("modal-db-list");
+
+    closeDbModal();  // Pulisce vista precedente
+    document.getElementById("toggle-view-button").classList.remove("fixed-top");
+
     if (filteredData.length === 0) {
-        const modal = document.getElementById("db-modal");
-        const modalTitle = document.getElementById("modal-country-title");
-        const modalList = document.getElementById("modal-db-list");
         modalTitle.textContent = "No datasets found";
         modalList.innerHTML = "<p>No datasets found.</p>";
         modal.classList.add("show");
         return;
     }
 
-    // Raggruppa i risultati per codice ISO2 della nazione
-    const grouped = {};
-    filteredData.forEach(entry => {
-        const countryName = getCountryFromEntry(entry);
-        const countryCode = countryNameToISO2[countryName];
-        if (!countryCode) return;
-        if (!grouped[countryCode]) grouped[countryCode] = [];
-        grouped[countryCode].push(entry);
+    modalTitle.textContent = `${filteredData.length} dataset${filteredData.length !== 1 ? 's' : ''} for the selected filters`;
+    modalList.innerHTML = "";
+
+    filteredData.forEach((entry, index) => {
+        const dbDiv = document.createElement("div");
+        dbDiv.className = "db-entry";
+
+        const name = getField(entry, "Name");
+        const acronym = getField(entry, "Acronym");
+        const description = getField(entry, "Short Description");
+
+        const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
+        const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+        const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
+        const focusList = extractBracketedValues(entry, "Data Collection Focus [");
+
+        const frequency = getField(entry, "Data Collection Frequency");
+        const duration = getField(entry, "Data Collection Duration (Years)");
+        const startingYear = getField(entry, "Starting Year");
+        const endingYear = getField(entry, "Ending Year");
+
+        let sampleLevel = getField(entry, "Sample Level");
+        if (sampleLevel === "Limited to specific regions/areas") {
+            const detail = getField(entry, "Sample Level (Details)");
+            sampleLevel = `${sampleLevel}${detail !== "N/A" ? `: ${detail}` : ""}`;
+        } else if (sampleLevel === "N/A" || sampleLevel === "") {
+            sampleLevel = "N/A";
+        }
+
+        dbDiv.innerHTML = `
+            <b>Name:</b> ${name}<br>
+            <b>Acronym:</b> ${acronym}<br><br>
+            ${description}<br><br>
+
+            <b>Responsible Organization(s):</b> ${responsibleOrgs.join(", ") || "N/A"}<br>
+            <b>Type of Longitudinal Data:</b> ${longitudinalTypes.join(", ") || "N/A"}<br>
+            <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
+            <b>Data Collection Focus:</b> ${focusList.join(", ") || "N/A"}<br>
+            <b>Data Collection Frequency:</b> ${frequency}<br>
+            <b>Data Collection Duration (Years):</b> ${duration}<br>
+            <b>Starting Year:</b> ${startingYear}<br>
+            <b>Ending Year:</b> ${endingYear}<br>
+            <b>Sample Level:</b> ${sampleLevel}<br>
+            <b><a href="#" class="toggle-section" data-target="details-${index}">Show detailed information</a></b><br>
+            <div id="details-${index}" class="collapsible-section" style="display:none;">
+                <p>[detailed info placeholder]</p>
+            </div>
+
+            <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
+            <div id="variables-${index}" class="collapsible-section" style="display:none;">
+                <p>[variables placeholder]</p>
+            </div>
+
+        `;
+
+        modalList.appendChild(dbDiv);
     });
 
-    // Prendi il primo paese nei risultati
-    const firstCode = Object.keys(grouped)[0];
-    if (!firstCode) return;
+    modal.classList.add("show");
+    document.querySelectorAll(".toggle-section").forEach(btn => {
+        btn.addEventListener("click", e => {
+            e.preventDefault();
+            const targetId = btn.getAttribute("data-target");
+            const target = document.getElementById(targetId);
 
-    // Salva i risultati nel countryEntryStore
-    countryEntryStore[firstCode] = grouped[firstCode];
+            const isVisible = target.style.display === "block";
+            target.style.display = isVisible ? "none" : "block";
 
-    // Chiudi il modale se era aperto
-    closeDbModal();
+            btn.textContent = isVisible
+                ? (btn.textContent.includes("detailed") ? "Show detailed information" : "Show dataset variables")
+                : (btn.textContent.includes("detailed") ? "Collapse detailed information" : "Collapse dataset variables");
+        });
+    });
 
-    // Mostra i risultati nel pannello laterale usando la funzione principale
-    showCountryDetailsInPanel(firstCode);
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('button.btn-success').forEach(btn => {
@@ -212,3 +269,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
