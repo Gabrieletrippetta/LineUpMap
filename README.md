@@ -5,7 +5,7 @@ FATTO! Finestra accanto searchbar per sapere quali filtri sono attivi
 show more cambiare funzione + uk che non va
 
 
-
+FATTO!
 basic information
 
 detailed information per 1
@@ -13,7 +13,7 @@ detailed information per 1
 dataset variables per 2
 
 
-
+fatto!
 student followed no info --> togliere
 
 filtri school grades!

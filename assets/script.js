@@ -217,20 +217,54 @@ function groupDataByCountry(data) {
     Object.keys(countries).forEach(name => grouped[name] = []);
 
     data.forEach(row => {
-        const match = row["Country"]?.match(/^([A-Z\/]+)\s?\(/);  // estrae "UK" da "UK (United Kingdom)"
-        if (match) {
-            const iso2 = match[1];
-            const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2 || iso2.includes(code) || code.includes(iso2))?.[0];
+        let matchedCountry = null;
 
-            if (countryName) {
-                grouped[countryName].push(row);
+        const raw = row["Country"]?.trim();
+
+        // 1. Casi speciali noti
+        if (raw === "UK (England, Wales, Scotland, Northern Ireland)") {
+            matchedCountry = "United Kingdom";
+        }
+
+        // 2. Altri casi: estrai ISO2 code come "UK"
+        if (!matchedCountry) {
+            const isoMatch = raw?.match(/^([A-Z\/]+)\s?\(/);
+            if (isoMatch) {
+                let iso2 = isoMatch[1];
+
+                // 🔁 correzione: normalizza UK → GB
+                if (iso2 === "UK") iso2 = "GB";
+
+                matchedCountry = Object.entries(countryNameToISO2).find(([name, code]) =>
+                    code === iso2 || iso2.includes(code) || code.includes(iso2)
+                )?.[0];
             }
+        }
+        console.log("Righe UK:", grouped["United Kingdom"]?.length);
+
+        // 3. Oppure estrai nome tra parentesi e vedi se corrisponde
+        if (!matchedCountry) {
+            const nameMatch = raw?.match(/\(([^)]+)\)/);
+            if (nameMatch && Object.keys(countries).includes(nameMatch[1])) {
+                matchedCountry = nameMatch[1];
+            }
+        }
+
+        // 4. Oppure prova direttamente tutto il campo
+        if (!matchedCountry && Object.keys(countries).includes(raw)) {
+            matchedCountry = raw;
+        }
+
+        // 5. Inserisci se trovato
+        if (matchedCountry && grouped[matchedCountry]) {
+            grouped[matchedCountry].push(row);
+        } else if (!matchedCountry) {
+            console.warn("Nessun paese trovato per:", raw);
         }
     });
 
     return grouped;
 }
-
 
 const countryEntryStore = {};  // Variabile globale
 
@@ -586,12 +620,22 @@ modal.classList.add("show");
 // SHOW ALL DATABASES PANEL
 
 function showCountryDetailsInPanel(code) {
-    const panelEntries = countryEntryStore[code] || [];
+    const decodedCode = decodeURIComponent(code);
+    let normalizedCode = decodedCode;
+
+    // Normalizza eventuali sinonimi noti
+    if (decodedCode === "UK" || decodedCode.includes("England")) {
+        normalizedCode = "United Kingdom";
+    }
+
+    const panelEntries = countryEntryStore[normalizedCode] || [];
     const panel = document.getElementById("db-modal");
     const title = document.getElementById("modal-country-title");
     const content = document.getElementById("modal-db-list");
 
-    title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : ''} in ${code}`;
+    const readableCode = decodeURIComponent(code);
+    title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : ''} in ${readableCode}`;
+
     content.innerHTML = "";
 
     document.getElementById("toggle-view-button").classList.add("fixed-top");
@@ -610,6 +654,158 @@ function showCountryDetailsInPanel(code) {
         const duration = getField(entry, "Data Collection Duration (Years)");
         const startingYear = getField(entry, "Starting Year");
         const endingYear = getField(entry, "Ending Year");
+
+        const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
+        const includedGrades = extractBracketedValues(entry, "School Grades Included [");
+        const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
+        const afterSchool = getField(entry, "Students Followed After School Education")
+        
+        const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
+        const measureTypes = extractBracketedValues(entry, "Measure Type [");
+        const adminMethod = getField(entry, "Administration Method");
+
+        const sampleTypes = extractBracketedValues(entry, "Sample Type [");
+        const samplingCriteria = getField(entry, "Sampling Weights/Criteria");
+        const sampleSize = getField(entry, "Average Sample Size x Wave");
+        const sampleUnits = extractBracketedValues(entry, "Sample Unit [");
+
+        const linkability = extractBracketedValues(entry, "Data Linkability At Individual Level [");
+        const linkabilityRaw = getField(entry, "Data Linkability At Individual Level");
+
+        const microdata = getField(entry, "Access to Micro Data");
+        const constraints = getField(entry, "Constraints for Data Download and Management");
+        const website = getField(entry, "Official Website");
+
+        const advancedInfo = `
+        <h3>Detailed information</h3>
+        <div class="accordion" id="advancedInfo-${index}">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">1. School Grades</button>
+                </h2>
+                <div id="school-${index}" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <p><strong>ECEC:</strong> ${ecec}</p>
+                        <p><strong>Included Grades:</strong></p>
+                        <ul>${includedGrades.map(g => `<li>${g}</li>`).join("") || "<li>None</li>"}</ul>
+                        <p><strong>Primary & Secondary:</strong> ${primarySecondary}</p>
+                        <p><strong>After School:</strong> ${afterSchool}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">2. Students’ Skills and Achievement</button>
+                </h2>
+                <div id="skills-${index}" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <p><strong>Skills Analysed:</strong> ${skills.join(", ") || "N/A"}</p>
+                        <p><strong>Measure Types:</strong> ${measureTypes.join(", ") || "N/A"}</p>
+                        <p><strong>Administration Method:</strong> ${adminMethod}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">3. Sample</button>
+                </h2>
+                <div id="sample-${index}" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <p><strong>Sample Types:</strong> ${sampleTypes.join(", ") || "N/A"}</p>
+                        ${sampleTypes.some(type => ["Non-Random Students’ Sample", "Other"].includes(type)) ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
+                        <p><strong>Avg Sample Size x Wave:</strong> ${sampleSize}</p>
+                        <p><strong>Sample Units:</strong> ${sampleUnits.join(", ") || "N/A"}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">4. Linkability</button>
+                </h2>
+                <div id="linkability-${index}" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <p><strong>Linkability:</strong> ${linkabilityRaw}</p>
+                        <p><strong>Details:</strong> ${linkability.join(", ") || "N/A"}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">5. Accessibility</button>
+                </h2>
+                <div id="accessibility-${index}" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <p><strong>Access to Microdata:</strong> ${microdata}</p>
+                        <p><strong>Constraints:</strong> ${constraints}</p>
+                        <p><strong>Website:</strong> <a href="${website}" target="_blank">${website}</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+        const variablesInfo = (entry) => {
+        const sections = {
+            "Students’ Information": [
+                "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country", "Student Specific Birth Country",
+                "Student Town of Residence", "Student Province of Residence", "Student Region of Residence", "Student Belonging to a Recognised Ethnic Minority",
+                "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments", "Student Physical Impairments",
+                "Student School Attitude or Motivation", "Student Assigned Teacher Grades", "Student Allowance/Scholarship", "Student Information Type"
+            ],
+            "Household’s Information": [
+                "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status", "Parental Occupation", "Parental Education",
+                "Parental Education Level (ISCED)", "Parental Migratory Background", "Parents Age", "Parents Place Of Birth",
+                "Parental Income or Wealth", "Parental Host Country's Language Proficiency", "Number of Books", "Number of Digital Devices",
+                "Ownership of the Apartment/House", "Household Information Type"
+            ],
+            "Teachers’ Information": [
+                "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree", "Teacher Contract Type",
+                "Teacher Information Type", "Teacher Information Linkability"
+            ],
+            "School/Class Information": [
+                "School Geo-Referencing", "School Type", "School Track", "School Size", "Class Size",
+                "School Composition", "Class Composition"
+            ]
+        };
+
+        const createSection = (title, keys) => {
+            const items = keys.map(key => {
+                const val = entry[key];
+                if (val && typeof val === "string" && val.toLowerCase().includes("yes")) {
+                    return `<li><strong>${key}:</strong> ${val}</li>`;
+                }
+                return null;
+            }).filter(Boolean).join("");
+
+            if (!items) return "";
+
+            return `
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-${title.replace(/\W/g, '')}">
+                            ${title}
+                        </button>
+                    </h2>
+                    <div id="collapse-${title.replace(/\W/g, '')}" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <ul>${items}</ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        return `
+            <div class="accordion mt-3" id="variablesAccordion">
+                ${Object.entries(sections).map(([title, keys]) => createSection(title, keys)).join("")}
+            </div>
+        `;
+    };
+
 
         let sampleLevel = getField(entry, "Sample Level");
         if (sampleLevel === "Limited to specific regions/areas") {
@@ -637,12 +833,13 @@ function showCountryDetailsInPanel(code) {
             <b>Sample Level:</b> ${sampleLevel}<br>
             <b><a href="#" class="toggle-section" data-target="details-${index}">Show detailed information</a></b><br>
             <div id="details-${index}" class="collapsible-section" style="display:none;">
-            <p>[detailed info placeholder]</p>
+                ${advancedInfo}
             </div>
 
             <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
             <div id="variables-${index}" class="collapsible-section" style="display:none;">
-            <p>[variables placeholder]</p>
+                <h3>Dataset Variables</h3>
+                ${variablesInfo(entry)}
             </div>
             <hr>
         `;
@@ -669,6 +866,26 @@ function showCountryDetailsInPanel(code) {
 
 }
 
+function getIncludedGrades(entry) {
+    const included = [];
+    Object.keys(entry).forEach(key => {
+        if (key.startsWith("School Grades Included [") && entry[key].trim().toLowerCase() === "yes") {
+        const match = key.match(/\[([^\]]+)\]/);
+        if (match) included.push(match[1]);
+        }
+    });
+    return included;
+}
+
+function stampaCoppieChiaveValore(prefix, entry) {
+    return Object.entries(entry)
+        .filter(([key, val]) => key.startsWith(prefix + " [") && val.trim().toLowerCase() === "yes")
+        .map(([key]) => {
+        const label = key.match(/\[([^\]]+)\]/);
+        return `<p><strong>${label ? label[1] : key}:</strong> Yes</p>`;
+        }).join("");
+    }
+    
 
 function closeDbPanel() {
     document.getElementById("dbpanel").classList.remove("show");
@@ -1410,6 +1627,7 @@ function clearAllFilters() {
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
     updateSelectedFiltersDisplay();
+    closeDbModal();
 }
 
 function showSelectedFiltersModal() {
