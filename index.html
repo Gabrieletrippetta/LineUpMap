@@ -75,6 +75,9 @@
             </div>
                 
             <div id="filter-area">
+                <div>
+                    <button id="toggle-view-button" class="btn btn-success btn-sm mb-4 col-12" onclick="toggleView()">List View</button>
+                </div>
                 <!-- Search bar -->
                 <div class="row align-items-start mb-3">
                     <!-- Sinistra: Search input, List/Search buttons, Filtri selezionati -->
@@ -82,9 +85,8 @@
                         <input type="text" id="search-input" class="form-control mb-2">
 
                         <div class="d-flex gap-2 mb-2">
-                            <button id="toggle-view-button" class="btn btn-success btn-sm" onclick="toggleView()">List View</button>
-                            <button class="btn btn-success btn-sm" onclick="applyFilters()">Search</button>
-                            <button class="btn btn-outline-success btn-sm" onclick="clearAllFilters()">Clear All Filters</button>
+                            <button class="btn btn-success btn-sm col-6" onclick="applyFilters()">Search</button>
+                            <button class="btn btn-outline-success btn-sm col-6" onclick="clearAllFilters()">Clear All Filters</button>
                         </div>
 
                     </div>
