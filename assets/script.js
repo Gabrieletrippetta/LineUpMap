@@ -21,9 +21,9 @@ function getField(entry, ...possibleKeys) {
 // function updateRoleDisplay(role) {
 //     const roleSpan = document.getElementById("current-role");
 //     const roleBox = document.getElementById("role-description-box");
-    
+
 //     console.log("updateRoleDisplay() chiamato con:", role);
-    
+
 //     if (role === "stakeholder") {
 //         roleSpan.innerText = "Educational Stakeholder";
 //         roleBox.innerText = roleDescriptions.stakeholder;
@@ -55,16 +55,16 @@ function getField(entry, ...possibleKeys) {
 function populateCountryFilter() {
     const container = document.getElementById("main-filter-labels");
     const countries = new Set();
-
+    
     mappingData.forEach(entry => {
         const match = entry["Country"]?.match(/\(([^)]+)\)/);
         if (match) countries.add(match[1]);
     });
-
+    
     const html = [...countries].sort().map(country => {
         return `<label><input type="checkbox" name="filter-country" value="${country}"> ${country}</label>`;
     }).join("<br>");
-
+    
     const wrapper = document.createElement("div");
     wrapper.innerHTML = html;
     container.appendChild(wrapper);
@@ -178,28 +178,28 @@ Object.keys(countries).forEach(country => {
 function countEntriesByCountry(data) {
     const counts = {};
     Object.keys(countries).forEach(name => counts[name] = 0);
-
+    
     data.forEach(row => {
         const match = row["Country"]?.match(/^([A-Z\/]+)\s?\(/);
         if (match) {
             const iso2 = match[1];
             const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2 || iso2.includes(code) || code.includes(iso2))?.[0];
-
+            
             if (countryName) {
                 counts[countryName]++;
             }
         }
     });
-
+    
     return counts;
 }
 
 
 // function groupDataByCountry(data) {
 //     const grouped = {};
-    
+
 //     data.forEach(row => {
-//         let rawCountry = row["Country"];
+    //         let rawCountry = row["Country"];
 //         let match = rawCountry && rawCountry.match(/\b[A-Z]{2}\b/);
 //         console.log("match: " + match);
 //         if (match) {
@@ -208,62 +208,62 @@ function countEntriesByCountry(data) {
 //             grouped[code].push(row);  // 👈 passiamo tutto l'oggetto originale
 //         }
 //     });
-    
+
 //     return grouped;
 // }
 
 function groupDataByCountry(data) {
     const grouped = {};
     Object.keys(countries).forEach(name => grouped[name] = []);
-
+    
     data.forEach(row => {
         let matchedCountry = null;
-
+        
         const raw = row["Country"]?.trim();
-
+        
         // 1. Casi speciali noti
         if (raw === "UK (England, Wales, Scotland, Northern Ireland)") {
             matchedCountry = "United Kingdom";
         }
-
+        
         // 2. Altri casi: estrai ISO2 code come "UK"
         if (!matchedCountry) {
             const isoMatch = raw?.match(/^([A-Z\/]+)\s?\(/);
             if (isoMatch) {
                 let iso2 = isoMatch[1];
-
+                
                 // 🔁 correzione: normalizza UK → GB
                 if (iso2 === "UK") iso2 = "GB";
-
+                
                 matchedCountry = Object.entries(countryNameToISO2).find(([name, code]) =>
                     code === iso2 || iso2.includes(code) || code.includes(iso2)
-                )?.[0];
-            }
+            )?.[0];
         }
-        console.log("Righe UK:", grouped["United Kingdom"]?.length);
-
-        // 3. Oppure estrai nome tra parentesi e vedi se corrisponde
-        if (!matchedCountry) {
-            const nameMatch = raw?.match(/\(([^)]+)\)/);
-            if (nameMatch && Object.keys(countries).includes(nameMatch[1])) {
-                matchedCountry = nameMatch[1];
-            }
+    }
+    console.log("Righe UK:", grouped["United Kingdom"]?.length);
+    
+    // 3. Oppure estrai nome tra parentesi e vedi se corrisponde
+    if (!matchedCountry) {
+        const nameMatch = raw?.match(/\(([^)]+)\)/);
+        if (nameMatch && Object.keys(countries).includes(nameMatch[1])) {
+            matchedCountry = nameMatch[1];
         }
+    }
+    
+    // 4. Oppure prova direttamente tutto il campo
+    if (!matchedCountry && Object.keys(countries).includes(raw)) {
+        matchedCountry = raw;
+    }
+    
+    // 5. Inserisci se trovato
+    if (matchedCountry && grouped[matchedCountry]) {
+        grouped[matchedCountry].push(row);
+    } else if (!matchedCountry) {
+        console.warn("Nessun paese trovato per:", raw);
+    }
+});
 
-        // 4. Oppure prova direttamente tutto il campo
-        if (!matchedCountry && Object.keys(countries).includes(raw)) {
-            matchedCountry = raw;
-        }
-
-        // 5. Inserisci se trovato
-        if (matchedCountry && grouped[matchedCountry]) {
-            grouped[matchedCountry].push(row);
-        } else if (!matchedCountry) {
-            console.warn("Nessun paese trovato per:", raw);
-        }
-    });
-
-    return grouped;
+return grouped;
 }
 
 const countryEntryStore = {};  // Variabile globale
@@ -453,7 +453,7 @@ function openDbModal(countryCode) {
     container.innerHTML = "";
     
     document.getElementById("toggle-view-button").classList.add("fixed-top");
-
+    
     const role = localStorage.getItem("userRole");
     console.log("Ruolo scelto: ", role);
     
@@ -528,11 +528,11 @@ function openDbModal(countryCode) {
             .filter(([key, val]) =>
                 key.startsWith("Access to Micro-Data") &&
             typeof val === "string"
-            )
-            .map(([_, val]) => {
-                const match = val.match(/https?:\/\/[^\s"]+/);
-                return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
-            });
+        )
+        .map(([_, val]) => {
+            const match = val.match(/https?:\/\/[^\s"]+/);
+            return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
+        });
         
         if (microdataLinks.length > 0) {
             microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
@@ -609,7 +609,7 @@ function openDbModal(countryCode) {
             `;
     }
     
-
+    
     container.appendChild(dbDiv);
 });
 
@@ -622,39 +622,39 @@ modal.classList.add("show");
 function showCountryDetailsInPanel(code) {
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
-
+    
     // Normalizza eventuali sinonimi noti
     if (decodedCode === "UK" || decodedCode.includes("England")) {
         normalizedCode = "United Kingdom";
     }
-
+    
     const panelEntries = countryEntryStore[normalizedCode] || [];
     const panel = document.getElementById("db-modal");
     const title = document.getElementById("modal-country-title");
     const content = document.getElementById("modal-db-list");
-
+    
     const readableCode = decodeURIComponent(code);
     title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : ''} in ${readableCode}`;
-
+    
     content.innerHTML = "";
-
+    
     document.getElementById("toggle-view-button").classList.add("fixed-top");
-
+    
     panelEntries.forEach((entry, index) => {
         const name = getField(entry, "Name");
         const acronym = getField(entry, "Acronym");
         const description = getField(entry, "Short Description");
-
+        
         const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
         const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
         const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
         const focusList = extractBracketedValues(entry, "Data Collection Focus [");
-
+        
         const frequency = getField(entry, "Data Collection Frequency");
         const duration = getField(entry, "Data Collection Duration (Years)");
         const startingYear = getField(entry, "Starting Year");
         const endingYear = getField(entry, "Ending Year");
-
+        
         const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
         const includedGrades = extractBracketedValues(entry, "School Grades Included [");
         const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
@@ -663,19 +663,19 @@ function showCountryDetailsInPanel(code) {
         const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
         const measureTypes = extractBracketedValues(entry, "Measure Type [");
         const adminMethod = getField(entry, "Administration Method");
-
+        
         const sampleTypes = extractBracketedValues(entry, "Sample Type [");
         const samplingCriteria = getField(entry, "Sampling Weights/Criteria");
         const sampleSize = getField(entry, "Average Sample Size x Wave");
         const sampleUnits = extractBracketedValues(entry, "Sample Unit [");
-
+        
         const linkability = extractBracketedValues(entry, "Data Linkability At Individual Level [");
         const linkabilityRaw = getField(entry, "Data Linkability At Individual Level");
-
+        
         const microdata = getField(entry, "Access to Micro Data");
         const constraints = getField(entry, "Constraints for Data Download and Management");
         const website = getField(entry, "Official Website");
-
+        
         const advancedInfo = `
         <h3>Detailed information</h3>
         <div class="accordion" id="advancedInfo-${index}">
@@ -693,7 +693,7 @@ function showCountryDetailsInPanel(code) {
                     </div>
                 </div>
             </div>
-
+        
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">2. Students’ Skills and Achievement</button>
@@ -706,7 +706,7 @@ function showCountryDetailsInPanel(code) {
                     </div>
                 </div>
             </div>
-
+        
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">3. Sample</button>
@@ -720,7 +720,7 @@ function showCountryDetailsInPanel(code) {
                     </div>
                 </div>
             </div>
-
+        
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">4. Linkability</button>
@@ -732,7 +732,7 @@ function showCountryDetailsInPanel(code) {
                     </div>
                 </div>
             </div>
-
+        
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">5. Accessibility</button>
@@ -746,43 +746,45 @@ function showCountryDetailsInPanel(code) {
                 </div>
             </div>
         </div>`;
-
+        
         const variablesInfo = (entry) => {
-        const sections = {
-            "Students’ Information": [
-                "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country", "Student Specific Birth Country",
-                "Student Town of Residence", "Student Province of Residence", "Student Region of Residence", "Student Belonging to a Recognised Ethnic Minority",
-                "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments", "Student Physical Impairments",
-                "Student School Attitude or Motivation", "Student Assigned Teacher Grades", "Student Allowance/Scholarship", "Student Information Type"
-            ],
-            "Household’s Information": [
-                "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status", "Parental Occupation", "Parental Education",
-                "Parental Education Level (ISCED)", "Parental Migratory Background", "Parents Age", "Parents Place Of Birth",
-                "Parental Income or Wealth", "Parental Host Country's Language Proficiency", "Number of Books", "Number of Digital Devices",
-                "Ownership of the Apartment/House", "Household Information Type"
-            ],
-            "Teachers’ Information": [
-                "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree", "Teacher Contract Type",
-                "Teacher Information Type", "Teacher Information Linkability"
-            ],
-            "School/Class Information": [
-                "School Geo-Referencing", "School Type", "School Track", "School Size", "Class Size",
-                "School Composition", "Class Composition"
-            ]
-        };
-
-        const createSection = (title, keys) => {
-            const items = keys.map(key => {
-                const val = entry[key];
-                if (val && typeof val === "string" && val.toLowerCase().includes("yes")) {
-                    return `<li><strong>${key}:</strong> ${val}</li>`;
-                }
-                return null;
-            }).filter(Boolean).join("");
-
-            if (!items) return "";
-
-            return `
+            const sections = {
+                "Students’ Information": [
+                    "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country", "Student Specific Birth Country",
+                    "Student Town of Residence", "Student Province of Residence", "Student Region of Residence", "Student Belonging to a Recognised Ethnic Minority",
+                    "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments", "Student Physical Impairments",
+                    "Student School Attitude or Motivation", "Student Assigned Teacher Grades", "Student Allowance/Scholarship", 
+                    // "Student Information Type"
+                ],
+                "Household’s Information": [
+                    "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status", "Parental Occupation", "Parental Education",
+                    "Parental Education Level (ISCED)", "Parental Migratory Background", "Parents Age", "Parents Place Of Birth",
+                    "Parental Income or Wealth", "Parental Host Country's Language Proficiency", "Number of Books", "Number of Digital Devices",
+                    "Ownership of the Apartment/House", 
+                    // "Household Information Type"
+                ],
+                "Teachers’ Information": [
+                    "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree", "Teacher Contract Type",
+                    // "Teacher Information Type", "Teacher Information Linkability"
+                ],
+                "School/Class Information": [
+                    "School Geo-Referencing", "School Type", "School Track", "School Size", "Class Size",
+                    "School Composition", "Class Composition"
+                ]
+            };
+            
+            const createSection = (title, keys) => {
+                const items = keys.map(key => {
+                    const val = entry[key];
+                    if (val && typeof val === "string" && val.toLowerCase().includes("yes")) {
+                        return `<li><strong>${key}:</strong> ${val}</li>`;
+                    }
+                    return null;
+                }).filter(Boolean).join("");
+                
+                if (!items) return "";
+                
+                return `
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -797,16 +799,16 @@ function showCountryDetailsInPanel(code) {
                     </div>
                 </div>
             `;
-        };
-
-        return `
+            };
+            
+            return `
             <div class="accordion mt-3" id="variablesAccordion">
                 ${Object.entries(sections).map(([title, keys]) => createSection(title, keys)).join("")}
             </div>
         `;
-    };
-
-
+        };
+        
+        
         let sampleLevel = getField(entry, "Sample Level");
         if (sampleLevel === "Limited to specific regions/areas") {
             const detail = getField(entry, "Sample Level (Details)");
@@ -814,14 +816,14 @@ function showCountryDetailsInPanel(code) {
         } else if (sampleLevel === "N/A" || sampleLevel === "") {
             sampleLevel = "N/A";
         }
-
-
+        
+        
         const entryDiv = document.createElement("div");
         entryDiv.innerHTML = `
             <b>Name:</b> ${name}<br>
             <b>Acronym:</b> ${acronym}<br><br>
             ${description}<br><br>
-
+        
             <b>Responsible Organization(s):</b> ${responsibleOrgs.join(", ") || "N/A"}<br>
             <b>Type of Longitudinal Data:</b> ${longitudinalTypes.join(", ") || "N/A"}<br>
             <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
@@ -835,7 +837,7 @@ function showCountryDetailsInPanel(code) {
             <div id="details-${index}" class="collapsible-section" style="display:none;">
                 ${advancedInfo}
             </div>
-
+        
             <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
             <div id="variables-${index}" class="collapsible-section" style="display:none;">
                 <h3>Dataset Variables</h3>
@@ -843,10 +845,10 @@ function showCountryDetailsInPanel(code) {
             </div>
             <hr>
         `;
-
+        
         content.appendChild(entryDiv);
     });
-
+    
     closeDbModal();
     panel.classList.add("show");
     document.querySelectorAll(".toggle-section").forEach(btn => {
@@ -854,24 +856,24 @@ function showCountryDetailsInPanel(code) {
             e.preventDefault();
             const targetId = btn.getAttribute("data-target");
             const target = document.getElementById(targetId);
-
+            
             const isVisible = target.style.display === "block";
             target.style.display = isVisible ? "none" : "block";
-
+            
             btn.textContent = isVisible
-                ? (btn.textContent.includes("detailed") ? "Show detailed information" : "Show dataset variables")
-                : (btn.textContent.includes("detailed") ? "Collapse detailed information" : "Collapse dataset variables");
+            ? (btn.textContent.includes("detailed") ? "Show detailed information" : "Show dataset variables")
+            : (btn.textContent.includes("detailed") ? "Collapse detailed information" : "Collapse dataset variables");
         });
     });
-
+    
 }
 
 function getIncludedGrades(entry) {
     const included = [];
     Object.keys(entry).forEach(key => {
         if (key.startsWith("School Grades Included [") && entry[key].trim().toLowerCase() === "yes") {
-        const match = key.match(/\[([^\]]+)\]/);
-        if (match) included.push(match[1]);
+            const match = key.match(/\[([^\]]+)\]/);
+            if (match) included.push(match[1]);
         }
     });
     return included;
@@ -879,13 +881,13 @@ function getIncludedGrades(entry) {
 
 function stampaCoppieChiaveValore(prefix, entry) {
     return Object.entries(entry)
-        .filter(([key, val]) => key.startsWith(prefix + " [") && val.trim().toLowerCase() === "yes")
-        .map(([key]) => {
+    .filter(([key, val]) => key.startsWith(prefix + " [") && val.trim().toLowerCase() === "yes")
+    .map(([key]) => {
         const label = key.match(/\[([^\]]+)\]/);
         return `<p><strong>${label ? label[1] : key}:</strong> Yes</p>`;
-        }).join("");
-    }
-    
+    }).join("");
+}
+
 
 function closeDbPanel() {
     document.getElementById("dbpanel").classList.remove("show");
@@ -910,17 +912,17 @@ function closeDbModal() {
 function openSingleDbModal(code, index) {
     const entry = countryEntryStore[code]?.[index];
     if (!entry) return;
-
+    
     const modal = document.getElementById("db-modal");
     const title = document.getElementById("modal-country-title");
     const container = document.getElementById("modal-db-list");
-
+    
     title.textContent = `Detailed Info - ${getField(entry, "Name")}`;
     container.innerHTML = "";
-
+    
     const dbDiv = document.createElement("div");
     dbDiv.className = "db-entry";
-
+    
     const role = localStorage.getItem("userRole");
     const name = getField(entry, "Name");
     const acronym = getField(entry, "Acronym");
@@ -928,62 +930,62 @@ function openSingleDbModal(code, index) {
     const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
     const startingYear = getField(entry, "Starting Year ");
     const endingYear = getField(entry, "Ending Year ");
-
+    
     const purposes = Object.entries(entry)
-        .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
-        .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
-        .join(", ") || "N/A";
-
+    .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
+    .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
+    .join(", ") || "N/A";
+    
     const sampleTypes = Object.entries(entry)
-        .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
-        .map(([_, val]) => val)
-        .join(", ") || "N/A";
-
+    .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
+    .map(([_, val]) => val)
+    .join(", ") || "N/A";
+    
     let access = getField(entry, "Data Accessibility");
     if (access === "Other") access = getField(entry, "Data Accessibility [Other]");
     if (!access || access === "-") access = "N/A";
-
+    
     if (role === "researcher") {
         const sampleLevel = getField(entry, "Sample Level");
-
+        
         const skills = Object.entries(entry)
-            .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
-            .map(([k, v]) => {
-                if (k.includes("Other Skills")) {
-                    const other = getField(entry, "Type of Skills Analysed [Other Skills]");
-                    return other !== "N/A" ? other : v;
-                }
-                return v;
-            }).join(", ") || "N/A";
-
+        .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
+        .map(([k, v]) => {
+            if (k.includes("Other Skills")) {
+                const other = getField(entry, "Type of Skills Analysed [Other Skills]");
+                return other !== "N/A" ? other : v;
+            }
+            return v;
+        }).join(", ") || "N/A";
+        
         let assessment = getField(entry, "Assessment Type");
         if (assessment === "Other") {
             assessment = getField(entry, "Assessment Type [Other]");
         }
-
+        
         const linkability = Object.entries(entry)
-            .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
-            .map(([_, v]) => v)
-            .join(", ") || "N/A";
-
+        .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
+        .map(([_, v]) => v)
+        .join(", ") || "N/A";
+        
         let microdataDisplay = "";
         const microdataLinks = Object.entries(entry)
-            .filter(([key, val]) => key.startsWith("Access to Micro-Data") && typeof val === "string")
-            .map(([_, val]) => {
-                const match = val.match(/https?:\/\/[^\s"]+/);
-                return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
-            });
-
+        .filter(([key, val]) => key.startsWith("Access to Micro-Data") && typeof val === "string")
+        .map(([_, val]) => {
+            const match = val.match(/https?:\/\/[^\s"]+/);
+            return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
+        });
+        
         if (microdataLinks.length > 0) {
             microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
         }
-
+        
         let accessLabel = "Access to Micro-Data";
         let accessDisplay = "N/A";
-
+        
         let rawAccess = getField(entry, "Data Accessibility");
         if (rawAccess === "Other") rawAccess = getField(entry, "Data Accessibility [Other]");
-
+        
         if (rawAccess && rawAccess.includes("http")) {
             const match = rawAccess.match(/https?:\/\/[^\s"]+/);
             if (match) {
@@ -995,14 +997,14 @@ function openSingleDbModal(code, index) {
             }
         } else {
             const microdata = Object.entries(entry)
-                .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
-                .map(([_, v]) => v)
-                .join(", ") || "N/A";
+            .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
+            .map(([_, v]) => v)
+            .join(", ") || "N/A";
             accessDisplay = microdata;
         }
-
+        
         const variables = "";
-
+        
         dbDiv.innerHTML = `
             <b>Name:</b> ${name}<br>
             <b>Acronym:</b> ${acronym}<br>
@@ -1035,7 +1037,7 @@ function openSingleDbModal(code, index) {
             <b>Access Information:</b> ${access}
         `;
     }
-
+    
     container.appendChild(dbDiv);
     modal.classList.add("show");
 }
@@ -1087,15 +1089,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const contactTab = document.getElementById('contact-tab');
     const contactPanel = document.getElementById('contact-panel');
     const closePanel = document.getElementById('close-panel');
-
+    
     contactTab.addEventListener('click', function () {
         contactPanel.classList.add('show');
     });
-
+    
     closePanel.addEventListener('click', function () {
         contactPanel.classList.remove('show');
     });
-
+    
 });
 
 document.querySelectorAll('.dropdown-toggle').forEach(button => {
@@ -1103,7 +1105,7 @@ document.querySelectorAll('.dropdown-toggle').forEach(button => {
         const parent = this.nextElementSibling;
         parent.classList.toggle('show');
         
-
+        
         // Chiude gli altri dropdown
         document.querySelectorAll('.custom-dropdown').forEach(drop => {
             if (drop !== parent) drop.classList.remove('show');
@@ -1136,7 +1138,7 @@ function toggleView() {
     const mapDiv = document.getElementById("map");
     const listDiv = document.getElementById("list-view");
     const button = document.getElementById("toggle-view-button");
-
+    
     if (mapDiv.style.display !== "none") {
         // Passa alla vista lista
         mapDiv.style.display = "none";
@@ -1156,31 +1158,31 @@ function toggleView() {
 
 function renderListView() {
     if (!mappingData) return;
-
+    
     const grouped = groupDataByCountry(mappingData);
     const listDiv = document.getElementById("list-view");
     listDiv.innerHTML = ""; // Pulisce prima
-
+    
     Object.keys(grouped).forEach(country => {
         const entries = grouped[country];
         if (entries.length === 0) return;
-
+        
         const section = document.createElement("section");
         section.classList.add("mb-5");
-
+        
         // Titolo paese
         const heading = document.createElement("h3");
         heading.textContent = `${country} (${entries.length})`;
         section.appendChild(heading);
-
+        
         // Contenitore riga
         const row = document.createElement("div");
         row.className = "row";
-
+        
         entries.forEach((entry, index) => {
             const col = document.createElement("div");
             col.className = "col-6 mb-4";
-
+            
             col.innerHTML = `
                 <div class="card h-100 shadow-sm d-flex flex-column">
                     <div class="card-body d-flex flex-column">
@@ -1191,10 +1193,10 @@ function renderListView() {
                     </div>
                 </div>
             `;
-
+            
             row.appendChild(col);
         });
-
+        
         section.appendChild(row);
         listDiv.appendChild(section);
     });
@@ -1207,9 +1209,9 @@ function renderListView() {
 //     const menu = document.getElementById("main-filters-menu");
 
 //     const toggleButton = dropdown.querySelector(".dropdown-toggle");
-    
+
 //     toggleButton.addEventListener("click", () => {
-//         if (menu.style.display === "flex") {
+    //         if (menu.style.display === "flex") {
 //             menu.style.display = "none";
 //         } else {
 //             menu.style.display = "flex";
@@ -1225,7 +1227,7 @@ function renderListView() {
 //         fetch("assets/mapping_data.json")
 //             .then(res => res.json())
 //             .then(json => {
-//                 window.mappingData = json;
+    //                 window.mappingData = json;
 //                 createMainFilterOptions(json);
 //                 setupMainFilterDropdownToggle();
 //             });
@@ -1277,7 +1279,7 @@ function extractGrades(data) {
         "First", "Second", "Third", "Fourth", "Fifth", "Sixth",
         "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth"
     ];
-
+    
     const values = new Set();
     data.forEach(entry => {
         Object.keys(entry).forEach(key => {
@@ -1292,12 +1294,12 @@ function extractGrades(data) {
 
 function extractSubOptionsIfMainIsYes(data, baseFieldName) {
     const values = new Set();
-
+    
     data.forEach(entry => {
         const mainKey = Object.keys(entry).find(k =>
             k.trim().toLowerCase() === baseFieldName.trim().toLowerCase()
         );
-
+        
         if (mainKey && entry[mainKey]?.toLowerCase() === "yes") {
             Object.keys(entry).forEach(key => {
                 // Tolgo lo spazio superfluo qui ↓
@@ -1316,7 +1318,7 @@ function extractSubOptionsIfMainIsYes(data, baseFieldName) {
             });
         }
     });
-
+    
     return Array.from(values).sort();
 }
 
@@ -1324,7 +1326,7 @@ function extractSubOptionsIfMainIsYes(data, baseFieldName) {
 function setupMainFilterInteraction(data) {
     const container = document.getElementById("main-filter-labels");
     container.innerHTML = ""; // Pulisce il contenuto esistente
-
+    
     const filters = {
         "Country": Object.keys(groupDataByCountry(data)),
         "Type of Longitudinal Data": extractByPrefix(data, "Type of Longitudinal Data ["),
@@ -1334,21 +1336,21 @@ function setupMainFilterInteraction(data) {
         "Sample Level": extractUniqueValues(data, "Sample Level"),
         "Access to Micro Data": extractUniqueValues(data, "Access to Micro Data")
     };
-
+    
     Object.entries(filters).forEach(([label, options]) => {
         const wrapper = document.createElement("div");
         wrapper.className = "filter-group";
-
+        
         const toggle = document.createElement("div");
         toggle.className = "filter-toggle";
         toggle.textContent = label;
         toggle.addEventListener("click", () => {
             wrapper.classList.toggle("expanded");
         });
-
+        
         const content = document.createElement("div");
         content.className = "filter-options";
-
+        
         if (label === "Country") {
             const half = Math.ceil(options.length / 2);
             const col1 = document.createElement("div");
@@ -1357,22 +1359,22 @@ function setupMainFilterInteraction(data) {
             col2.className = "filter-column";
             const row = document.createElement("div");
             row.className = "filter-row";
-
+            
             options.forEach((opt, i) => {
                 const checkbox = createCheckbox(label, opt);
                 if (i < half) col1.appendChild(checkbox);
                 else col2.appendChild(checkbox);
             });
-
+            
             row.appendChild(col1);
             row.appendChild(col2);
             content.appendChild(row);
-        // } else if (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(label)) {
-        //     // Usa radio button
-        //     options.forEach(opt => {
-        //         const radio = createCheckbox(label, opt, true); // Passa true per radio
-        //         content.appendChild(radio);
-        //     });
+            // } else if (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(label)) {
+            //     // Usa radio button
+            //     options.forEach(opt => {
+                //         const radio = createCheckbox(label, opt, true); // Passa true per radio
+            //         content.appendChild(radio);
+            //     });
         } else {
             // Tutti gli altri filtri usano checkbox
             options.forEach(opt => {
@@ -1380,7 +1382,7 @@ function setupMainFilterInteraction(data) {
                 content.appendChild(checkbox);
             });
         }
-
+        
         
         wrapper.appendChild(toggle);
         wrapper.appendChild(content);
@@ -1388,16 +1390,16 @@ function setupMainFilterInteraction(data) {
         
         // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             //     cb.addEventListener("change", applyFilters);
-            // });
-        });
-
-
+        // });
+    });
+    
+    
 }
 
 function setupAdvancedFilterInteraction(data) {
     const container = document.getElementById("advanced-filter-labels");
     container.innerHTML = ""; // Pulisce il contenuto esistente
-
+    
     const filters = {
         "School Grades Included": extractGrades(data),
         "Information on ECEC or Pre-Primary Education": extractUniqueValues(data, "Information on ECEC or Pre-Primary Education"),
@@ -1408,21 +1410,21 @@ function setupAdvancedFilterInteraction(data) {
         "Sample Unit": extractByPrefix(data, "Sample Unit ["),
         "Data Linkability At Individual Level": extractSubOptionsIfMainIsYes(data, "Data Linkability At Individual Level")
     };
-
+    
     Object.entries(filters).forEach(([label, options]) => {
         const wrapper = document.createElement("div");
         wrapper.className = "filter-group";
-
+        
         const toggle = document.createElement("div");
         toggle.className = "filter-toggle";
         toggle.textContent = label;
         toggle.addEventListener("click", () => {
             wrapper.classList.toggle("expanded");
         });
-
+        
         const content = document.createElement("div");
         content.className = "filter-options";
-
+        
         if (label.toLowerCase().includes("school grades")) {
             const half = Math.ceil(options.length / 2);
             const col1 = document.createElement("div");
@@ -1431,13 +1433,13 @@ function setupAdvancedFilterInteraction(data) {
             col2.className = "filter-column";
             const row = document.createElement("div");
             row.className = "filter-row";
-
+            
             options.forEach((opt, i) => {
                 const checkbox = createCheckbox(label, opt);
                 if (i < half) col1.appendChild(checkbox);
                 else col2.appendChild(checkbox);
             });
-
+            
             row.appendChild(col1);
             row.appendChild(col2);
             content.appendChild(row);
@@ -1448,7 +1450,7 @@ function setupAdvancedFilterInteraction(data) {
                 content.appendChild(checkbox);
             });
         }
-
+        
         
         wrapper.appendChild(toggle);
         wrapper.appendChild(content);
@@ -1456,131 +1458,95 @@ function setupAdvancedFilterInteraction(data) {
         
         // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             //     cb.addEventListener("change", applyFilters);
-            // });
-        });
-
-
+        // });
+    });
+    
+    
 }
 
 function setupDataVariablesInteraction(data) {
-    const container = document.getElementById("data-variables-labels");
-    container.innerHTML = ""; // pulisce il contenuto esistente
-
-    const groupedFields = {
+    const sections = {
         "Students' Information": [
-            { label: "Student Gender", value: extractUniqueValues(data, "Student Gender") },
-            { label: "Student Age", value: extractUniqueValues(data, "Student Age") },
-            { label: "Student Citizenship", value: extractUniqueValues(data, "Student Citizenship") },
-            { label: "Student Foreign Birth Country", value: extractUniqueValues(data, "Student Foreign Birth Country") },
-            { label: "Student Specific Birth Country", value: extractUniqueValues(data, "Student Specific Birth Country") },
-            { label: "Student Town of Residence", value: extractUniqueValues(data, "Student Town of Residence") },
-            { label: "Student Province of Residence", value: extractUniqueValues(data, "Student Province of Residence") },
-            { label: "Student Region of Residence", value: extractUniqueValues(data, "Student Region of Residence") },
-            { label: "Student Belonging to a Recognized Ethnic Minority", value: extractUniqueValues(data, "Student Belonging to a Recognized Ethnic Minority") },
-            { label: "Student ECEC Attendance", value: extractUniqueValues(data, "Student ECEC Attendance") },
-            { label: "Student Previous Grade Retention", value: extractUniqueValues(data, "Student Previous Grade Retention") },
-            { label: "Student Learning Impairments", value: extractUniqueValues(data, "Student Learning Impairments") },
-            { label: "Student Physical Impairments", value: extractUniqueValues(data, "Student Physical Impairments") },
-            { label: "Student School Attitude or Motivation", value: extractUniqueValues(data, "Student School Attitude or Motivation") },
-            { label: "Student Assigned Teacher Grades", value: extractUniqueValues(data, "Student Assigned Teacher Grades") },
-            { label: "Student Allowance/Scholarship", value: extractUniqueValues(data, "Student Allowance/Scholarship") }
+            "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country",
+            "Student Specific Birth Country", "Student Town of Residence", "Student Province of Residence",
+            "Student Region of Residence", "Student Belonging to a Recognized Ethnic Minority",
+            "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments",
+            "Student Physical Impairments", "Student School Attitude or Motivation", "Student Assigned Teacher Grades",
+            "Student Allowance/Scholarship"
         ],
         "Household's Information": [
-            { label: "Number of Parents", value: extractUniqueValues(data, "Number of Parents") },
-            { label: "Presence of Stepparents", value: extractUniqueValues(data, "Presence of Stepparents") },
-            { label: "Siblings", value: extractUniqueValues(data, "Siblings") },
-            { label: "Parental Working Status", value: extractUniqueValues(data, "Parental Working Status") },
-            { label: "Parental Occupation", value: extractUniqueValues(data, "Parental Occupation") },
-            { label: "Parental Education", value: extractUniqueValues(data, "Parental Education") },
-            { label: "Parental Education Level (ISCED)", value: extractUniqueValues(data, "Parental Education Level (ISCED)") },
-            { label: "Parental Migratory Background", value: extractUniqueValues(data, "Parental Migratory Background") },
-            { label: "Parents Age", value: extractUniqueValues(data, "Parents Age") },
-            { label: "Parents Place of Birth", value: extractUniqueValues(data, "Parents Place of Birth") },
-            { label: "Parental Income or Wealth", value: extractUniqueValues(data, "Parental Income or Wealth") },
-            { label: "Parental Host Country’s Language Proficiency", value: extractUniqueValues(data, "Parental Host Country’s Language Proficiency") },
-            { label: "Number of Books", value: extractUniqueValues(data, "Number of Books") },
-            { label: "Number of Digital Devices", value: extractUniqueValues(data, "Number of Digital Devices") },
-            { label: "Ownership of the Apartment/House", value: extractUniqueValues(data, "Ownership of the Apartment/House") }
+            "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status",
+            "Parental Occupation", "Parental Education", "Parental Education Level (ISCED)",
+            "Parental Migratory Background", "Parents Age", "Parents Place of Birth",
+            "Parental Income or Wealth", "Parental Host Country’s Language Proficiency",
+            "Number of Books", "Number of Digital Devices", "Ownership of the Apartment/House"
         ],
         "Teachers' Information": [
-            { label: "Teacher Age", value: extractUniqueValues(data, "Teacher Age") },
-            { label: "Teacher Gender", value: extractUniqueValues(data, "Teacher Gender") },
-            { label: "Teacher Seniority", value: extractUniqueValues(data, "Teacher Seniority") },
-            { label: "Teacher Educational Degree", value: extractUniqueValues(data, "Teacher Educational Degree") },
-            { label: "Teacher Contract Type", value: extractUniqueValues(data, "Teacher Contract Type") },
-            { label: "Student-Teacher Linkability", value: extractUniqueValues(data, "Student-Teacher Linkability") }
+            "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree",
+            "Teacher Contract Type"
         ],
         "School/Class Information": [
-            { label: "School Geo Referencing", value: extractUniqueValues(data, "School Geo Referencing") },
-            { label: "School Type", value: extractUniqueValues(data, "School Type") },
-            { label: "School Track", value: extractUniqueValues(data, "School Track") },
-            { label: "School Size", value: extractUniqueValues(data, "School Size") },
-            { label: "Class Size", value: extractUniqueValues(data, "Class Size") },
-            { label: "School Composition", value: extractUniqueValues(data, "School Composition") },
-            { label: "Class Composition", value: extractUniqueValues(data, "Class Composition") }
+            "School Geo Referencing", "School Type", "School Track", "School Size",
+            "Class Size", "School Composition", "Class Composition"
         ]
     };
-
-    Object.entries(groupedFields).forEach(([label, fields]) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "filter-group";
-
-        const toggle = document.createElement("div");
-        toggle.className = "filter-toggle";
-        toggle.textContent = label;
-        toggle.addEventListener("click", () => {
-            wrapper.classList.toggle("expanded");
-        });
-
-        const content = document.createElement("div");
-        content.className = "filter-options";
-
-        const uniqueVars = new Set();
-
-        data.forEach(entry => {
-            fields.forEach(field => {
-                const fieldName = field.label;
-                if (entry[fieldName] && entry[fieldName].toLowerCase() !== "no" && entry[fieldName].toLowerCase() !== "n/a" && entry[fieldName] !== "-") {
-                    uniqueVars.add(fieldName);
+    
+    const container = document.getElementById("dataset-variables-section");
+    container.innerHTML = "";
+    
+    for (const [sectionTitle, variables] of Object.entries(sections)) {
+        const section = document.createElement("div");
+        section.classList.add("card", "mb-2");
+        
+        const sectionId = sectionTitle.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
+        const header = document.createElement("div");
+        header.classList.add("card-header");
+        header.innerHTML = `<button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#${sectionId}-collapse">${sectionTitle}</button>`;
+        section.appendChild(header);
+        
+        const body = document.createElement("div");
+        body.classList.add("collapse");
+        body.id = `${sectionId}-collapse`;
+        
+        const list = document.createElement("ul");
+        list.classList.add("list-group", "list-group-flush");
+        
+        variables.forEach(variable => {
+            const values = new Set();
+            
+            data.forEach(entry => {
+                if (entry.hasOwnProperty(variable) && entry[variable] != null) {
+                    values.add(String(entry[variable]).trim());
                 }
             });
+            
+            const valueList = Array.from(values).sort().join(", ");
+            const li = document.createElement("li");
+            li.classList.add("list-group-item");
+            li.innerHTML = `<strong>${variable}:</strong> ${valueList || "<em>No data</em>"}`;
+            list.appendChild(li);
         });
-
-        Array.from(uniqueVars).sort().forEach(varName => {
-    const labelEl = document.createElement("label");
-    labelEl.className = "checkbox-label";
-
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.value = varName;
-    input.dataset.filter = varName; // 🔑 fondamentale per far funzionare la ricerca
-
-    labelEl.appendChild(input);
-    labelEl.append(` ${varName}`);
-    content.appendChild(labelEl);
-});
-
-        wrapper.appendChild(toggle);
-        wrapper.appendChild(content);
-        container.appendChild(wrapper);
-    });
-
+        
+        body.appendChild(list);
+        section.appendChild(body);
+        container.appendChild(section);
+    }
 }
 
 function createCheckbox(groupLabel, optionLabel, isRadio = false) {
     const label = document.createElement("label");
     label.className = "checkbox-label";
-
+    
     const input = document.createElement("input");
     input.type = isRadio ? "radio" : "checkbox";
     input.value = optionLabel;
     input.dataset.filter = groupLabel; 
-
+    
     if (isRadio) {
         input.className = "form-check-input"; // ✅ serve per stile quadrato
         input.name = groupLabel; // 🔑 per gruppi esclusivi
     }
-
+    
     label.classList.add("filter-options")
     label.appendChild(input);
     label.append(` ${optionLabel}`);
@@ -1594,18 +1560,18 @@ function findMatchingKey(data, label) {
 
 
 function applyCountryFilter(selectedCountries) {
-  // Aggiorna i pin sulla mappa
+    // Aggiorna i pin sulla mappa
     const filteredData = mappingData.filter(entry => {
-    const match = entry["Country"]?.match(/\(([^)]+)\)/);
-    const countryName = match ? match[1] : "";
-    return selectedCountries.includes(countryName);
-});
-
+        const match = entry["Country"]?.match(/\(([^)]+)\)/);
+        const countryName = match ? match[1] : "";
+        return selectedCountries.includes(countryName);
+    });
+    
     const countryCounts = countEntriesByCountry(filteredData);
     const grouped = groupDataByCountry(filteredData);
-
+    
     renderMapWithCounts(countryCounts, grouped);
-
+    
     // Salva i dati filtrati per la ricerca
     window.filteredDataForSearch = filteredData;
 }
@@ -1622,7 +1588,7 @@ function clearAllFilters() {
     // Deseleziona tutti i checkbox e radio
     const inputs = document.querySelectorAll('#filter-area input[type="checkbox"], #filter-area input[type="radio"]');
     inputs.forEach(input => input.checked = false);
-
+    
     // Svuota input di ricerca
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
@@ -1633,7 +1599,7 @@ function clearAllFilters() {
 function showSelectedFiltersModal() {
     const modalBody = document.getElementById("selected-filters-modal-body");
     const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked');
-
+    
     if (selectedInputs.length === 0) {
         modalBody.innerHTML = "<p class='text-muted'>No filters selected.</p>";
     } else {
@@ -1644,7 +1610,7 @@ function showSelectedFiltersModal() {
         }).join("");
         modalBody.innerHTML = items;
     }
-
+    
     const myModal = new bootstrap.Modal(document.getElementById('selectedFiltersModal'));
     myModal.show();
 }
@@ -1652,13 +1618,13 @@ function showSelectedFiltersModal() {
 function updateSelectedFiltersDisplay() {
     const countSpan = document.getElementById("selected-filters-count");
     const list = document.getElementById("selected-filters-list");
-
+    
     const selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked');
     countSpan.textContent = selectedInputs.length;
-
+    
     if (!list) return;
     list.innerHTML = "";
-
+    
     if (selectedInputs.length === 0) {
         const li = document.createElement("li");
         li.className = "list-group-item text-muted";
@@ -1674,4 +1640,3 @@ function updateSelectedFiltersDisplay() {
         });
     }
 }
-
