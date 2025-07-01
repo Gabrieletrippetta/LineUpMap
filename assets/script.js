@@ -445,7 +445,7 @@ function extractBracketedValues(entry, prefix) {
 
 // SHOW REALLY BASIC INFO ON DB
 
-function openDbModal(code) {
+function openDbModal(code, index) {
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
 
@@ -468,7 +468,7 @@ function openDbModal(code) {
     const role = localStorage.getItem("userRole");
     console.log("Ruolo scelto: ", role);
 
-    panelEntries.forEach(entry => {
+    panelEntries.forEach((entry, index) => {
         const dbDiv = document.createElement("div");
         dbDiv.className = "db-entry";
 
@@ -480,7 +480,7 @@ function openDbModal(code) {
             <b>Name:</b> ${name}<br>
             <b>Acronym:</b> ${acronym}<br>
             ${description}<br><br>
-            <button class="btn btn-primary" onclick="showCountryDetailsInPanel('${readableCode}')">Show details</button>
+            <button class="btn btn-primary" onclick="openSingleDbModal('${readableCode}', ${index})">Show details</button>
         `;
 
         container.appendChild(dbDiv);
