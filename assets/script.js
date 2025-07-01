@@ -782,138 +782,249 @@ function closeDbModal() {
     map.setView([54.5260, 14.5551], 4.4);
 }
 
-// function openSingleDbModal(code, index) {
-//     const entry = countryEntryStore[code]?.[index];
-//     if (!entry) return;
+function openSingleDbModal(code, index) {
+    const decodedCode = decodeURIComponent(code);
+    let normalizedCode = decodedCode;
+
+    // Normalizza eventuali sinonimi noti
+    if (decodedCode === "UK" || decodedCode.includes("England")) {
+        normalizedCode = "United Kingdom";
+    }
+
+    const panelEntries = countryEntryStore[normalizedCode] || [];
+    const entry = panelEntries[index];
+    if (!entry) return;
+
+    const panel = document.getElementById("db-modal");
+    const title = document.getElementById("modal-country-title");
+    const content = document.getElementById("modal-db-list");
+
+    title.textContent = "Dataset details";
+    content.innerHTML = "";
+    document.getElementById("toggle-view-button").classList.add("fixed-top");
+
+    const name = getField(entry, "Name");
+    const acronym = getField(entry, "Acronym");
+    const description = getField(entry, "Short Description");
     
-//     const modal = document.getElementById("db-modal");
-//     const title = document.getElementById("modal-country-title");
-//     const container = document.getElementById("modal-db-list");
+    const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
+    const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+    const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
+    const focusList = extractBracketedValues(entry, "Data Collection Focus [");
     
-//     title.textContent = `Detailed Info - ${getField(entry, "Name")}`;
-//     container.innerHTML = "";
+    const frequency = getField(entry, "Data Collection Frequency");
+    const duration = getField(entry, "Data Collection Duration (Years)");
+    const startingYear = getField(entry, "Starting Year");
+    const endingYear = getField(entry, "Ending Year");
     
-//     const dbDiv = document.createElement("div");
-//     dbDiv.className = "db-entry";
+    const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
+    const includedGrades = extractBracketedValues(entry, "School Grades Included [");
+    const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
+    const afterSchool = getField(entry, "Students Followed After School Education")
     
-//     const role = localStorage.getItem("userRole");
-//     const name = getField(entry, "Name");
-//     const acronym = getField(entry, "Acronym");
-//     const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
-//     const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
-//     const startingYear = getField(entry, "Starting Year ");
-//     const endingYear = getField(entry, "Ending Year ");
+    const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
+    const measureTypes = extractBracketedValues(entry, "Measure Type [");
+    const adminMethod = getField(entry, "Administration Method");
     
-//     const purposes = Object.entries(entry)
-//     .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
-//     .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
-//     .join(", ") || "N/A";
+    const sampleTypes = extractBracketedValues(entry, "Sample Type [");
+    const samplingCriteria = getField(entry, "Sampling Weights/Criteria");
+    const sampleSize = getField(entry, "Average Sample Size x Wave");
+    const sampleUnits = extractBracketedValues(entry, "Sample Unit [");
     
-//     const sampleTypes = Object.entries(entry)
-//     .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
-//     .map(([_, val]) => val)
-//     .join(", ") || "N/A";
+    const linkability = extractBracketedValues(entry, "Data Linkability At Individual Level [");
+    const linkabilityRaw = getField(entry, "Data Linkability At Individual Level");
     
-//     let access = getField(entry, "Data Accessibility");
-//     if (access === "Other") access = getField(entry, "Data Accessibility [Other]");
-//     if (!access || access === "-") access = "N/A";
+    const microdata = getField(entry, "Access to Micro Data");
+    const constraints = getField(entry, "Constraints for Data Download and Management");
+    const website = getField(entry, "Official Website");
     
-//     if (role === "researcher") {
-//         const sampleLevel = getField(entry, "Sample Level");
-        
-//         const skills = Object.entries(entry)
-//         .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
-//         .map(([k, v]) => {
-//             if (k.includes("Other Skills")) {
-//                 const other = getField(entry, "Type of Skills Analysed [Other Skills]");
-//                 return other !== "N/A" ? other : v;
-//             }
-//             return v;
-//         }).join(", ") || "N/A";
-        
-//         let assessment = getField(entry, "Assessment Type");
-//         if (assessment === "Other") {
-//             assessment = getField(entry, "Assessment Type [Other]");
-//         }
-        
-//         const linkability = Object.entries(entry)
-//         .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
-//         .map(([_, v]) => v)
-//         .join(", ") || "N/A";
-        
-//         let microdataDisplay = "";
-//         const microdataLinks = Object.entries(entry)
-//         .filter(([key, val]) => key.startsWith("Access to Micro-Data") && typeof val === "string")
-//         .map(([_, val]) => {
-//             const match = val.match(/https?:\/\/[^\s"]+/);
-//             return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
-//         });
-        
-//         if (microdataLinks.length > 0) {
-//             microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
-//         }
-        
-//         let accessLabel = "Access to Micro-Data";
-//         let accessDisplay = "N/A";
-        
-//         let rawAccess = getField(entry, "Data Accessibility");
-//         if (rawAccess === "Other") rawAccess = getField(entry, "Data Accessibility [Other]");
-        
-//         if (rawAccess && rawAccess.includes("http")) {
-//             const match = rawAccess.match(/https?:\/\/[^\s"]+/);
-//             if (match) {
-//                 accessLabel = "Website and/or Direct Links to Data or Data Owners";
-//                 accessDisplay = `<a href="${match[0]}" target="_blank">${match[0]}</a>`;
-//             } else {
-//                 accessLabel = "Website and/or Direct Links to Data or Data Owners";
-//                 accessDisplay = rawAccess;
-//             }
-//         } else {
-//             const microdata = Object.entries(entry)
-//             .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
-//             .map(([_, v]) => v)
-//             .join(", ") || "N/A";
-//             accessDisplay = microdata;
-//         }
-        
-//         const variables = "";
-        
-//         dbDiv.innerHTML = `
-//             <b>Name:</b> ${name}<br>
-//             <b>Acronym:</b> ${acronym}<br>
-//             <b>Purpose of Data Collection:</b> ${purposes}<br>
-//             <b>Target Population:</b> ${sampleTypes}<br>
-//             <b>Time of Data Collection:</b> ${duration}<br>
-//             <b>Frequency:</b> ${frequency}<br>
-//             <b>Starting Year:</b> ${startingYear}<br>
-//             <b>Ending Year: </b> ${endingYear}<br>
-//             <b>Access Information:</b> ${access}<br>
-//             <b>Sample & Representativeness:</b> ${sampleLevel}<br>
-//             <b>Skill Assessed:</b> ${skills}<br>
-//             <b>Assessment Type:</b> ${assessment}<br>
-//             <b>Data Linkability:</b> ${linkability}<br>
-//             <b>Variables Collected:</b> ${variables}<br>
-//             ${accessDisplay.includes("http") ? microdataDisplay : ""}
-//             <b>${accessLabel}</b> ${accessDisplay}<br>
-//         `;
-//     } else {
-//         dbDiv.innerHTML = `
-//             <b>Name:</b> ${name}<br>
-//             <b>Acronym:</b> ${acronym}<br>
-//             <b>Type of Longitudinal Data:</b> ${getField(entry, "Individual Level Longitudinal Design", "Longitudinal")}<br>
-//             <b>Purpose of Data Collection:</b> ${purposes}<br>
-//             <b>Target Population:</b> ${sampleTypes}<br>
-//             <b>Time of Data Collection:</b> ${duration}<br>
-//             <b>Frequency:</b> ${frequency}<br>
-//             <b>Starting Year:</b> ${startingYear}<br>
-//             <b>Ending Year: </b> ${endingYear}<br>
-//             <b>Access Information:</b> ${access}
-//         `;
-//     }
+    const advancedInfo = `
+    <h3>Detailed information</h3>
+    <div class="accordion" id="advancedInfo-${index}">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">1. School Grades</button>
+            </h2>
+            <div id="school-${index}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <p><strong>ECEC:</strong> ${ecec}</p>
+                    <p><strong>Included Grades:</strong></p>
+                    <ul>${includedGrades.map(g => `<li>${g}</li>`).join("") || "<li>None</li>"}</ul>
+                    <p><strong>Primary & Secondary:</strong> ${primarySecondary}</p>
+                    <p><strong>After School:</strong> ${afterSchool}</p>
+                </div>
+            </div>
+        </div>
     
-//     container.appendChild(dbDiv);
-//     modal.classList.add("show");
-// }
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">2. Students’ Skills and Achievement</button>
+            </h2>
+            <div id="skills-${index}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <p><strong>Skills Analysed:</strong> ${skills.join(", ") || "N/A"}</p>
+                    <p><strong>Measure Types:</strong> ${measureTypes.join(", ") || "N/A"}</p>
+                    <p><strong>Administration Method:</strong> ${adminMethod}</p>
+                </div>
+            </div>
+        </div>
+    
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">3. Sample</button>
+            </h2>
+            <div id="sample-${index}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <p><strong>Sample Types:</strong> ${sampleTypes.join(", ") || "N/A"}</p>
+                    ${sampleTypes.some(type => ["Non-Random Students’ Sample", "Other"].includes(type)) ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
+                    <p><strong>Avg Sample Size x Wave:</strong> ${sampleSize}</p>
+                    <p><strong>Sample Units:</strong> ${sampleUnits.join(", ") || "N/A"}</p>
+                </div>
+            </div>
+        </div>
+    
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">4. Linkability</button>
+            </h2>
+            <div id="linkability-${index}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <p><strong>Linkability:</strong> ${linkabilityRaw}</p>
+                    <p><strong>Details:</strong> ${linkability.join(", ") || "N/A"}</p>
+                </div>
+            </div>
+        </div>
+    
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">5. Accessibility</button>
+            </h2>
+            <div id="accessibility-${index}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <p><strong>Access to Microdata:</strong> ${microdata}</p>
+                    <p><strong>Constraints:</strong> ${constraints}</p>
+                    <p><strong>Website:</strong> <a href="${website}" target="_blank">${website}</a></p>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    
+    const variablesInfo = (entry) => {
+        const sections = {
+            "Students’ Information": [
+                "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country", "Student Specific Birth Country",
+                "Student Town of Residence", "Student Province of Residence", "Student Region of Residence", "Student Belonging to a Recognised Ethnic Minority",
+                "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments", "Student Physical Impairments",
+                "Student School Attitude or Motivation", "Student Assigned Teacher Grades", "Student Allowance/Scholarship"
+            ],
+            "Household’s Information": [
+                "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status", "Parental Occupation", "Parental Education",
+                "Parental Education Level (ISCED)", "Parental Migratory Background", "Parents Age", "Parents Place Of Birth",
+                "Parental Income or Wealth", "Parental Host Country's Language Proficiency", "Number of Books", "Number of Digital Devices",
+                "Ownership of the Apartment/House"
+            ],
+            "Teachers’ Information": [
+                "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree", "Teacher Contract Type"
+            ],
+            "School/Class Information": [
+                "School Geo-Referencing", "School Type", "School Track", "School Size", "Class Size",
+                "School Composition", "Class Composition"
+            ]
+        };
+        
+        const createSection = (title, keys) => {
+            const items = keys.map(key => {
+                const val = entry[key];
+                if (val && typeof val === "string" && val.trim() !== "") {
+                    return `<li><strong>${key}:</strong> ${val}</li>`;
+                }
+                return null;
+            }).filter(Boolean).join("");
+            
+            if (!items) return "";
+            
+            return `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapse-${title.replace(/\W/g, '')}">
+                        ${title}
+                    </button>
+                </h2>
+                <div id="collapse-${title.replace(/\W/g, '')}" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <ul>${items}</ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        };
+        
+        return `
+        <div class="accordion mt-3" id="variablesAccordion">
+            ${Object.entries(sections).map(([title, keys]) => createSection(title, keys)).join("")}
+        </div>
+    `;
+    };
+        
+        
+    let sampleLevel = getField(entry, "Sample Level");
+    if (sampleLevel === "Limited to specific regions/areas") {
+        const detail = getField(entry, "Sample Level (Details)");
+        sampleLevel = `${sampleLevel}${detail !== "N/A" ? `: ${detail}` : ""}`;
+    } else if (sampleLevel === "N/A" || sampleLevel === "") {
+        sampleLevel = "N/A";
+    }
+    
+    
+    const entryDiv = document.createElement("div");
+    entryDiv.innerHTML = `
+        <b>Name:</b> ${name}<br>
+        <b>Acronym:</b> ${acronym}<br><br>
+        ${description}<br><br>
+    
+        <b>Responsible Organization(s):</b> ${responsibleOrgs.join(", ") || "N/A"}<br>
+        <b>Type of Longitudinal Data:</b> ${longitudinalTypes.join(", ") || "N/A"}<br>
+        <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
+        <b>Data Collection Focus:</b> ${focusList.join(", ") || "N/A"}<br>
+        <b>Data Collection Frequency:</b> ${frequency}<br>
+        <b>Data Collection Duration (Years):</b> ${duration}<br>
+        <b>Starting Year:</b> ${startingYear}<br>
+        <b>Ending Year:</b> ${endingYear}<br>
+        <b>Sample Level:</b> ${sampleLevel}<br>
+        <b><a href="#" class="toggle-section" data-target="details-${index}">Show detailed information</a></b><br>
+        <div id="details-${index}" class="collapsible-section" style="display:none;">
+            ${advancedInfo}
+        </div>
+    
+        <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
+        <div id="variables-${index}" class="collapsible-section" style="display:none;">
+            <h3>Dataset Variables</h3>
+            ${variablesInfo(entry)}
+        </div>
+        <hr>
+    `;
+    
+    content.appendChild(entryDiv);
+    
+    closeDbModal();
+    panel.classList.add("show");
+    document.querySelectorAll(".toggle-section").forEach(btn => {
+        btn.addEventListener("click", e => {
+            e.preventDefault();
+            const targetId = btn.getAttribute("data-target");
+            const target = document.getElementById(targetId);
+            
+            const isVisible = target.style.display === "block";
+            target.style.display = isVisible ? "none" : "block";
+            
+            btn.textContent = isVisible
+            ? (btn.textContent.includes("detailed") ? "Show detailed information" : "Show dataset variables")
+            : (btn.textContent.includes("detailed") ? "Collapse detailed information" : "Collapse dataset variables");
+        });
+    });
+};
+
 
 
 // MAP BORDERS
