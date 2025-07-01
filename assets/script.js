@@ -448,49 +448,51 @@ function extractBracketedValues(entry, prefix) {
 function openDbModal(code, index) {
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
-
+    
     // Normalizza eventuali sinonimi noti
     if (decodedCode === "UK" || decodedCode.includes("England")) {
         normalizedCode = "United Kingdom";
     }
-
+    
     const panelEntries = countryEntryStore[normalizedCode] || [];
     const modal = document.getElementById("db-modal");
     const title = document.getElementById("modal-country-title");
     const container = document.getElementById("modal-db-list");
-
+    
     const readableCode = decodeURIComponent(code);
     title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : ''} in ${readableCode}`;
     container.innerHTML = "";
-
+    
     document.getElementById("toggle-view-button").classList.add("fixed-top");
-
+    
     const role = localStorage.getItem("userRole");
     console.log("Ruolo scelto: ", role);
-
+    
     panelEntries.forEach((entry, index) => {
         const dbDiv = document.createElement("div");
         dbDiv.className = "db-entry";
-
+        
         const name = getField(entry, "Name");
         const acronym = getField(entry, "Acronym");
         const description = getField(entry, "Short Description");
-
+        
         dbDiv.innerHTML = `
             <b>Name:</b> ${name}<br>
             <b>Acronym:</b> ${acronym}<br>
             ${description}<br><br>
             <button class="btn btn-primary" onclick="openSingleDbModal('${readableCode}', ${index})">Show details</button>
-        `;
-
-        container.appendChild(dbDiv);
-        console.log("Appended entry:", dbDiv);
-    });
-
-    closeDbPanel();
-    modal.classList.add("show");
+            
+            `;
+            
+            container.appendChild(dbDiv);
+            console.log("Appended entry:", dbDiv);
+        });
+        
+        closeDbPanel();
+        modal.classList.add("show");
 }
-
+    
+//! Bottone per popout    <button class="btn btn-secondary" onclick="popoutDataset('${readableCode}', ${index})">Popout</button>
 
 
 // SHOW ALL DATASET PANEL
@@ -785,24 +787,24 @@ function closeDbModal() {
 function openSingleDbModal(code, index) {
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
-
+    
     // Normalizza eventuali sinonimi noti
     if (decodedCode === "UK" || decodedCode.includes("England")) {
         normalizedCode = "United Kingdom";
     }
-
+    
     const panelEntries = countryEntryStore[normalizedCode] || [];
     const entry = panelEntries[index];
     if (!entry) return;
-
+    
     const panel = document.getElementById("db-modal");
     const title = document.getElementById("modal-country-title");
     const content = document.getElementById("modal-db-list");
-
+    
     title.textContent = "Dataset details";
     content.innerHTML = "";
     document.getElementById("toggle-view-button").classList.add("fixed-top");
-
+    
     const name = getField(entry, "Name");
     const acronym = getField(entry, "Acronym");
     const description = getField(entry, "Short Description");
@@ -966,8 +968,8 @@ function openSingleDbModal(code, index) {
         </div>
     `;
     };
-        
-        
+    
+    
     let sampleLevel = getField(entry, "Sample Level");
     if (sampleLevel === "Limited to specific regions/areas") {
         const detail = getField(entry, "Sample Level (Details)");
@@ -1249,11 +1251,11 @@ function extractUniqueValues(data, fieldName) {
 function extractByPrefix(data, prefix) {
     const seen = new Set();
     const orderedValues = [];
-
+    
     data.forEach(entry => {
         Object.keys(entry).forEach(key => {
             if (!key.includes("[") || !key.includes("]")) return;
-
+            
             if (key.startsWith(prefix)) {
                 const match = key.match(/\[([^\]]+)\]/);
                 if (match) {
@@ -1266,7 +1268,7 @@ function extractByPrefix(data, prefix) {
             }
         });
     });
-
+    
     return orderedValues;
 }
 
@@ -1274,9 +1276,9 @@ function extractByPrefix(data, prefix) {
 // function extractByPrefix(data, prefix) {
 //     const values = new Set();
 //     data.forEach(entry => {
-//         Object.keys(entry).forEach(key => {
-//             if (!key.includes("[") || !key.includes("]")) return; // Ignora chiavi senza parentesi
-            
+    //         Object.keys(entry).forEach(key => {
+        //             if (!key.includes("[") || !key.includes("]")) return; // Ignora chiavi senza parentesi
+
 //             const value = entry[key];
 //             if (key.startsWith(prefix) && value && value.toString().toLowerCase() === "yes") {
 //                 const match = key.match(/\[([^\]]+)\]/);
@@ -1735,6 +1737,50 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Esegui subito il rendering iniziale
             window.updateSelectedFiltersDisplay();
-        });
+});
         
+    // POPOUT
+function popoutDataset(code, index) {
+    const decodedCode = decodeURIComponent(code);
+    let normalizedCode = decodedCode;
+    
+    if (decodedCode === "UK" || decodedCode.includes("England")) {
+        normalizedCode = "United Kingdom";
+    }
+    
+    const entry = countryEntryStore[normalizedCode]?.[index];
+    if (!entry) {
+        console.warn("Dataset non trovato:", normalizedCode, index);
+        return;
+    }
+    
+    // Costruisci il contenuto HTML
+    const name = getField(entry, "Name");
+    const acronym = getField(entry, "Acronym");
+    const description = getField(entry, "Short Description");
+    
+    const htmlContent = `
+        <html>
+        <head>
+            <title>${name}</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        </head>
+        <body style="padding:20px;">
+            <h3>${name}</h3>
+            <h5><i>${acronym}</i></h5>
+            <p>${description}</p>
+            <p><em>More details could be added here...</em></p>
+        </body>
+        </html>
+    `;
+        
+        // Apri una nuova finestra e scrivici dentro
+    const popup = window.open("", "_blank", "width=600,height=600,resizable=yes,scrollbars=yes");
+    if (popup) {
+        popup.document.write(htmlContent);
+        popup.document.close();
+    } else {
+        alert("Popup blocked! Please allow popups for this site.");
+    }
+}
         
