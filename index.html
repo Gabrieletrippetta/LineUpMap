@@ -91,26 +91,20 @@
 
                     </div>
                     
-                    <!-- Centro: Clear all -->
                     <div class="col text-center d-flex flex-column align-items-center justify-content-evenly">
-                        <div class="">
-                            <p>
-                                <a class="btn btn-primary btn-sm mt-2" data-bs-toggle="collapse" href="#selectedFiltersCollapse" role="button" aria-expanded="false" aria-controls="selectedFiltersCollapse">
-                                    Selected Filters (<span id="selected-filters-count">0</span>)
-                                </a>
-                            </p>
-                            <div class="" id="selectedFiltersCollapse">
-                                <div class="card card-body p-1">
-                                    <ul class="list-group list-group-flush small mb-0 p-0" id="selected-filters-list">
-                                        No filter selected
-                                        <!-- Filtri selezionati qui -->
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-
+                        <button id="selected-filters-button"
+                                class="btn btn-outline-primary btn-sm mt-2"
+                                type="button"
+                                data-bs-toggle="popover"
+                                data-bs-trigger="hover focus"
+                                data-bs-placement="bottom"
+                                data-bs-html="true"
+                                title=""
+                                data-bs-content="<ul class='list-group list-group-flush small mb-0 p-0'><li>No filter selected</li></ul>">
+                            <span id="selected-filters-count-label">No filter selected</span>
+                        </button>
                     </div>
+
                     
                     <!-- Destra: vuota o per usi futuri -->
                     <!-- <div class="col"></div> -->

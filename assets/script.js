@@ -80,8 +80,8 @@ var map = L.map('map', {
     worldCopyJump: false,
     zoomControl: false,
     maxBounds: [
-        [25, -20],  // Sud-ovest (lat, lon)
-        [75, 50]    // Nord-est (lat, lon)
+        [15, -40],  // Sud-ovest (lat, lon)
+        [80, 80]    // Nord-est (lat, lon)
     ],
     maxBoundsViscosity: 1.0
 });
@@ -316,8 +316,11 @@ function renderMapWithCounts(counts, groupedData) {
             
             popupContent += `
                 <div class="popup-buttons">
-                    <button class="show-button" onclick="zoomToCountry('${encodedCode}'); showCountryDetailsInPanel('${encodedCode}')">
+                    <button class="show-button" onclick="zoomToCountry('${encodedCode}'); openDbModal('${encodedCode}')">
                         Show all datasets (${count})
+                    </button>
+                    <button class="expand-button" onclick="showCountryDetailsInPanel('${encodedCode}')">
+                        Show more
                     </button>
                     
                 </div>
@@ -405,7 +408,6 @@ document.addEventListener("DOMContentLoaded", () => {
         //   setupMainFilterDropdownToggle();
         // ✅ Imposta il placeholder dinamico nel campo di ricerca
         const searchInput = document.getElementById("search-input");
-        console.log("searchinput", searchInput)
         if (searchInput && searchInput.value.trim() === "") {
             searchInput.placeholder = `Search among ${mappingData.length} datasets`;
         }
@@ -441,183 +443,57 @@ function extractBracketedValues(entry, prefix) {
     return result;
 }
 
-// SHOW MORE INFO ON DB
+// SHOW REALLY BASIC INFO ON DB
 
-function openDbModal(countryCode) {
-    const modalEntries = countryEntryStore[countryCode] || [];
+function openDbModal(code) {
+    const decodedCode = decodeURIComponent(code);
+    let normalizedCode = decodedCode;
+
+    // Normalizza eventuali sinonimi noti
+    if (decodedCode === "UK" || decodedCode.includes("England")) {
+        normalizedCode = "United Kingdom";
+    }
+
+    const panelEntries = countryEntryStore[normalizedCode] || [];
     const modal = document.getElementById("db-modal");
     const title = document.getElementById("modal-country-title");
     const container = document.getElementById("modal-db-list");
-    
-    title.textContent = `${modalEntries.length} dataset${modalEntries.length !== 1 ? 's' : ''} in ${countryCode}`;
+
+    const readableCode = decodeURIComponent(code);
+    title.textContent = `${panelEntries.length} dataset${panelEntries.length !== 1 ? 's' : ''} in ${readableCode}`;
     container.innerHTML = "";
-    
+
     document.getElementById("toggle-view-button").classList.add("fixed-top");
-    
+
     const role = localStorage.getItem("userRole");
     console.log("Ruolo scelto: ", role);
-    
-    modalEntries.forEach(entry => {
+
+    panelEntries.forEach(entry => {
         const dbDiv = document.createElement("div");
         dbDiv.className = "db-entry";
-        
+
         const name = getField(entry, "Name");
         const acronym = getField(entry, "Acronym");
-        const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
-        const responsibleDisplay = responsibleOrgs.length > 0 ? responsibleOrgs.join(", ") : "N/A";
-        const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
-        const longitudinalDisplay = longitudinalTypes.length > 0 ? longitudinalTypes.join(", ") : "N/A";
-        const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
-        const purposesDisplay = purposesList.length > 0 ? purposesList.join(", ") : "N/A";
-        const focusList = extractBracketedValues(entry, "Data Collection Focus [");
-        const focusDisplay = focusList.length > 0 ? focusList.join(", ") : "N/A";
-        const frequency = getField(entry, "Data Collection Frequency");
-        console.log("FREQUENCY", frequency);
-        const duration = getField(entry, "Data Collection Duration (Years)");
-        console.log("DURATION", duration);
-        const startingYear = getField(entry, "Starting Year");
-        const endingYear = getField(entry, "Ending Year");
-        
-        const purposes = Object.entries(entry)
-        .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
-        .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
-        .join(", ") || "N/A";
-        
-        const sampleTypes = Object.entries(entry)
-        .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
-        .map(([key, val]) => val)
-        .join(", ") || "N/A";
-        
-        let access = getField(entry, "Data Accessibility");
-        if (access === "Other") {
-            access = getField(entry, "Data Accessibility [Other]");
-        }
-        if (!access || access === "-") {
-            access = "N/A";
-        }
-        
-        if (role === "researcher") {
-            const sampleLevel = getField(entry, "Sample Level");
-            
-            // Skill Assessed
-            let skills = Object.entries(entry)
-            .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
-            .map(([k, v]) => {
-                if (k.includes("Other Skills")) {
-                    const other = getField(entry, "Type of Skills Analysed [Other Skills]");
-                    return other !== "N/A" ? other : v;
-                }
-                return v;
-            }).join(", ") || "N/A";
-            
-            // Assessment Type
-            let assessment = getField(entry, "Assessment Type");
-            if (assessment === "Other") {
-                assessment = getField(entry, "Assessment Type [Other]");
-            }
-            
-            // Data Linkability
-            const linkability = Object.entries(entry)
-            .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
-            .map(([_, v]) => v)
-            .join(", ") || "N/A";
-            
-            // Microdata Accessibility
-            let microdataDisplay = "";
-            const microdataLinks = Object.entries(entry)
-            .filter(([key, val]) =>
-                key.startsWith("Access to Micro-Data") &&
-            typeof val === "string"
-        )
-        .map(([_, val]) => {
-            const match = val.match(/https?:\/\/[^\s"]+/);
-            return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
-        });
-        
-        if (microdataLinks.length > 0) {
-            microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
-        }
-        
-        // Website or links
-        let linkInfo = getField(entry, "Data Accessibility");
-        if (linkInfo === "Other") {
-            linkInfo = getField(entry, "Data Accessibility [Other]");
-        }
-        // Access logic: link or microdata fallback
-        let accessLabel = "Access to Micro-Data";
-        let accessDisplay = "N/A";
-        
-        let rawAccess = getField(entry, "Data Accessibility");
-        if (rawAccess === "Other") {
-            rawAccess = getField(entry, "Data Accessibility [Other]");
-        }
-        
-        if (rawAccess && rawAccess.includes("http")) {
-            const match = rawAccess.match(/https?:\/\/[^\s"]+/);
-            if (match) {
-                accessLabel = "Website and/or Direct Links to Data or Data Owners";
-                accessDisplay = `<a href="${match[0]}" target="_blank">${match[0]}</a>`;
-            } else {
-                accessLabel = "Website and/or Direct Links to Data or Data Owners";
-                accessDisplay = rawAccess;
-            }
-        } else {
-            // fallback a microdata accessibility
-            const microdata = Object.entries(entry)
-            .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
-            .map(([_, v]) => v)
-            .join(", ") || "N/A";
-            accessDisplay = microdata;
-        }
-        
-        
-        // Variables Collected (placeholder)
-        const variables = "";
-        dbDiv.innerHTML = `
-                <b>Name:</b> ${name}<br>
-                <b>Acronym:</b> ${acronym}<br>
-                <b>Responsible Organizations:</b> ${responsibleDisplay}<br>
-                <b>Purpose of Data Collection:</b> ${purposesDisplay}<br>
-                <b>Type of Longitudinal Data:</b> ${longitudinalDisplay}<br>
-                <b>Data Collection Focus:</b> ${focusDisplay}<br>
-                <b>Data Collection Frequency:</b> ${frequency}<br>
-                <b>Data Collection Duration:</b> ${duration}<br>
-                <b>Starting Year:</b> ${startingYear}<br>
-                <b>Ending Year: </b> ${endingYear}<br>
-                <b>Access Information:</b> ${access}<br>
-                <b>Sample & Representativeness:</b> ${sampleLevel}<br>
-                <b>Skill Assessed:</b> ${skills}<br>
-                <b>Assessment Type:</b> ${assessment}<br>
-                <b>Data Linkability:</b> ${linkability}<br>
-                <b>Variables Collected:</b> ${variables}<br>
-                ${accessDisplay.includes("http") ? microdataDisplay : ""}
-                <b>${accessLabel}</b> ${accessDisplay}<br>
-            `;
-    } else {
-        dbDiv.innerHTML = `
-                <b>Name:</b> ${name}<br>
-                <b>Acronym:</b> ${acronym}<br>
-                <b>Responsible Organizations:</b> ${responsibleDisplay}<br>
-                <b>Purpose of Data Collection:</b> ${purposesDisplay}<br>
-                <b>Type of Longitudinal Data:</b> ${longitudinalDisplay}<br>
-                <b>Data Collection Focus:</b> ${focusDisplay}<br>
-                <b>Data Collection Frequency:</b> ${frequency}<br>
-                <b>Data Collection Duration:</b> ${duration}<br>
-                <b>Starting Year:</b> ${startingYear}<br>
-                <b>Ending Year: </b> ${endingYear}<br>
-                <b>Access Information:</b> ${access}
-            `;
-    }
-    
-    
-    container.appendChild(dbDiv);
-});
+        const description = getField(entry, "Short Description");
 
-closeDbPanel();
-modal.classList.add("show");
+        dbDiv.innerHTML = `
+            <b>Name:</b> ${name}<br>
+            <b>Acronym:</b> ${acronym}<br>
+            ${description}<br><br>
+            <button class="btn btn-primary" onclick="showCountryDetailsInPanel('${readableCode}')">Show details</button>
+        `;
+
+        container.appendChild(dbDiv);
+        console.log("Appended entry:", dbDiv);
+    });
+
+    closeDbPanel();
+    modal.classList.add("show");
 }
 
-// SHOW ALL DATABASES PANEL
+
+
+// SHOW ALL DATASET PANEL
 
 function showCountryDetailsInPanel(code) {
     const decodedCode = decodeURIComponent(code);
@@ -753,19 +629,16 @@ function showCountryDetailsInPanel(code) {
                     "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country", "Student Specific Birth Country",
                     "Student Town of Residence", "Student Province of Residence", "Student Region of Residence", "Student Belonging to a Recognised Ethnic Minority",
                     "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments", "Student Physical Impairments",
-                    "Student School Attitude or Motivation", "Student Assigned Teacher Grades", "Student Allowance/Scholarship", 
-                    // "Student Information Type"
+                    "Student School Attitude or Motivation", "Student Assigned Teacher Grades", "Student Allowance/Scholarship"
                 ],
                 "Household’s Information": [
                     "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status", "Parental Occupation", "Parental Education",
                     "Parental Education Level (ISCED)", "Parental Migratory Background", "Parents Age", "Parents Place Of Birth",
                     "Parental Income or Wealth", "Parental Host Country's Language Proficiency", "Number of Books", "Number of Digital Devices",
-                    "Ownership of the Apartment/House", 
-                    // "Household Information Type"
+                    "Ownership of the Apartment/House"
                 ],
                 "Teachers’ Information": [
-                    "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree", "Teacher Contract Type",
-                    // "Teacher Information Type", "Teacher Information Linkability"
+                    "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree", "Teacher Contract Type"
                 ],
                 "School/Class Information": [
                     "School Geo-Referencing", "School Type", "School Track", "School Size", "Class Size",
@@ -776,7 +649,7 @@ function showCountryDetailsInPanel(code) {
             const createSection = (title, keys) => {
                 const items = keys.map(key => {
                     const val = entry[key];
-                    if (val && typeof val === "string" && val.toLowerCase().includes("yes")) {
+                    if (val && typeof val === "string" && val.trim() !== "") {
                         return `<li><strong>${key}:</strong> ${val}</li>`;
                     }
                     return null;
@@ -909,138 +782,138 @@ function closeDbModal() {
     map.setView([54.5260, 14.5551], 4.4);
 }
 
-function openSingleDbModal(code, index) {
-    const entry = countryEntryStore[code]?.[index];
-    if (!entry) return;
+// function openSingleDbModal(code, index) {
+//     const entry = countryEntryStore[code]?.[index];
+//     if (!entry) return;
     
-    const modal = document.getElementById("db-modal");
-    const title = document.getElementById("modal-country-title");
-    const container = document.getElementById("modal-db-list");
+//     const modal = document.getElementById("db-modal");
+//     const title = document.getElementById("modal-country-title");
+//     const container = document.getElementById("modal-db-list");
     
-    title.textContent = `Detailed Info - ${getField(entry, "Name")}`;
-    container.innerHTML = "";
+//     title.textContent = `Detailed Info - ${getField(entry, "Name")}`;
+//     container.innerHTML = "";
     
-    const dbDiv = document.createElement("div");
-    dbDiv.className = "db-entry";
+//     const dbDiv = document.createElement("div");
+//     dbDiv.className = "db-entry";
     
-    const role = localStorage.getItem("userRole");
-    const name = getField(entry, "Name");
-    const acronym = getField(entry, "Acronym");
-    const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
-    const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
-    const startingYear = getField(entry, "Starting Year ");
-    const endingYear = getField(entry, "Ending Year ");
+//     const role = localStorage.getItem("userRole");
+//     const name = getField(entry, "Name");
+//     const acronym = getField(entry, "Acronym");
+//     const duration = getField(entry, "Data Collection Duration", "Data Collection Duration ");
+//     const frequency = getField(entry, "Data Collection Frequency", "Data Collection Frequency");
+//     const startingYear = getField(entry, "Starting Year ");
+//     const endingYear = getField(entry, "Ending Year ");
     
-    const purposes = Object.entries(entry)
-    .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
-    .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
-    .join(", ") || "N/A";
+//     const purposes = Object.entries(entry)
+//     .filter(([key, val]) => key.startsWith("Data Collection Purpose") && val && val !== "-")
+//     .map(([key]) => key.match(/\[(.*?)\]/)?.[1] || key)
+//     .join(", ") || "N/A";
     
-    const sampleTypes = Object.entries(entry)
-    .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
-    .map(([_, val]) => val)
-    .join(", ") || "N/A";
+//     const sampleTypes = Object.entries(entry)
+//     .filter(([key, val]) => key.includes("Sample Type/Size") && val && val !== "-")
+//     .map(([_, val]) => val)
+//     .join(", ") || "N/A";
     
-    let access = getField(entry, "Data Accessibility");
-    if (access === "Other") access = getField(entry, "Data Accessibility [Other]");
-    if (!access || access === "-") access = "N/A";
+//     let access = getField(entry, "Data Accessibility");
+//     if (access === "Other") access = getField(entry, "Data Accessibility [Other]");
+//     if (!access || access === "-") access = "N/A";
     
-    if (role === "researcher") {
-        const sampleLevel = getField(entry, "Sample Level");
+//     if (role === "researcher") {
+//         const sampleLevel = getField(entry, "Sample Level");
         
-        const skills = Object.entries(entry)
-        .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
-        .map(([k, v]) => {
-            if (k.includes("Other Skills")) {
-                const other = getField(entry, "Type of Skills Analysed [Other Skills]");
-                return other !== "N/A" ? other : v;
-            }
-            return v;
-        }).join(", ") || "N/A";
+//         const skills = Object.entries(entry)
+//         .filter(([k, v]) => k.includes("Type of Skills Analysed") && v && v !== "-")
+//         .map(([k, v]) => {
+//             if (k.includes("Other Skills")) {
+//                 const other = getField(entry, "Type of Skills Analysed [Other Skills]");
+//                 return other !== "N/A" ? other : v;
+//             }
+//             return v;
+//         }).join(", ") || "N/A";
         
-        let assessment = getField(entry, "Assessment Type");
-        if (assessment === "Other") {
-            assessment = getField(entry, "Assessment Type [Other]");
-        }
+//         let assessment = getField(entry, "Assessment Type");
+//         if (assessment === "Other") {
+//             assessment = getField(entry, "Assessment Type [Other]");
+//         }
         
-        const linkability = Object.entries(entry)
-        .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
-        .map(([_, v]) => v)
-        .join(", ") || "N/A";
+//         const linkability = Object.entries(entry)
+//         .filter(([k, v]) => k.includes("Data Linkability at Individual Level") && v && v !== "-")
+//         .map(([_, v]) => v)
+//         .join(", ") || "N/A";
         
-        let microdataDisplay = "";
-        const microdataLinks = Object.entries(entry)
-        .filter(([key, val]) => key.startsWith("Access to Micro-Data") && typeof val === "string")
-        .map(([_, val]) => {
-            const match = val.match(/https?:\/\/[^\s"]+/);
-            return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
-        });
+//         let microdataDisplay = "";
+//         const microdataLinks = Object.entries(entry)
+//         .filter(([key, val]) => key.startsWith("Access to Micro-Data") && typeof val === "string")
+//         .map(([_, val]) => {
+//             const match = val.match(/https?:\/\/[^\s"]+/);
+//             return match ? `<a href="${match[0]}" target="_blank">${match[0]}</a>` : val;
+//         });
         
-        if (microdataLinks.length > 0) {
-            microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
-        }
+//         if (microdataLinks.length > 0) {
+//             microdataDisplay = `<b>Access to Micro-Data:</b> ${microdataLinks.join(", ")}<br>`;
+//         }
         
-        let accessLabel = "Access to Micro-Data";
-        let accessDisplay = "N/A";
+//         let accessLabel = "Access to Micro-Data";
+//         let accessDisplay = "N/A";
         
-        let rawAccess = getField(entry, "Data Accessibility");
-        if (rawAccess === "Other") rawAccess = getField(entry, "Data Accessibility [Other]");
+//         let rawAccess = getField(entry, "Data Accessibility");
+//         if (rawAccess === "Other") rawAccess = getField(entry, "Data Accessibility [Other]");
         
-        if (rawAccess && rawAccess.includes("http")) {
-            const match = rawAccess.match(/https?:\/\/[^\s"]+/);
-            if (match) {
-                accessLabel = "Website and/or Direct Links to Data or Data Owners";
-                accessDisplay = `<a href="${match[0]}" target="_blank">${match[0]}</a>`;
-            } else {
-                accessLabel = "Website and/or Direct Links to Data or Data Owners";
-                accessDisplay = rawAccess;
-            }
-        } else {
-            const microdata = Object.entries(entry)
-            .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
-            .map(([_, v]) => v)
-            .join(", ") || "N/A";
-            accessDisplay = microdata;
-        }
+//         if (rawAccess && rawAccess.includes("http")) {
+//             const match = rawAccess.match(/https?:\/\/[^\s"]+/);
+//             if (match) {
+//                 accessLabel = "Website and/or Direct Links to Data or Data Owners";
+//                 accessDisplay = `<a href="${match[0]}" target="_blank">${match[0]}</a>`;
+//             } else {
+//                 accessLabel = "Website and/or Direct Links to Data or Data Owners";
+//                 accessDisplay = rawAccess;
+//             }
+//         } else {
+//             const microdata = Object.entries(entry)
+//             .filter(([k, v]) => k.startsWith("Access to Micro-Data") && v && v !== "-")
+//             .map(([_, v]) => v)
+//             .join(", ") || "N/A";
+//             accessDisplay = microdata;
+//         }
         
-        const variables = "";
+//         const variables = "";
         
-        dbDiv.innerHTML = `
-            <b>Name:</b> ${name}<br>
-            <b>Acronym:</b> ${acronym}<br>
-            <b>Purpose of Data Collection:</b> ${purposes}<br>
-            <b>Target Population:</b> ${sampleTypes}<br>
-            <b>Time of Data Collection:</b> ${duration}<br>
-            <b>Frequency:</b> ${frequency}<br>
-            <b>Starting Year:</b> ${startingYear}<br>
-            <b>Ending Year: </b> ${endingYear}<br>
-            <b>Access Information:</b> ${access}<br>
-            <b>Sample & Representativeness:</b> ${sampleLevel}<br>
-            <b>Skill Assessed:</b> ${skills}<br>
-            <b>Assessment Type:</b> ${assessment}<br>
-            <b>Data Linkability:</b> ${linkability}<br>
-            <b>Variables Collected:</b> ${variables}<br>
-            ${accessDisplay.includes("http") ? microdataDisplay : ""}
-            <b>${accessLabel}</b> ${accessDisplay}<br>
-        `;
-    } else {
-        dbDiv.innerHTML = `
-            <b>Name:</b> ${name}<br>
-            <b>Acronym:</b> ${acronym}<br>
-            <b>Type of Longitudinal Data:</b> ${getField(entry, "Individual Level Longitudinal Design", "Longitudinal")}<br>
-            <b>Purpose of Data Collection:</b> ${purposes}<br>
-            <b>Target Population:</b> ${sampleTypes}<br>
-            <b>Time of Data Collection:</b> ${duration}<br>
-            <b>Frequency:</b> ${frequency}<br>
-            <b>Starting Year:</b> ${startingYear}<br>
-            <b>Ending Year: </b> ${endingYear}<br>
-            <b>Access Information:</b> ${access}
-        `;
-    }
+//         dbDiv.innerHTML = `
+//             <b>Name:</b> ${name}<br>
+//             <b>Acronym:</b> ${acronym}<br>
+//             <b>Purpose of Data Collection:</b> ${purposes}<br>
+//             <b>Target Population:</b> ${sampleTypes}<br>
+//             <b>Time of Data Collection:</b> ${duration}<br>
+//             <b>Frequency:</b> ${frequency}<br>
+//             <b>Starting Year:</b> ${startingYear}<br>
+//             <b>Ending Year: </b> ${endingYear}<br>
+//             <b>Access Information:</b> ${access}<br>
+//             <b>Sample & Representativeness:</b> ${sampleLevel}<br>
+//             <b>Skill Assessed:</b> ${skills}<br>
+//             <b>Assessment Type:</b> ${assessment}<br>
+//             <b>Data Linkability:</b> ${linkability}<br>
+//             <b>Variables Collected:</b> ${variables}<br>
+//             ${accessDisplay.includes("http") ? microdataDisplay : ""}
+//             <b>${accessLabel}</b> ${accessDisplay}<br>
+//         `;
+//     } else {
+//         dbDiv.innerHTML = `
+//             <b>Name:</b> ${name}<br>
+//             <b>Acronym:</b> ${acronym}<br>
+//             <b>Type of Longitudinal Data:</b> ${getField(entry, "Individual Level Longitudinal Design", "Longitudinal")}<br>
+//             <b>Purpose of Data Collection:</b> ${purposes}<br>
+//             <b>Target Population:</b> ${sampleTypes}<br>
+//             <b>Time of Data Collection:</b> ${duration}<br>
+//             <b>Frequency:</b> ${frequency}<br>
+//             <b>Starting Year:</b> ${startingYear}<br>
+//             <b>Ending Year: </b> ${endingYear}<br>
+//             <b>Access Information:</b> ${access}
+//         `;
+//     }
     
-    container.appendChild(dbDiv);
-    modal.classList.add("show");
-}
+//     container.appendChild(dbDiv);
+//     modal.classList.add("show");
+// }
 
 
 // MAP BORDERS
@@ -1235,44 +1108,78 @@ function renderListView() {
 // });
 
 function extractUniqueValues(data, fieldName) {
-    const order = ["Yes", "No"]
-    const set = new Set();
+    const seen = new Set();
+    const yesNo = [];
+    const others = [];
+    
     data.forEach(entry => {
         const val = getField(entry, fieldName);
-        if (val && val !== "N/A" && val.toLowerCase() !== "not clear" && val.toLowerCase() !== "no info") {
-            set.add(val);
-        }    
+        if (
+            val &&
+            val !== "N/A" &&
+            val.toLowerCase() !== "not clear" &&
+            val.toLowerCase() !== "no info" &&
+            !seen.has(val)
+        ) {
+            seen.add(val);
+            if (val === "Yes") {
+                yesNo.unshift(val);  // mette "Yes" all'inizio
+            } else if (val === "No") {
+                yesNo.push(val);     // mette "No" dopo "Yes"
+            } else {
+                others.push(val);    // mantiene ordine di apparizione
+            }
+        }
     });
-    return Array.from(set).sort((a, b) => {
-        const indexA = order.indexOf(a);
-        const indexB = order.indexOf(b);
-        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-    });
+    
+    return [...yesNo, ...others];
 }
 
 function extractByPrefix(data, prefix) {
-    const values = new Set();
+    const seen = new Set();
+    const orderedValues = [];
+
     data.forEach(entry => {
         Object.keys(entry).forEach(key => {
-            if (!key.includes("[") || !key.includes("]")) return; // Ignora chiavi senza parentesi
-            
-            const value = entry[key];
-            if (key.startsWith(prefix) && value && value.toString().toLowerCase() === "yes") {
+            if (!key.includes("[") || !key.includes("]")) return;
+
+            if (key.startsWith(prefix)) {
                 const match = key.match(/\[([^\]]+)\]/);
                 if (match) {
                     const extracted = match[1].trim();
-                    if (extracted.toLowerCase() !== "not clear"){
-                        values.add(extracted);
+                    if (extracted.toLowerCase() !== "not clear" && !seen.has(extracted)) {
+                        seen.add(extracted);
+                        orderedValues.push(extracted);
                     }
                 }
             }
         });
     });
-    return Array.from(values).sort();
+
+    return orderedValues;
 }
+
+
+// function extractByPrefix(data, prefix) {
+//     const values = new Set();
+//     data.forEach(entry => {
+//         Object.keys(entry).forEach(key => {
+//             if (!key.includes("[") || !key.includes("]")) return; // Ignora chiavi senza parentesi
+            
+//             const value = entry[key];
+//             if (key.startsWith(prefix) && value && value.toString().toLowerCase() === "yes") {
+//                 const match = key.match(/\[([^\]]+)\]/);
+//                 if (match) {
+//                     const extracted = match[1].trim();
+//                     if (extracted.toLowerCase() !== "not clear"){
+//                         values.add(extracted);
+//                     }
+//                 }
+//             }
+//         });
+//     });
+//     return Array.from(values);
+// }
 
 function extractGrades(data) {
     const order = [
@@ -1465,72 +1372,108 @@ function setupAdvancedFilterInteraction(data) {
 }
 
 function setupDataVariablesInteraction(data) {
-    const sections = {
+    const container = document.getElementById("data-variables-labels");
+    container.innerHTML = ""; // pulisce il contenuto esistente
+    
+    const groupedFields = {
         "Students' Information": [
-            "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country",
-            "Student Specific Birth Country", "Student Town of Residence", "Student Province of Residence",
-            "Student Region of Residence", "Student Belonging to a Recognized Ethnic Minority",
-            "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments",
-            "Student Physical Impairments", "Student School Attitude or Motivation", "Student Assigned Teacher Grades",
-            "Student Allowance/Scholarship"
+            { label: "Student Gender", value: extractUniqueValues(data, "Student Gender") },
+            { label: "Student Age", value: extractUniqueValues(data, "Student Age") },
+            { label: "Student Citizenship", value: extractUniqueValues(data, "Student Citizenship") },
+            { label: "Student Foreign Birth Country", value: extractUniqueValues(data, "Student Foreign Birth Country") },
+            { label: "Student Specific Birth Country", value: extractUniqueValues(data, "Student Specific Birth Country") },
+            { label: "Student Town of Residence", value: extractUniqueValues(data, "Student Town of Residence") },
+            { label: "Student Province of Residence", value: extractUniqueValues(data, "Student Province of Residence") },
+            { label: "Student Region of Residence", value: extractUniqueValues(data, "Student Region of Residence") },
+            { label: "Student Belonging to a Recognized Ethnic Minority", value: extractUniqueValues(data, "Student Belonging to a Recognized Ethnic Minority") },
+            { label: "Student ECEC Attendance", value: extractUniqueValues(data, "Student ECEC Attendance") },
+            { label: "Student Previous Grade Retention", value: extractUniqueValues(data, "Student Previous Grade Retention") },
+            { label: "Student Learning Impairments", value: extractUniqueValues(data, "Student Learning Impairments") },
+            { label: "Student Physical Impairments", value: extractUniqueValues(data, "Student Physical Impairments") },
+            { label: "Student School Attitude or Motivation", value: extractUniqueValues(data, "Student School Attitude or Motivation") },
+            { label: "Student Assigned Teacher Grades", value: extractUniqueValues(data, "Student Assigned Teacher Grades") },
+            { label: "Student Allowance/Scholarship", value: extractUniqueValues(data, "Student Allowance/Scholarship") }
         ],
         "Household's Information": [
-            "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status",
-            "Parental Occupation", "Parental Education", "Parental Education Level (ISCED)",
-            "Parental Migratory Background", "Parents Age", "Parents Place of Birth",
-            "Parental Income or Wealth", "Parental Host Country’s Language Proficiency",
-            "Number of Books", "Number of Digital Devices", "Ownership of the Apartment/House"
+            { label: "Number of Parents", value: extractUniqueValues(data, "Number of Parents") },
+            { label: "Presence of Stepparents", value: extractUniqueValues(data, "Presence of Stepparents") },
+            { label: "Siblings", value: extractUniqueValues(data, "Siblings") },
+            { label: "Parental Working Status", value: extractUniqueValues(data, "Parental Working Status") },
+            { label: "Parental Occupation", value: extractUniqueValues(data, "Parental Occupation") },
+            { label: "Parental Education", value: extractUniqueValues(data, "Parental Education") },
+            { label: "Parental Education Level (ISCED)", value: extractUniqueValues(data, "Parental Education Level (ISCED)") },
+            { label: "Parental Migratory Background", value: extractUniqueValues(data, "Parental Migratory Background") },
+            { label: "Parents Age", value: extractUniqueValues(data, "Parents Age") },
+            { label: "Parents Place of Birth", value: extractUniqueValues(data, "Parents Place of Birth") },
+            { label: "Parental Income or Wealth", value: extractUniqueValues(data, "Parental Income or Wealth") },
+            { label: "Parental Host Country’s Language Proficiency", value: extractUniqueValues(data, "Parental Host Country’s Language Proficiency") },
+            { label: "Number of Books", value: extractUniqueValues(data, "Number of Books") },
+            { label: "Number of Digital Devices", value: extractUniqueValues(data, "Number of Digital Devices") },
+            { label: "Ownership of the Apartment/House", value: extractUniqueValues(data, "Ownership of the Apartment/House") }
         ],
         "Teachers' Information": [
-            "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree",
-            "Teacher Contract Type"
+            { label: "Teacher Age", value: extractUniqueValues(data, "Teacher Age") },
+            { label: "Teacher Gender", value: extractUniqueValues(data, "Teacher Gender") },
+            { label: "Teacher Seniority", value: extractUniqueValues(data, "Teacher Seniority") },
+            { label: "Teacher Educational Degree", value: extractUniqueValues(data, "Teacher Educational Degree") },
+            { label: "Teacher Contract Type", value: extractUniqueValues(data, "Teacher Contract Type") },
+            { label: "Student-Teacher Linkability", value: extractUniqueValues(data, "Student-Teacher Linkability") }
         ],
         "School/Class Information": [
-            "School Geo Referencing", "School Type", "School Track", "School Size",
-            "Class Size", "School Composition", "Class Composition"
+            { label: "School Geo Referencing", value: extractUniqueValues(data, "School Geo Referencing") },
+            { label: "School Type", value: extractUniqueValues(data, "School Type") },
+            { label: "School Track", value: extractUniqueValues(data, "School Track") },
+            { label: "School Size", value: extractUniqueValues(data, "School Size") },
+            { label: "Class Size", value: extractUniqueValues(data, "Class Size") },
+            { label: "School Composition", value: extractUniqueValues(data, "School Composition") },
+            { label: "Class Composition", value: extractUniqueValues(data, "Class Composition") }
         ]
     };
     
-    const container = document.getElementById("dataset-variables-section");
-    container.innerHTML = "";
-    
-    for (const [sectionTitle, variables] of Object.entries(sections)) {
-        const section = document.createElement("div");
-        section.classList.add("card", "mb-2");
+    Object.entries(groupedFields).forEach(([label, fields]) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "filter-group";
         
-        const sectionId = sectionTitle.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
-        const header = document.createElement("div");
-        header.classList.add("card-header");
-        header.innerHTML = `<button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#${sectionId}-collapse">${sectionTitle}</button>`;
-        section.appendChild(header);
-        
-        const body = document.createElement("div");
-        body.classList.add("collapse");
-        body.id = `${sectionId}-collapse`;
-        
-        const list = document.createElement("ul");
-        list.classList.add("list-group", "list-group-flush");
-        
-        variables.forEach(variable => {
-            const values = new Set();
-            
-            data.forEach(entry => {
-                if (entry.hasOwnProperty(variable) && entry[variable] != null) {
-                    values.add(String(entry[variable]).trim());
-                }
-            });
-            
-            const valueList = Array.from(values).sort().join(", ");
-            const li = document.createElement("li");
-            li.classList.add("list-group-item");
-            li.innerHTML = `<strong>${variable}:</strong> ${valueList || "<em>No data</em>"}`;
-            list.appendChild(li);
+        const toggle = document.createElement("div");
+        toggle.className = "filter-toggle";
+        toggle.textContent = label;
+        toggle.addEventListener("click", () => {
+            wrapper.classList.toggle("expanded");
         });
         
-        body.appendChild(list);
-        section.appendChild(body);
-        container.appendChild(section);
-    }
+        const content = document.createElement("div");
+        content.className = "filter-options";
+        
+        const uniqueVars = new Set();
+        
+        data.forEach(entry => {
+            fields.forEach(field => {
+                const fieldName = field.label;
+                if (entry[fieldName] && entry[fieldName].toLowerCase() !== "n/a" && entry[fieldName] !== "-") {
+                    uniqueVars.add(fieldName);
+                }
+            });
+        });
+        
+        Array.from(uniqueVars).forEach(varName => {
+            const labelEl = document.createElement("label");
+            labelEl.className = "checkbox-label";
+            
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.value = varName;
+            input.dataset.filter = varName; // 🔑 fondamentale per far funzionare la ricerca
+            
+            labelEl.appendChild(input);
+            labelEl.append(` ${varName}`);
+            content.appendChild(labelEl);
+        });
+        
+        wrapper.appendChild(toggle);
+        wrapper.appendChild(content);
+        container.appendChild(wrapper);
+    });
+    
 }
 
 function createCheckbox(groupLabel, optionLabel, isRadio = false) {
@@ -1640,3 +1583,47 @@ function updateSelectedFiltersDisplay() {
         });
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const selectedFiltersButton = document.getElementById('selected-filters-button');
+    const popoverInstance = new bootstrap.Popover(selectedFiltersButton);
+    
+    // Funzione globale per aggiornare l'etichetta e il contenuto del popover
+    window.updateSelectedFiltersDisplay = function () {
+        const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked, input[type="radio"]:checked'));
+        const label = document.getElementById('selected-filters-count-label');
+        
+        if (selected.length === 0) {
+            label.textContent = 'No filter selected';
+            selectedFiltersButton.setAttribute('data-bs-content',
+                "<ul class='list-group list-group-flush small mb-0 p-0'><li>No filter selected</li></ul>");
+            } else {
+                label.textContent = `${selected.length} filter${selected.length > 1 ? 's' : ''} selected`;
+                
+                const listItems = selected.map(input => {
+                    const group = input.getAttribute('data-filter');
+                    const value = input.value;
+                    return `<li class='list-group-item py-1 px-2 small'><strong>${group}:</strong> ${value}</li>`;
+                }).join('');
+                
+                selectedFiltersButton.setAttribute('data-bs-content',
+                    `<ul class='list-group list-group-flush small mb-0 p-0'>${listItems}</ul>`);
+                }
+                
+                // Ricrea il popover per aggiornare il contenuto dinamico
+                bootstrap.Popover.getInstance(selectedFiltersButton)?.dispose();
+                new bootstrap.Popover(selectedFiltersButton);
+            };
+            
+            // 🔁 Ogni volta che cambia un checkbox o radio, aggiorna il popover
+            document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+                input.addEventListener('change', () => {
+                    if (window.updateSelectedFiltersDisplay) window.updateSelectedFiltersDisplay();
+                });
+            });
+            
+            // Esegui subito il rendering iniziale
+            window.updateSelectedFiltersDisplay();
+        });
+        
+        
