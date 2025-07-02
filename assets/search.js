@@ -247,7 +247,7 @@ function showResultsModal(filteredData) {
         <div class="accordion" id="advancedInfo-${index}">
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">1. School Grades</button>
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">School Grades</button>
                 </h2>
                 <div id="school-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -262,7 +262,7 @@ function showResultsModal(filteredData) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">2. Students’ Skills and Achievement</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">Students’ Skills and Achievement</button>
                 </h2>
                 <div id="skills-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -275,7 +275,7 @@ function showResultsModal(filteredData) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">3. Sample</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">Sample</button>
                 </h2>
                 <div id="sample-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -289,7 +289,7 @@ function showResultsModal(filteredData) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">4. Linkability</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">Linkability</button>
                 </h2>
                 <div id="linkability-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -301,7 +301,7 @@ function showResultsModal(filteredData) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">5. Accessibility</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">Accessibility</button>
                 </h2>
                 <div id="accessibility-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -395,20 +395,61 @@ function showResultsModal(filteredData) {
             <b>Starting Year:</b> ${startingYear}<br>
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
-            <b><a href="#" class="toggle-section" data-target="details-${index}">Show detailed information</a></b><br>
-            <div id="details-${index}" class="collapsible-section" style="display:none;">
+            <div id="details-${index}" class="collapse">
                 ${advancedInfo}
             </div>
-        
-            <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
-            <div id="variables-${index}" class="collapsible-section" style="display:none;">
-                <h3>Dataset Variables</h3>
+
+            <button type="button" class="btn btn-success btn-sm toggle-collapse-btn mt-2"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#details-${index}"
+                    aria-expanded="false"
+                    aria-controls="details-${index}">
+                Show detailed information
+            </button><br>
+
+            <div id="variables-${index}" class="collapse">
+                <h3 class="mt-3">Dataset Variables</h3>
                 ${variablesInfo(entry)}
             </div>
+
+            <button type="button" class="btn btn-success btn-sm var-toggle-collapse-btn mt-2"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#variables-${index}"
+                    aria-expanded="false"
+                    aria-controls="variables-${index}">
+                Show dataset variables
+            </button>
         
         `;
         
         modalList.appendChild(dbDiv);
+        const collapseBtn = dbDiv.querySelector('.toggle-collapse-btn');
+        const collapseId = collapseBtn.getAttribute('data-bs-target');
+        const collapseEl = dbDiv.querySelector(collapseId);
+
+        if (collapseEl) {
+            collapseEl.addEventListener('show.bs.collapse', () => {
+                collapseBtn.textContent = 'Collapse detailed information';
+            });
+
+            collapseEl.addEventListener('hide.bs.collapse', () => {
+                collapseBtn.textContent = 'Show detailed information';
+            });
+        }
+
+        const collapseVarBtn = dbDiv.querySelector('.var-toggle-collapse-btn');
+        const collapseVarId = collapseVarBtn.getAttribute('data-bs-target');
+        const collapseVarEl = dbDiv.querySelector(collapseVarId);
+
+        if (collapseVarEl) {
+            collapseVarEl.addEventListener('show.bs.collapse', () => {
+                collapseVarBtn.textContent = 'Collapse dataset variables';
+            });
+
+            collapseVarEl.addEventListener('hide.bs.collapse', () => {
+                collapseVarBtn.textContent = 'Show dataset variables';
+            });
+        }
     });
     
     modal.classList.add("show");

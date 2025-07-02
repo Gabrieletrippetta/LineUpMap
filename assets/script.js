@@ -483,15 +483,15 @@ function openDbModal(code, index) {
             <button class="btn btn-primary" onclick="openSingleDbModal('${readableCode}', ${index})">Show details</button>
             
             `;
-            
-            container.appendChild(dbDiv);
-            console.log("Appended entry:", dbDiv);
-        });
         
-        closeDbPanel();
-        modal.classList.add("show");
-}
+        container.appendChild(dbDiv);
+        console.log("Appended entry:", dbDiv);
+    });
     
+    closeDbPanel();
+    modal.classList.add("show");
+}
+
 //! Bottone per popout    <button class="btn btn-secondary" onclick="popoutDataset('${readableCode}', ${index})">Popout</button>
 
 
@@ -559,7 +559,7 @@ function showCountryDetailsInPanel(code) {
         <div class="accordion" id="advancedInfo-${index}">
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">1. School Grades</button>
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">School Grades</button>
                 </h2>
                 <div id="school-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -574,7 +574,7 @@ function showCountryDetailsInPanel(code) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">2. Students’ Skills and Achievement</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">Students’ Skills and Achievement</button>
                 </h2>
                 <div id="skills-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -587,7 +587,7 @@ function showCountryDetailsInPanel(code) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">3. Sample</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">Sample</button>
                 </h2>
                 <div id="sample-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -601,7 +601,7 @@ function showCountryDetailsInPanel(code) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">4. Linkability</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">Linkability</button>
                 </h2>
                 <div id="linkability-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -613,7 +613,7 @@ function showCountryDetailsInPanel(code) {
         
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">5. Accessibility</button>
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">Accessibility</button>
                 </h2>
                 <div id="accessibility-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
@@ -708,19 +708,62 @@ function showCountryDetailsInPanel(code) {
             <b>Starting Year:</b> ${startingYear}<br>
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
-            <b><a href="#" class="toggle-section" data-target="details-${index}">Show detailed information</a></b><br>
-            <div id="details-${index}" class="collapsible-section" style="display:none;">
+        
+            <div id="details-${index}" class="collapse">
                 ${advancedInfo}
             </div>
         
-            <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
-            <div id="variables-${index}" class="collapsible-section" style="display:none;">
-                <h3>Dataset Variables</h3>
+            <button type="button" class="btn btn-success btn-sm toggle-collapse-btn mt-2"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#details-${index}"
+                    aria-expanded="false"
+                    aria-controls="details-${index}">
+                Show detailed information
+            </button><br>
+        
+            <div id="variables-${index}" class="collapse">
+                <h3 class="mt-3">Dataset Variables</h3>
                 ${variablesInfo(entry)}
             </div>
+        
+            <button type="button" class="btn btn-success btn-sm var-toggle-collapse-btn mt-2"
+                data-bs-toggle="collapse"
+                data-bs-target="#variables-${index}"
+                aria-expanded="false"
+                aria-controls="variables-${index}">
+                Show dataset variables
+            </button>
+        
             <hr>
         `;
         
+        // Subito dopo aver impostato innerHTML
+        const collapseBtn = entryDiv.querySelector('.toggle-collapse-btn');
+        const collapseId = collapseBtn.getAttribute('data-bs-target');
+        const collapseEl = entryDiv.querySelector(collapseId);
+        
+        if (collapseEl) {
+            collapseEl.addEventListener('show.bs.collapse', () => {
+                collapseBtn.textContent = 'Collapse detailed information';
+            });
+            
+            collapseEl.addEventListener('hide.bs.collapse', () => {
+                collapseBtn.textContent = 'Show detailed information';
+            });
+        }
+        const collapseVarBtn = entryDiv.querySelector('.var-toggle-collapse-btn');
+        const collapseVarId = collapseVarBtn.getAttribute('data-bs-target');
+        const collapseVarEl = entryDiv.querySelector(collapseVarId);
+        
+        if (collapseVarEl) {
+            collapseVarEl.addEventListener('show.bs.collapse', () => {
+                collapseVarBtn.textContent = 'Collapse dataset variables';
+            });
+            
+            collapseVarEl.addEventListener('hide.bs.collapse', () => {
+                collapseVarBtn.textContent = 'Show dataset variables';
+            });
+        }
         content.appendChild(entryDiv);
     });
     
@@ -845,7 +888,7 @@ function openSingleDbModal(code, index) {
     <div class="accordion" id="advancedInfo-${index}">
         <div class="accordion-item">
             <h2 class="accordion-header">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">1. School Grades</button>
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#school-${index}">School Grades</button>
             </h2>
             <div id="school-${index}" class="accordion-collapse collapse">
                 <div class="accordion-body">
@@ -860,7 +903,7 @@ function openSingleDbModal(code, index) {
     
         <div class="accordion-item">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">2. Students’ Skills and Achievement</button>
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skills-${index}">Students’ Skills and Achievement</button>
             </h2>
             <div id="skills-${index}" class="accordion-collapse collapse">
                 <div class="accordion-body">
@@ -873,7 +916,7 @@ function openSingleDbModal(code, index) {
     
         <div class="accordion-item">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">3. Sample</button>
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample-${index}">Sample</button>
             </h2>
             <div id="sample-${index}" class="accordion-collapse collapse">
                 <div class="accordion-body">
@@ -887,7 +930,7 @@ function openSingleDbModal(code, index) {
     
         <div class="accordion-item">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">4. Linkability</button>
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability-${index}">Linkability</button>
             </h2>
             <div id="linkability-${index}" class="accordion-collapse collapse">
                 <div class="accordion-body">
@@ -899,7 +942,7 @@ function openSingleDbModal(code, index) {
     
         <div class="accordion-item">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">5. Accessibility</button>
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility-${index}">Accessibility</button>
             </h2>
             <div id="accessibility-${index}" class="accordion-collapse collapse">
                 <div class="accordion-body">
@@ -994,18 +1037,63 @@ function openSingleDbModal(code, index) {
         <b>Starting Year:</b> ${startingYear}<br>
         <b>Ending Year:</b> ${endingYear}<br>
         <b>Sample Level:</b> ${sampleLevel}<br>
-        <b><a href="#" class="toggle-section" data-target="details-${index}">Show detailed information</a></b><br>
-        <div id="details-${index}" class="collapsible-section" style="display:none;">
+    
+        <div id="details-${index}" class="collapse">
             ${advancedInfo}
         </div>
+        
+        <button type="button" class="btn btn-success btn-sm toggle-collapse-btn mt-2"
+                data-bs-toggle="collapse"
+                data-bs-target="#details-${index}"
+                aria-expanded="false"
+                aria-controls="details-${index}">
+            Show detailed information
+        </button><br>
     
-        <b><a href="#" class="toggle-section" data-target="variables-${index}">Show dataset variables</a></b><br>
-        <div id="variables-${index}" class="collapsible-section" style="display:none;">
-            <h3>Dataset Variables</h3>
+    
+        <div id="variables-${index}" class="collapse">
+            <h3 class="mt-3">Dataset Variables</h3>
             ${variablesInfo(entry)}
         </div>
+    
+        <button type="button" class="btn btn-success btn-sm var-toggle-collapse-btn mt-2"
+            data-bs-toggle="collapse"
+            data-bs-target="#variables-${index}"
+            aria-expanded="false"
+            aria-controls="variables-${index}">
+            Show dataset variables
+        </button>
+    
         <hr>
-    `;
+        `;
+    
+    // Subito dopo aver impostato innerHTML
+    const collapseBtn = entryDiv.querySelector('.toggle-collapse-btn');
+    const collapseId = collapseBtn.getAttribute('data-bs-target');
+    const collapseEl = entryDiv.querySelector(collapseId);
+    
+    if (collapseEl) {
+        collapseEl.addEventListener('show.bs.collapse', () => {
+            collapseBtn.textContent = 'Collapse detailed information';
+        });
+        
+        collapseEl.addEventListener('hide.bs.collapse', () => {
+            collapseBtn.textContent = 'Show detailed information';
+        });
+    }
+    const collapseVarBtn = entryDiv.querySelector('.var-toggle-collapse-btn');
+    const collapseVarId = collapseVarBtn.getAttribute('data-bs-target');
+    const collapseVarEl = entryDiv.querySelector(collapseVarId);
+    
+    if (collapseVarEl) {
+        collapseVarEl.addEventListener('show.bs.collapse', () => {
+            collapseVarBtn.textContent = 'Collapse dataset variables';
+        });
+        
+        collapseVarEl.addEventListener('hide.bs.collapse', () => {
+            collapseVarBtn.textContent = 'Show dataset variables';
+        });
+    }
     
     content.appendChild(entryDiv);
     
@@ -1026,8 +1114,6 @@ function openSingleDbModal(code, index) {
         });
     });
 };
-
-
 
 // MAP BORDERS
 
@@ -1737,29 +1823,29 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Esegui subito il rendering iniziale
             window.updateSelectedFiltersDisplay();
-});
+        });
         
-    // POPOUT
-function popoutDataset(code, index) {
-    const decodedCode = decodeURIComponent(code);
-    let normalizedCode = decodedCode;
-    
-    if (decodedCode === "UK" || decodedCode.includes("England")) {
-        normalizedCode = "United Kingdom";
-    }
-    
-    const entry = countryEntryStore[normalizedCode]?.[index];
-    if (!entry) {
-        console.warn("Dataset non trovato:", normalizedCode, index);
-        return;
-    }
-    
-    // Costruisci il contenuto HTML
-    const name = getField(entry, "Name");
-    const acronym = getField(entry, "Acronym");
-    const description = getField(entry, "Short Description");
-    
-    const htmlContent = `
+        // POPOUT
+        function popoutDataset(code, index) {
+            const decodedCode = decodeURIComponent(code);
+            let normalizedCode = decodedCode;
+            
+            if (decodedCode === "UK" || decodedCode.includes("England")) {
+                normalizedCode = "United Kingdom";
+            }
+            
+            const entry = countryEntryStore[normalizedCode]?.[index];
+            if (!entry) {
+                console.warn("Dataset non trovato:", normalizedCode, index);
+                return;
+            }
+            
+            // Costruisci il contenuto HTML
+            const name = getField(entry, "Name");
+            const acronym = getField(entry, "Acronym");
+            const description = getField(entry, "Short Description");
+            
+            const htmlContent = `
         <html>
         <head>
             <title>${name}</title>
@@ -1773,14 +1859,15 @@ function popoutDataset(code, index) {
         </body>
         </html>
     `;
+            
+            // Apri una nuova finestra e scrivici dentro
+            const popup = window.open("", "_blank", "width=600,height=600,resizable=yes,scrollbars=yes");
+            if (popup) {
+                popup.document.write(htmlContent);
+                popup.document.close();
+            } else {
+                alert("Popup blocked! Please allow popups for this site.");
+            }
+        }
         
-        // Apri una nuova finestra e scrivici dentro
-    const popup = window.open("", "_blank", "width=600,height=600,resizable=yes,scrollbars=yes");
-    if (popup) {
-        popup.document.write(htmlContent);
-        popup.document.close();
-    } else {
-        alert("Popup blocked! Please allow popups for this site.");
-    }
-}
         
