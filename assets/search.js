@@ -38,6 +38,9 @@ function filterMappingData(data, filters) {
 function getCountryFromEntry(entry) {
     const raw = entry["Country"];
     if (!raw) return null;
+
+    if (raw.includes("BE (Flanders)")) return "Belgium (Flanders)";
+    if (raw.includes("BE (Wallonia)")) return "Belgium (Wallonia)";
     
     // Cerca ISO2 in formato "AT (Austria)" o "AT/DE (Austria, Germany)"
     const isoMatch = raw.match(/^([A-Z]{2,})(?:\/[A-Z]{2})*/);
@@ -212,18 +215,18 @@ function showResultsModal(filteredData) {
         const description = getField(entry, "Short Description");
         
         const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
-        const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+        const allLongitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+        const longitudinalTypes = allLongitudinalTypes.filter(type => type !== "Hybrid Data");
         const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
         const focusList = extractBracketedValues(entry, "Data Collection Focus [");
         
         const frequency = getField(entry, "Data Collection Frequency");
-        const duration = getField(entry, "Data Collection Duration (Years)");
+        // const duration = getField(entry, "Data Collection Duration (Years)");
         const startingYear = getField(entry, "Starting Year");
         const endingYear = getField(entry, "Ending Year");
         
         const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
         const includedGrades = extractBracketedValues(entry, "School Grades Included [");
-        const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
         const afterSchool = getField(entry, "Students Followed After School Education")
         
         const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
@@ -254,8 +257,7 @@ function showResultsModal(filteredData) {
                         <p><strong>ECEC:</strong> ${ecec}</p>
                         <p><strong>Included Grades:</strong></p>
                         <ul>${includedGrades.map(g => `<li>${g}</li>`).join("") || "<li>None</li>"}</ul>
-                        <p><strong>Primary & Secondary:</strong> ${primarySecondary}</p>
-                        <p><strong>After School:</strong> ${afterSchool}</p>
+                        <p><strong>Students followed after school education:</strong> ${afterSchool}</p>
                     </div>
                 </div>
             </div>
@@ -391,7 +393,6 @@ function showResultsModal(filteredData) {
             <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
             <b>Data Collection Focus:</b> ${focusList.join(", ") || "N/A"}<br>
             <b>Data Collection Frequency:</b> ${frequency}<br>
-            <b>Data Collection Duration (Years):</b> ${duration}<br>
             <b>Starting Year:</b> ${startingYear}<br>
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>

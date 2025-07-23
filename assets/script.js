@@ -11,6 +11,7 @@ function getField(entry, ...possibleKeys) {
     return "N/A";
 }
 
+let previousModalState = null;
 //! SCELTA DELL'UTENTE
 
 // const roleDescriptions = {
@@ -94,9 +95,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var countries = {
     "Austria": [47.5162, 14.5501],
-    "Belgium": [50.6203, 4.3517],
+    "Belgium (Flanders)": [50.8798, 3.85],
+    "Belgium (Wallonia)": [50.4669, 4.8675],
     "Bulgaria": [42.7339, 25.4858],
-    "Croatia": [43.6, 15.2],
+    "Croatia": [44.402, 15.581],
     "Cyprus": [35.1264, 33.4299],
     "Czech Republic": [49.8175, 15.4729],
     "Denmark": [56.2639, 9.5018],
@@ -129,7 +131,8 @@ var countries = {
 
 const countryNameToISO2 = {
     "Austria": "AT",
-    "Belgium": "BE",
+    "Belgium (Flanders)": "BE-FL",
+    "Belgium (Wallonia)": "BE-WA",
     "Bulgaria": "BG",
     "Croatia": "HR",
     "Cyprus": "CY",
@@ -161,6 +164,43 @@ const countryNameToISO2 = {
     "Switzerland": "CH",
     "United Kingdom": "UK"
 };
+
+const colorPalette = [
+    '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#0a007f',
+    '#ffff33', '#a65628', '#f781bf', '#999999', '#66c2a5',
+    '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#00d92f',
+    '#e5c494', '#b3b3b3', '#1b9e77', '#d95f02', '#7570b3',
+    '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666',
+    '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99',
+    '#e31a1c', '#fdbf6f', '#00b2d6', '#6a3d9a', '#ff7f00',
+    '#ffff99', '#b15928'
+];
+
+const countryColors = {};
+let colorIndex = 0;
+
+function assignUniqueColor(isoCode) {
+    if (!countryColors[isoCode]) {
+        countryColors[isoCode] = colorPalette[colorIndex % colorPalette.length];
+        colorIndex++;
+    }
+    return countryColors[isoCode];
+}
+
+function drawAllCountriesColored() {
+    Object.entries(countryBorders).forEach(([iso2, feature]) => {
+        const color = assignUniqueColor(iso2);
+        
+        L.geoJSON(feature, {
+            style: {
+                color: '#444',
+                weight: 1,
+                fillColor: color,
+                fillOpacity: 0.5
+            }
+        }).addTo(map);
+    });
+}
 
 var markers = {};
 
@@ -194,55 +234,42 @@ function countEntriesByCountry(data) {
     return counts;
 }
 
-
-// function groupDataByCountry(data) {
-//     const grouped = {};
-
-//     data.forEach(row => {
-    //         let rawCountry = row["Country"];
-//         let match = rawCountry && rawCountry.match(/\b[A-Z]{2}\b/);
-//         console.log("match: " + match);
-//         if (match) {
-//             let code = match[0];
-//             if (!grouped[code]) grouped[code] = [];
-//             grouped[code].push(row);  // 👈 passiamo tutto l'oggetto originale
-//         }
-//     });
-
-//     return grouped;
-// }
-
 function groupDataByCountry(data) {
     const grouped = {};
     Object.keys(countries).forEach(name => grouped[name] = []);
     
     data.forEach(row => {
-        let matchedCountry = null;
-        
         const raw = row["Country"]?.trim();
         
-        // 1. Casi speciali noti
+        // 🎯 Gestione Flanders e Wallonia
+        if (row["Country"]?.includes("BE (Flanders)")) {
+            grouped["Belgium (Flanders)"].push(row);
+            return;
+        }
+        if (row["Country"]?.includes("BE (Wallonia)")) {
+            grouped["Belgium (Wallonia)"].push(row);
+            return;
+        }
+        let matchedCountry = null;
+        
+        // 🇬🇧 UK eccezione
         if (raw === "UK (England, Wales, Scotland, Northern Ireland)") {
             matchedCountry = "United Kingdom";
         }
         
-        // 2. Altri casi: estrai ISO2 code come "UK"
+        // Estrai ISO e cerca
         if (!matchedCountry) {
             const isoMatch = raw?.match(/^([A-Z\/]+)\s?\(/);
             if (isoMatch) {
                 let iso2 = isoMatch[1];
-                
-                // 🔁 correzione: normalizza UK → GB
                 if (iso2 === "UK") iso2 = "GB";
-                
                 matchedCountry = Object.entries(countryNameToISO2).find(([name, code]) =>
                     code === iso2 || iso2.includes(code) || code.includes(iso2)
             )?.[0];
         }
     }
-    console.log("Righe UK:", grouped["United Kingdom"]?.length);
     
-    // 3. Oppure estrai nome tra parentesi e vedi se corrisponde
+    // Match tramite nome
     if (!matchedCountry) {
         const nameMatch = raw?.match(/\(([^)]+)\)/);
         if (nameMatch && Object.keys(countries).includes(nameMatch[1])) {
@@ -250,21 +277,22 @@ function groupDataByCountry(data) {
         }
     }
     
-    // 4. Oppure prova direttamente tutto il campo
+    // Fallback
     if (!matchedCountry && Object.keys(countries).includes(raw)) {
         matchedCountry = raw;
     }
     
-    // 5. Inserisci se trovato
     if (matchedCountry && grouped[matchedCountry]) {
         grouped[matchedCountry].push(row);
     } else if (!matchedCountry) {
         console.warn("Nessun paese trovato per:", raw);
     }
+    
 });
 
 return grouped;
 }
+
 
 const countryEntryStore = {};  // Variabile globale
 
@@ -272,13 +300,18 @@ function renderMapWithCounts(counts, groupedData) {
     // Rimuove tutti i marker esistenti
     Object.values(markers).forEach(marker => map.removeLayer(marker));
     markers = {};
-    Object.keys(countries).forEach(code => {
+    
+    const sortedCountries = Object.keys(countries).sort();
+    
+    sortedCountries.forEach(code => {
         const count = counts[code] || 0;
         const latlng = countries[code];
         
+        const pinColor = count > 0 ? "#007bff" : "#999999";
+        
         const iconHtml = `
             <div class="svg-pin">
-            <svg width="40" height="50" viewBox="0 0 24 24" fill="#007bff" xmlns="http://www.w3.org/2000/svg">
+            <svg width="40" height="50" viewBox="0 0 24 24" fill="${pinColor}" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
             </svg>
             <span class="pin-count">${count}</span>
@@ -296,39 +329,58 @@ function renderMapWithCounts(counts, groupedData) {
         const marker = L.marker(latlng, { icon }).addTo(map);
         markers[code] = marker;
         
-        const entries = groupedData[code] || [];
+        const entries = (groupedData[code] || []).slice();
+        
+        // Ordina i dataset per "Name"
+        entries.sort((a, b) => {
+            const nameA = getField(a, "Name").toLowerCase();
+            const nameB = getField(b, "Name").toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+        
         countryEntryStore[code] = entries;  // 🔒 Salva dati per uso nei click handler
         
-        let popupContent = `<b>${code}</b><br>`;
+        let popupContent = `<p class="popup-country">Datasets in <b>${code}</b></p>`;
         
         if (entries.length === 0) {
             popupContent += `<i>No data available</i>`;
         } else {
             popupContent += `<div id="entryList-${code}" style="display: block;">`;
-            entries.slice(0, 3).forEach(e => {
+            
+            entries.slice(0, 3).forEach((e, i) => {
                 const name = getField(e, "Name");
                 const acronym = getField(e, "Acronym");
-                popupContent += `<div><b>${name}</b><br><i>${acronym}</i></div><hr>`;
+                const encodedCode = encodeURIComponent(code);
+                
+                popupContent += `
+                    <div class="entry-preview">
+                        <strong>Name: </strong><span>${name}</span><br>
+                        <strong>Acronym: </strong><i>${acronym}</i><br>
+                        <div style="text-align: right;">
+                            <button class="expand-button" onclick="openSingleDbModal('${encodedCode}', ${i})">
+                                Show more
+                            </button>
+                        </div>
+                    </div><hr>`;
             });
+            
             popupContent += `</div>`;
             
-            const encodedCode = encodeURIComponent(code);
-            
-            popupContent += `
-                <div class="popup-buttons">
-                    <button class="show-button" onclick="zoomToCountry('${encodedCode}'); openDbModal('${encodedCode}')">
-                        Show all datasets (${count})
-                    </button>
-                    <button class="expand-button" onclick="showCountryDetailsInPanel('${encodedCode}')">
-                        Show more
-                    </button>
-                    
-                </div>
-            `;
+            if (entries.length > 3) {
+                const encodedCode = encodeURIComponent(code);
+                popupContent += `
+            <div class="popup-buttons">
+                <button class="show-button" onclick="zoomToCountry('${encodedCode}'); openDbModal('${encodedCode}')">
+                    Show all datasets (${count})
+                </button>
+            </div>
+        `;
+            }
         }
         
+        
         marker.bindPopup(popupContent);
-        marker.on("mouseover", () => marker.openPopup());
+        marker.on("click", () => marker.openPopup());
     });
     
     // console.log("COUNTS:", counts);
@@ -386,6 +438,7 @@ fetch("./assets/europe.geojson")
         console.log("Chiamo initMap da geojson");
         initMap();
     }
+    drawAllCountriesColored();
 })
 .catch(err => console.error("Errore nel caricamento dei confini:", err));
 
@@ -429,6 +482,10 @@ function initMap() {
     setupAdvancedFilterInteraction(mappingData);
     setupDataVariablesInteraction(mappingData);
     // setupVariablesFilterInteraction(mappingData);
+    Object.entries(countryNameToISO2).forEach(([country, iso2]) => {
+        const color = countryColors[iso2];
+        console.log(`${country} (${iso2}): ${color}`);
+    });
 }
 
 // EXTRACT IN SQUARE BRACKETS CONTENT
@@ -445,7 +502,8 @@ function extractBracketedValues(entry, prefix) {
 
 // SHOW REALLY BASIC INFO ON DB
 
-function openDbModal(code, index) {
+function openDbModal(code) {
+    previousModalState = null;
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
     
@@ -480,8 +538,9 @@ function openDbModal(code, index) {
             <b>Name:</b> ${name}<br>
             <b>Acronym:</b> ${acronym}<br>
             ${description}<br><br>
-            <button class="btn btn-primary" onclick="openSingleDbModal('${readableCode}', ${index})">Show details</button>
-            
+            <div style="text-align: right;">
+                <button class="expand-button" onclick="openSingleDbModal('${readableCode}', ${index})">Show more</button>
+            </div>
             `;
         
         container.appendChild(dbDiv);
@@ -524,18 +583,18 @@ function showCountryDetailsInPanel(code) {
         const description = getField(entry, "Short Description");
         
         const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
-        const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+        const allLongitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+        const longitudinalTypes = allLongitudinalTypes.filter(type => type !== "Hybrid Data");
         const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
         const focusList = extractBracketedValues(entry, "Data Collection Focus [");
         
         const frequency = getField(entry, "Data Collection Frequency");
-        const duration = getField(entry, "Data Collection Duration (Years)");
         const startingYear = getField(entry, "Starting Year");
         const endingYear = getField(entry, "Ending Year");
         
         const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
         const includedGrades = extractBracketedValues(entry, "School Grades Included [");
-        const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
+        // const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
         const afterSchool = getField(entry, "Students Followed After School Education")
         
         const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
@@ -566,8 +625,7 @@ function showCountryDetailsInPanel(code) {
                         <p><strong>ECEC:</strong> ${ecec}</p>
                         <p><strong>Included Grades:</strong></p>
                         <ul>${includedGrades.map(g => `<li>${g}</li>`).join("") || "<li>None</li>"}</ul>
-                        <p><strong>Primary & Secondary:</strong> ${primarySecondary}</p>
-                        <p><strong>After School:</strong> ${afterSchool}</p>
+                        <p><strong>Students followed after school education:</strong> ${afterSchool}</p>
                     </div>
                 </div>
             </div>
@@ -704,22 +762,23 @@ function showCountryDetailsInPanel(code) {
             <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
             <b>Data Collection Focus:</b> ${focusList.join(", ") || "N/A"}<br>
             <b>Data Collection Frequency:</b> ${frequency}<br>
-            <b>Data Collection Duration (Years):</b> ${duration}<br>
             <b>Starting Year:</b> ${startingYear}<br>
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
         
+            <button type-button class="btn btn-secondary btn-sm mt-2" onclick="popoutDataset('${readableCode}', ${index})">&#x2197; Popout</button>
+        
             <div id="details-${index}" class="collapse">
                 ${advancedInfo}
             </div>
-        
+            
             <button type="button" class="btn btn-success btn-sm toggle-collapse-btn mt-2"
                     data-bs-toggle="collapse"
                     data-bs-target="#details-${index}"
                     aria-expanded="false"
                     aria-controls="details-${index}">
                 Show detailed information
-            </button><br>
+            </button>
         
             <div id="variables-${index}" class="collapse">
                 <h3 class="mt-3">Dataset Variables</h3>
@@ -733,7 +792,7 @@ function showCountryDetailsInPanel(code) {
                 aria-controls="variables-${index}">
                 Show dataset variables
             </button>
-        
+            
             <hr>
         `;
         
@@ -828,6 +887,7 @@ function closeDbModal() {
 }
 
 function openSingleDbModal(code, index) {
+    previousModalState = { type: "country", code };
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
     
@@ -853,18 +913,19 @@ function openSingleDbModal(code, index) {
     const description = getField(entry, "Short Description");
     
     const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
-    const longitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+    const allLongitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+    const longitudinalTypes = allLongitudinalTypes.filter(type => type !== "Hybrid Data");
     const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
     const focusList = extractBracketedValues(entry, "Data Collection Focus [");
     
     const frequency = getField(entry, "Data Collection Frequency");
-    const duration = getField(entry, "Data Collection Duration (Years)");
+    // const duration = getField(entry, "Data Collection Duration (Years)");
     const startingYear = getField(entry, "Starting Year");
     const endingYear = getField(entry, "Ending Year");
     
     const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
     const includedGrades = extractBracketedValues(entry, "School Grades Included [");
-    const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
+    // const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
     const afterSchool = getField(entry, "Students Followed After School Education")
     
     const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
@@ -895,8 +956,7 @@ function openSingleDbModal(code, index) {
                     <p><strong>ECEC:</strong> ${ecec}</p>
                     <p><strong>Included Grades:</strong></p>
                     <ul>${includedGrades.map(g => `<li>${g}</li>`).join("") || "<li>None</li>"}</ul>
-                    <p><strong>Primary & Secondary:</strong> ${primarySecondary}</p>
-                    <p><strong>After School:</strong> ${afterSchool}</p>
+                    <p><strong>Students followed after school education:</strong> ${afterSchool}</p>
                 </div>
             </div>
         </div>
@@ -1033,23 +1093,23 @@ function openSingleDbModal(code, index) {
         <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
         <b>Data Collection Focus:</b> ${focusList.join(", ") || "N/A"}<br>
         <b>Data Collection Frequency:</b> ${frequency}<br>
-        <b>Data Collection Duration (Years):</b> ${duration}<br>
         <b>Starting Year:</b> ${startingYear}<br>
         <b>Ending Year:</b> ${endingYear}<br>
         <b>Sample Level:</b> ${sampleLevel}<br>
     
+        <button type-button class="btn btn-secondary btn-sm mt-2 mr-4" onclick="popoutDataset('${code}', ${index})">&#x2197; Popout</button>
+        
         <div id="details-${index}" class="collapse">
             ${advancedInfo}
         </div>
         
-        <button type="button" class="btn btn-success btn-sm toggle-collapse-btn mt-2"
+        <button type="button" class="btn btn-success btn-sm toggle-collapse-btn mt-2 mr-4"
                 data-bs-toggle="collapse"
                 data-bs-target="#details-${index}"
                 aria-expanded="false"
                 aria-controls="details-${index}">
             Show detailed information
-        </button><br>
-    
+        </button>
     
         <div id="variables-${index}" class="collapse">
             <h3 class="mt-3">Dataset Variables</h3>
@@ -1235,9 +1295,10 @@ function renderListView() {
     const listDiv = document.getElementById("list-view");
     listDiv.innerHTML = ""; // Pulisce prima
     
-    Object.keys(grouped).forEach(country => {
-        const entries = grouped[country];
-        if (entries.length === 0) return;
+    const sortedCountries = Object.keys(countries).sort(); // Ordina alfabeticamente tutte le nazioni
+    
+    sortedCountries.forEach(country => {
+        const entries = grouped[country] || [];
         
         const section = document.createElement("section");
         section.classList.add("mb-5");
@@ -1251,23 +1312,37 @@ function renderListView() {
         const row = document.createElement("div");
         row.className = "row";
         
-        entries.forEach((entry, index) => {
-            const col = document.createElement("div");
-            col.className = "col-6 mb-4";
+        if (entries.length === 0) {
+            const emptyMsg = document.createElement("p");
+            emptyMsg.textContent = "No datasets available for this country.";
+            row.appendChild(emptyMsg);
+        } else {
+            entries.sort((a, b) => {
+                const nameA = getField(a, "Name").toLowerCase();
+                const nameB = getField(b, "Name").toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
             
-            col.innerHTML = `
-                <div class="card h-100 shadow-sm d-flex flex-column">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title"><strong>Name: </strong>${getField(entry, "Name")}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted"><strong>Acronym: </strong>${getField(entry, "Acronym")}</h6>
-                        <p class="card-text">${getField(entry, "Short Description")}</p>
-                        <button class="btn btn-success mt-auto" onclick="openSingleDbModal('${country}', ${index})">Show more</button>
+            entries.forEach((entry, index) => {
+                const col = document.createElement("div");
+                col.className = "col-6 mb-4";
+                
+                col.innerHTML = `
+                    <div class="card h-100 shadow-sm d-flex flex-column">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><strong>Name: </strong>${getField(entry, "Name")}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted"><strong>Acronym: </strong>${getField(entry, "Acronym")}</h6>
+                            <p class="card-text">${getField(entry, "Short Description")}</p>
+                            <button class="btn btn-success mt-auto" onclick="openSingleDbModal('${country}', ${index})">Show more</button>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+                
+                row.appendChild(col);
+            });
             
-            row.appendChild(col);
-        });
+        }
+        
         
         section.appendChild(row);
         listDiv.appendChild(section);
@@ -1286,7 +1361,7 @@ function renderListView() {
     //         if (menu.style.display === "flex") {
 //             menu.style.display = "none";
 //         } else {
-//             menu.style.display = "flex";
+    //             menu.style.display = "flex";
 //         }
 //     });
 // }
@@ -1296,7 +1371,7 @@ function renderListView() {
 //     if (typeof mappingData !== "undefined") {
 //         createMainFilterOptions(mappingData);
 //     } else {
-//         fetch("assets/mapping_data.json")
+    //         fetch("assets/mapping_data.json")
 //             .then(res => res.json())
 //             .then(json => {
     //                 window.mappingData = json;
@@ -1783,6 +1858,158 @@ function updateSelectedFiltersDisplay() {
     }
 }
 
+function popoutDataset(code, index) {
+    const decodedCode = decodeURIComponent(code);
+    let normalizedCode = decodedCode;
+    if (decodedCode === "UK" || decodedCode.includes("England")) {
+        normalizedCode = "United Kingdom";
+    }
+
+    const entry = countryEntryStore[normalizedCode]?.[index];
+    if (!entry) return;
+
+    const name = getField(entry, "Name");
+    const acronym = getField(entry, "Acronym");
+    const description = getField(entry, "Short Description");
+
+    const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
+    const allLongitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
+    const longitudinalTypes = allLongitudinalTypes.filter(type => type !== "Hybrid Data");
+    const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
+    const focusList = extractBracketedValues(entry, "Data Collection Focus [");
+
+    const frequency = getField(entry, "Data Collection Frequency");
+    const startingYear = getField(entry, "Starting Year");
+    const endingYear = getField(entry, "Ending Year");
+
+    const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
+    const includedGrades = extractBracketedValues(entry, "School Grades Included [");
+    const afterSchool = getField(entry, "Students Followed After School Education");
+
+    const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
+    const measureTypes = extractBracketedValues(entry, "Measure Type [");
+    const adminMethod = getField(entry, "Administration Method");
+
+    const sampleTypes = extractBracketedValues(entry, "Sample Type [");
+    const samplingCriteria = getField(entry, "Sampling Weights/Criteria");
+    const sampleSize = getField(entry, "Average Sample Size x Wave");
+    const sampleUnits = extractBracketedValues(entry, "Sample Unit [");
+
+    const linkability = extractBracketedValues(entry, "Data Linkability At Individual Level [");
+    const linkabilityRaw = getField(entry, "Data Linkability At Individual Level");
+
+    const microdata = getField(entry, "Access to Micro Data");
+    const constraints = getField(entry, "Constraints for Data Download and Management");
+    const website = getField(entry, "Official Website");
+
+    let sampleLevel = getField(entry, "Sample Level");
+    if (sampleLevel === "Limited to specific regions/areas") {
+        const detail = getField(entry, "Sample Level (Details)");
+        sampleLevel = `${sampleLevel}${detail !== "N/A" ? `: ${detail}` : ""}`;
+    } else if (sampleLevel === "N/A" || sampleLevel === "") {
+        sampleLevel = "N/A";
+    }
+
+    const variablesInfo = (entry) => {
+        const sections = {
+            "Students’ Information": [ "Student Gender", "Student Age", "Student Citizenship", "Student Foreign Birth Country", "Student Specific Birth Country", "Student Town of Residence", "Student Province of Residence", "Student Region of Residence", "Student Belonging to a Recognised Ethnic Minority", "Student ECEC Attendance", "Student Previous Grade Retention", "Student Learning Impairments", "Student Physical Impairments", "Student School Attitude or Motivation", "Student Assigned Teacher Grades", "Student Allowance/Scholarship" ],
+            "Household’s Information": [ "Number of Parents", "Presence of Stepparents", "Siblings", "Parental Working Status", "Parental Occupation", "Parental Education", "Parental Education Level (ISCED)", "Parental Migratory Background", "Parents Age", "Parents Place Of Birth", "Parental Income or Wealth", "Parental Host Country's Language Proficiency", "Number of Books", "Number of Digital Devices", "Ownership of the Apartment/House" ],
+            "Teachers’ Information": [ "Teacher Age", "Teacher Gender", "Teacher Seniority", "Teacher Educational Degree", "Teacher Contract Type" ],
+            "School/Class Information": [ "School Geo-Referencing", "School Type", "School Track", "School Size", "Class Size", "School Composition", "Class Composition" ]
+        };
+
+        return Object.entries(sections).map(([title, keys]) => {
+            const items = keys.map(key => {
+                const val = entry[key];
+                return (val && val.trim() !== "") ? `<li><strong>${key}:</strong> ${val}</li>` : "";
+            }).filter(Boolean).join("");
+            return items ? `<h4>${title}</h4><ul>${items}</ul>` : "";
+        }).join("<br>");
+    };
+
+    const htmlContent = `
+        <html>
+        <head>
+            <title>${name} - (${acronym}) - ${decodeURIComponent(code)}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.5; }
+                h2 { color: #007bff; }
+                h3 { margin-top: 1.5em; }
+                ul { padding-left: 20px; }
+                li { margin-bottom: 0.4em; }
+            </style>
+        </head>
+        <body>
+            <h2>${name}</h2>
+            <p><strong>Acronym:</strong> ${acronym}</p>
+            <p>${description}</p>
+            <h3>Main Information</h3>
+            <p><strong>Responsible Organization(s):</strong> ${responsibleOrgs.join(", ") || "N/A"}</p>
+            <p><strong>Type of Longitudinal Data:</strong> ${longitudinalTypes.join(", ") || "N/A"}</p>
+            <p><strong>Purpose of Data Collection:</strong> ${purposesList.join(", ") || "N/A"}</p>
+            <p><strong>Data Collection Focus:</strong> ${focusList.join(", ") || "N/A"}</p>
+            <p><strong>Data Collection Frequency:</strong> ${frequency}</p>
+            <p><strong>Starting Year:</strong> ${startingYear}</p>
+            <p><strong>Ending Year:</strong> ${endingYear}</p>
+            <p><strong>Sample Level:</strong> ${sampleLevel}</p>
+
+            <h3>School Grades</h3>
+            <p><strong>ECEC:</strong> ${ecec}</p>
+            <p><strong>Included Grades:</strong> ${includedGrades.join(", ") || "None"}</p>
+            <p><strong>Students followed after school education:</strong> ${afterSchool}</p>
+
+            <h3>Students’ Skills and Achievement</h3>
+            <p><strong>Skills Analysed:</strong> ${skills.join(", ") || "N/A"}</p>
+            <p><strong>Measure Types:</strong> ${measureTypes.join(", ") || "N/A"}</p>
+            <p><strong>Administration Method:</strong> ${adminMethod}</p>
+
+            <h3>Sample</h3>
+            <p><strong>Sample Types:</strong> ${sampleTypes.join(", ") || "N/A"}</p>
+            ${sampleTypes.some(type => ["Non-Random Students’ Sample", "Other"].includes(type)) ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
+            <p><strong>Avg Sample Size x Wave:</strong> ${sampleSize}</p>
+            <p><strong>Sample Units:</strong> ${sampleUnits.join(", ") || "N/A"}</p>
+
+            <h3>Linkability</h3>
+            <p><strong>Linkability:</strong> ${linkabilityRaw}</p>
+            <p><strong>Details:</strong> ${linkability.join(", ") || "N/A"}</p>
+
+            <h3>Accessibility</h3>
+            <p><strong>Access to Microdata:</strong> ${microdata}</p>
+            <p><strong>Constraints:</strong> ${constraints}</p>
+            <p><strong>Website:</strong> <a href="${website}" target="_blank">${website}</a></p>
+
+            <h3>Dataset Variables</h3>
+            ${variablesInfo(entry)}
+        </body>
+        </html>
+    `;
+
+    const popup = window.open("", "_blank", "width=1200,height=800,scrollbars=yes,resizable=yes");
+    if (popup) {
+        popup.document.open();
+        popup.document.write(htmlContent);
+        popup.document.close();
+    } else {
+        alert("Pop-up blocked. Please allow pop-ups for this site.");
+    }
+}
+
+function handleBackButton() {
+    if (!previousModalState) {
+        closeDbModal(); // Nessun stato precedente → chiudi
+        return;
+    }
+
+    if (previousModalState.type === "country") {
+        const { code } = previousModalState;
+        previousModalState = null; // Evitiamo loop infiniti
+        openDbModal(code);
+    } else {
+        closeDbModal();
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const selectedFiltersButton = document.getElementById('selected-filters-button');
     const popoverInstance = new bootstrap.Popover(selectedFiltersButton);
@@ -1824,50 +2051,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Esegui subito il rendering iniziale
             window.updateSelectedFiltersDisplay();
         });
+    
         
-        // POPOUT
-        function popoutDataset(code, index) {
-            const decodedCode = decodeURIComponent(code);
-            let normalizedCode = decodedCode;
-            
-            if (decodedCode === "UK" || decodedCode.includes("England")) {
-                normalizedCode = "United Kingdom";
-            }
-            
-            const entry = countryEntryStore[normalizedCode]?.[index];
-            if (!entry) {
-                console.warn("Dataset non trovato:", normalizedCode, index);
-                return;
-            }
-            
-            // Costruisci il contenuto HTML
-            const name = getField(entry, "Name");
-            const acronym = getField(entry, "Acronym");
-            const description = getField(entry, "Short Description");
-            
-            const htmlContent = `
-        <html>
-        <head>
-            <title>${name}</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        </head>
-        <body style="padding:20px;">
-            <h3>${name}</h3>
-            <h5><i>${acronym}</i></h5>
-            <p>${description}</p>
-            <p><em>More details could be added here...</em></p>
-        </body>
-        </html>
-    `;
-            
-            // Apri una nuova finestra e scrivici dentro
-            const popup = window.open("", "_blank", "width=600,height=600,resizable=yes,scrollbars=yes");
-            if (popup) {
-                popup.document.write(htmlContent);
-                popup.document.close();
-            } else {
-                alert("Popup blocked! Please allow popups for this site.");
-            }
-        }
+        
         
         

@@ -184,11 +184,12 @@
         
         <!-- PANNELLO CON INFORMAZIONI SUI DATABASE -->
         <div id="db-modal" class="db-modal">
-            <div class="db-modal-content">
-                <button class="db-modal-close" onclick="closeDbModal()">✖</button>
-                <h2 id="modal-country-title"></h2>
-                <div id="modal-db-list"></div>
+            <div class="db-modal-header">
+                <button id="modal-back-button" class="btn btn-warning" onclick="handleBackButton()" style="float: left;">← Back</button>
+                <button class=" btn btn-danger" onclick="closeDbModal()">✖</button>
             </div>
+            <h2 id="modal-country-title"></h2>
+            <div id="modal-db-list"></div>
         </div>
     
 
