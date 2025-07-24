@@ -11,21 +11,6 @@ function getSearchFilters() {
 
 function filterMappingData(data, filters) {
     return data.filter(entry => {
-        const name = getField(entry, "Name").toLowerCase();
-        const acronym = getField(entry, "Acronym").toLowerCase();
-        const description = getField(entry, "Short Description").toLowerCase();
-        const responsibleRaw = getField(entry, "Responsible Organization", "Responsible Organization [Public authority]", "Responsible Organization [University or Public Research Centre]", "Responsible Organization [Private organization]");
-        const responsibleText = typeof responsibleRaw === "string" ? responsibleRaw.toLowerCase() : "";
-        
-        const searchTerms = filters.search.split(/\s+/).filter(Boolean);
-        const allTermsMatch = (text) => searchTerms.every(term => text.includes(term));
-        
-        const matchesSearch = !filters.search || (
-            allTermsMatch(name) ||
-            allTermsMatch(acronym) ||
-            allTermsMatch(description) ||
-            allTermsMatch(responsibleText)
-        );
         
         const matchesDropdowns = filters.selectedFilters.length === 0 || filters.selectedFilters.every(val => {
             return Object.values(entry).some(v => v && typeof v === "string" && v.toLowerCase().includes(val.toLowerCase()));
@@ -38,7 +23,7 @@ function filterMappingData(data, filters) {
 function getCountryFromEntry(entry) {
     const raw = entry["Country"];
     if (!raw) return null;
-
+    
     if (raw.includes("BE (Flanders)")) return "Belgium (Flanders)";
     if (raw.includes("BE (Wallonia)")) return "Belgium (Wallonia)";
     
@@ -132,21 +117,16 @@ function applyFilters() {
         }
     }
     
-    const name = getField(entry, "Name").toLowerCase();
-    const acronym = getField(entry, "Acronym").toLowerCase();
-    const description = getField(entry, "Short Description").toLowerCase();
-    const responsibleRaw = getField(entry, "Responsible Organization", "Responsible Organization [Public authority]", "Responsible Organization [University or Public Research Centre]", "Responsible Organization [Private organization]");
-    const responsibleText = typeof responsibleRaw === "string" ? responsibleRaw.toLowerCase() : "";
+    // 🔍 RICERCA TESTUALE SU TUTTI I CAMPI
+    const entryText = Object.values(entry)
+    .filter(v => typeof v === "string")
+    .join(" ")
+    .toLowerCase();
     
     const searchTerms = filters.search.split(/\s+/).filter(Boolean);
     const allTermsMatch = (text) => searchTerms.every(term => text.includes(term));
     
-    const matchesSearch = !filters.search || (
-        allTermsMatch(name) ||
-        allTermsMatch(acronym) ||
-        allTermsMatch(description) ||
-        allTermsMatch(responsibleText)
-    );
+    const matchesSearch = !filters.search || allTermsMatch(entryText);
     
     // filtraggio applicato con values.some (OR)
     const matchesGrouped = Object.entries(selectedGroupedFilters)
@@ -174,17 +154,26 @@ function applyFilters() {
     zoomToCountry();
     return matchesSearch && matchesGrouped;
 });
+const grouped = groupDataByCountry(filtered);
+const counts = countEntriesByCountry(filtered);
+renderMapWithCounts(counts, grouped);
 
 // Altrimenti mostra solo mappa (es. filtri paese)
 if (filters.search || Object.keys(selectedGroupedFilters).length > 0) {
-    showResultsModal(filtered);
+    const isListView = document.getElementById("toggle-view-button")?.textContent.includes("Map View");
+    
+    if (isListView) {
+        renderListView(filtered);  // ⚠️ Assicurati che questa funzione esista
+    } else {
+        showResultsModal(filtered);
+    }
 } else {
-    // Se non ci sono parole chiave o altri filtri, aggiorna la mappa con il filtro paese
     const countryFiltered = applyCountryFilter(mappingData, selectedCountries);
     const grouped = groupDataByCountry(countryFiltered);
     const counts = countEntriesByCountry(countryFiltered);
     renderMapWithCounts(counts, grouped);
 }
+
 updateSelectedFiltersDisplay();
 }
 
@@ -206,6 +195,34 @@ function showResultsModal(filteredData) {
     modalTitle.textContent = `${filteredData.length} dataset${filteredData.length !== 1 ? 's' : ''} for the selected filters`;
     modalList.innerHTML = "";
     
+    const frequencyOrder = {
+        "yearly (or more than once per year)": 1,
+        "every other year": 2,
+        "every three years": 3,
+        "every four year or more": 4
+    };
+
+    function normalize(text) {
+        return text
+            .toLowerCase()
+            .replace(/\s+/g, " ")       // rimuove spazi multipli
+            .replace(/[’']/g, "'")      // normalizza apostrofi
+            .trim();
+    }
+
+    filteredData.sort((a, b) => {
+        const aFreqRaw = a["Data Collection Frequency"] || "";
+        const bFreqRaw = b["Data Collection Frequency"] || "";
+
+        const aFreqNorm = normalize(aFreqRaw);
+        const bFreqNorm = normalize(bFreqRaw);
+
+        const aVal = frequencyOrder[aFreqNorm] || 99;
+        const bVal = frequencyOrder[bFreqNorm] || 99;
+
+        return aVal - bVal;
+    });
+
     filteredData.forEach((entry, index) => {
         const dbDiv = document.createElement("div");
         dbDiv.className = "db-entry";
@@ -396,23 +413,26 @@ function showResultsModal(filteredData) {
             <b>Starting Year:</b> ${startingYear}<br>
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
+
+            <button type-button class="btn btn-secondary btn-sm mt-2 mr-4" onclick="popoutDataset('${getCountryFromEntry(entry)}', ${index})">&#x2197; Popout</button>
+
             <div id="details-${index}" class="collapse">
                 ${advancedInfo}
             </div>
-
+        
             <button type="button" class="btn btn-success btn-sm toggle-collapse-btn mt-2"
                     data-bs-toggle="collapse"
                     data-bs-target="#details-${index}"
                     aria-expanded="false"
                     aria-controls="details-${index}">
                 Show detailed information
-            </button><br>
-
+            </button>
+        
             <div id="variables-${index}" class="collapse">
                 <h3 class="mt-3">Dataset Variables</h3>
                 ${variablesInfo(entry)}
             </div>
-
+        
             <button type="button" class="btn btn-success btn-sm var-toggle-collapse-btn mt-2"
                     data-bs-toggle="collapse"
                     data-bs-target="#variables-${index}"
@@ -427,26 +447,26 @@ function showResultsModal(filteredData) {
         const collapseBtn = dbDiv.querySelector('.toggle-collapse-btn');
         const collapseId = collapseBtn.getAttribute('data-bs-target');
         const collapseEl = dbDiv.querySelector(collapseId);
-
+        
         if (collapseEl) {
             collapseEl.addEventListener('show.bs.collapse', () => {
                 collapseBtn.textContent = 'Collapse detailed information';
             });
-
+            
             collapseEl.addEventListener('hide.bs.collapse', () => {
                 collapseBtn.textContent = 'Show detailed information';
             });
         }
-
+        
         const collapseVarBtn = dbDiv.querySelector('.var-toggle-collapse-btn');
         const collapseVarId = collapseVarBtn.getAttribute('data-bs-target');
         const collapseVarEl = dbDiv.querySelector(collapseVarId);
-
+        
         if (collapseVarEl) {
             collapseVarEl.addEventListener('show.bs.collapse', () => {
                 collapseVarBtn.textContent = 'Collapse dataset variables';
             });
-
+            
             collapseVarEl.addEventListener('hide.bs.collapse', () => {
                 collapseVarBtn.textContent = 'Show dataset variables';
             });

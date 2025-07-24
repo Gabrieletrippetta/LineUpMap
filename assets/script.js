@@ -551,9 +551,6 @@ function openDbModal(code) {
     modal.classList.add("show");
 }
 
-//! Bottone per popout    <button class="btn btn-secondary" onclick="popoutDataset('${readableCode}', ${index})">Popout</button>
-
-
 // SHOW ALL DATASET PANEL
 
 function showCountryDetailsInPanel(code) {
@@ -1288,10 +1285,9 @@ function toggleView() {
     }
 }
 
-function renderListView() {
-    if (!mappingData) return;
+function renderListView(data = mappingData) {
     
-    const grouped = groupDataByCountry(mappingData);
+    const grouped = groupDataByCountry(data);
     const listDiv = document.getElementById("list-view");
     listDiv.innerHTML = ""; // Pulisce prima
     
@@ -1513,7 +1509,15 @@ function setupMainFilterInteraction(data) {
         "Type of Longitudinal Data": extractByPrefix(data, "Type of Longitudinal Data ["),
         "Data Collection Focus": extractByPrefix(data, "Data Collection Focus ["),
         "Data Collection Purpose": extractByPrefix(data, "Data Collection Purpose ["),
-        "Data Collection Frequency": extractUniqueValues(data, "Data Collection Frequency"),
+        "Data Collection Frequency": extractUniqueValues(data, "Data Collection Frequency").sort((a, b) => {
+            const order = [
+                "Yearly (or more than once per year)",
+                "Every other year",
+                "Every three years",
+                "Every four year or more"
+            ];
+            return order.indexOf(a) - order.indexOf(b);
+        }),
         "Sample Level": extractUniqueValues(data, "Sample Level"),
         "Access to Micro Data": extractUniqueValues(data, "Access to Micro Data")
     };
@@ -1809,6 +1813,10 @@ function clearAllFilters() {
     // Svuota input di ricerca
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
+    const grouped = groupDataByCountry(mappingData);
+    const counts = countEntriesByCountry(mappingData);
+    renderMapWithCounts(counts, grouped);
+    renderListView(mappingData);
     updateSelectedFiltersDisplay();
     closeDbModal();
 }
@@ -1933,17 +1941,20 @@ function popoutDataset(code, index) {
             <title>${name} - (${acronym}) - ${decodeURIComponent(code)}</title>
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.5; }
-                h2 { color: #007bff; }
+                h1 { font-size: 2em; margin-bottom: 0.5em; }
+                h2 { margin-top: 2em; }
                 h3 { margin-top: 1.5em; }
+                h4 { margin-top: 1.2em; }
                 ul { padding-left: 20px; }
                 li { margin-bottom: 0.4em; }
             </style>
         </head>
         <body>
-            <h2>${name}</h2>
+            <h1>${name}</h1>
             <p><strong>Acronym:</strong> ${acronym}</p>
             <p>${description}</p>
-            <h3>Main Information</h3>
+            <h2>Main Information</h2>
+            <p><strong>Country:</strong> ${decodeURIComponent(code)}</p>
             <p><strong>Responsible Organization(s):</strong> ${responsibleOrgs.join(", ") || "N/A"}</p>
             <p><strong>Type of Longitudinal Data:</strong> ${longitudinalTypes.join(", ") || "N/A"}</p>
             <p><strong>Purpose of Data Collection:</strong> ${purposesList.join(", ") || "N/A"}</p>
@@ -1953,6 +1964,7 @@ function popoutDataset(code, index) {
             <p><strong>Ending Year:</strong> ${endingYear}</p>
             <p><strong>Sample Level:</strong> ${sampleLevel}</p>
 
+            <h2>Detailed information</h2>
             <h3>School Grades</h3>
             <p><strong>ECEC:</strong> ${ecec}</p>
             <p><strong>Included Grades:</strong> ${includedGrades.join(", ") || "None"}</p>
@@ -1978,7 +1990,7 @@ function popoutDataset(code, index) {
             <p><strong>Constraints:</strong> ${constraints}</p>
             <p><strong>Website:</strong> <a href="${website}" target="_blank">${website}</a></p>
 
-            <h3>Dataset Variables</h3>
+            <h2>Dataset Variables</h2>
             ${variablesInfo(entry)}
         </body>
         </html>
