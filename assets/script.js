@@ -1310,7 +1310,7 @@ function renderListView(data = mappingData) {
         
         if (entries.length === 0) {
             const emptyMsg = document.createElement("p");
-            emptyMsg.textContent = "No datasets available for this country.";
+            emptyMsg.textContent = "No datasets available for this country or with the selected filters.";
             row.appendChild(emptyMsg);
         } else {
             entries.sort((a, b) => {
