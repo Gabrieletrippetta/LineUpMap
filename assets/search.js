@@ -133,8 +133,13 @@ function applyFilters() {
     .filter(([group]) => group !== "Country")
     .every(([group, values]) => {
         return values.some(val => {
+            const cleanVal = val.replace(/ Data$/, "").toLowerCase();
             // 1. Chiave diretta: group = "Parental Education", val = "for both parents"
             const directVal = entry[group]?.toLowerCase() || "";
+
+            if (group === "Data Collection Frequency") {
+                return directVal === cleanVal || directVal.includes(cleanVal);
+            }
             
             // 2. Chiave estesa: es. "Parental Education [for both parents]"
             const extendedKey = `${group} [${val}]`;
@@ -142,10 +147,10 @@ function applyFilters() {
             
             // 3. Match se valore è "yes", "yes, ...", o contiene la parola chiave
             const directMatch =
-            directVal.startsWith("yes") || directVal.includes(val.toLowerCase());
+            directVal.startsWith("yes") || directVal.includes(val.toLowerCase()) || directVal.includes(cleanVal);
             
             const extendedMatch =
-            extendedVal.startsWith("yes") || extendedVal.includes(val.toLowerCase());
+            extendedVal.startsWith("yes") || extendedVal.includes(val.toLowerCase()) || extendedVal.includes(cleanVal);
             
             return directMatch || extendedMatch;
         });
