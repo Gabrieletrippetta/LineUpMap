@@ -232,8 +232,8 @@ function showResultsModal(filteredData) {
         const description = getField(entry, "Short Description");
         
         const responsibleOrgs = extractBracketedValues(entry, "Responsible Organization [");
-        const allLongitudinalTypes = extractBracketedValues(entry, "Type of Longitudinal Data [");
-        const longitudinalTypes = allLongitudinalTypes.filter(type => type !== "Hybrid Data");
+        const longitudinalStructure = getField(entry, "Longitudinal Data Structure");
+        const longitudinalTypes = getField(entry, "Type of Longitudinal Data");
         const purposesList = extractBracketedValues(entry, "Data Collection Purpose [");
         const focusList = extractBracketedValues(entry, "Data Collection Focus [");
         
@@ -246,12 +246,25 @@ function showResultsModal(filteredData) {
         const includedGrades = extractBracketedValues(entry, "School Grades Included [");
         const afterSchool = getField(entry, "Students Followed After School Education")
         
-        const skills = extractBracketedValues(entry, "Type of Skills Analysed [");
+        let skills = extractBracketedValues(entry, "Type of Skills Analysed [");
+        const otherDetails = getField(entry, "Other Skills (Details)");
+
+        skills = skills.map(skill => {
+            if (skill.toLowerCase() === "other skills" && otherDetails && otherDetails !== "N/A") {
+                return `Other Skills: ${otherDetails.replace(/;/g, ", ")}`;
+            }
+            return skill;
+        });
         const measureTypes = extractBracketedValues(entry, "Measure Type [");
         const adminMethod = getField(entry, "Administration Method");
         
         const sampleTypes = extractBracketedValues(entry, "Sample Type [");
         const samplingCriteria = getField(entry, "Sampling Weights/Criteria");
+
+        const showSamplingCriteria = sampleTypes.some(t =>
+            t.toLowerCase() === "non-random students' sample" || t.toLowerCase() === "other"
+        );
+
         const sampleSize = getField(entry, "Average Sample Size x Wave");
         const sampleUnits = extractBracketedValues(entry, "Sample Unit [");
         
@@ -299,7 +312,8 @@ function showResultsModal(filteredData) {
                 <div id="sample-${index}" class="accordion-collapse collapse">
                     <div class="accordion-body">
                         <p><strong>Sample Types:</strong> ${sampleTypes.join(", ") || "N/A"}</p>
-                        ${sampleTypes.some(type => ["Non-Random Students’ Sample", "Other"].includes(type)) ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
+                        ${showSamplingCriteria && samplingCriteria !== "N/A" ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
+
                         <p><strong>Avg Sample Size x Wave:</strong> ${sampleSize}</p>
                         <p><strong>Sample Units:</strong> ${sampleUnits.join(", ") || "N/A"}</p>
                     </div>
@@ -359,7 +373,7 @@ function showResultsModal(filteredData) {
             const createSection = (title, keys) => {
                 const items = keys.map(key => {
                     const val = entry[key];
-                    if (val && typeof val === "string" && val.toLowerCase().includes("yes")) {
+                    if (val && typeof val === "string" && val.trim() !== "") {
                         return `<li><strong>${key}:</strong> ${val}</li>`;
                     }
                     return null;
@@ -406,7 +420,8 @@ function showResultsModal(filteredData) {
             ${description}<br><br>
         
             <b>Responsible Organization(s):</b> ${responsibleOrgs.join(", ") || "N/A"}<br>
-            <b>Type of Longitudinal Data:</b> ${longitudinalTypes.join(", ") || "N/A"}<br>
+            <b>Longitudinal Data Structure:</b> ${longitudinalStructure || "N/A"} Data<br>
+            <b>Type of Longitudinal Data:</b> ${longitudinalTypes || "N/A"} Data<br>
             <b>Purpose of Data Collection:</b> ${purposesList.join(", ") || "N/A"}<br>
             <b>Data Collection Focus:</b> ${focusList.join(", ") || "N/A"}<br>
             <b>Data Collection Frequency:</b> ${frequency}<br>
