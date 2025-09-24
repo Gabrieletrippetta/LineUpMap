@@ -96,7 +96,7 @@ function applyFilters() {
                 const isoMatch = raw?.match(/^([A-Z\/]+)\s?\(/);
                 if (isoMatch) {
                     let iso2 = isoMatch[1];
-                    if (iso2 === "UK") iso2 = "GB";
+                    if (iso2 === "UK" || iso2 === "GB") iso2 = "UK";
                     normalized = Object.entries(countryNameToISO2).find(([name, code]) =>
                         code === iso2 || iso2.includes(code) || code.includes(iso2)
                 )?.[0];
@@ -156,7 +156,6 @@ function applyFilters() {
         });
     });
     
-    zoomToCountry();
     return matchesSearch && matchesGrouped;
 });
 const grouped = groupDataByCountry(filtered);

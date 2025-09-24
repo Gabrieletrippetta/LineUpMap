@@ -12,6 +12,8 @@ function getField(entry, ...possibleKeys) {
 }
 
 let previousModalState = null;
+
+
 //! SCELTA DELL'UTENTE
 
 // const roleDescriptions = {
@@ -262,7 +264,7 @@ function groupDataByCountry(data) {
             const isoMatch = raw?.match(/^([A-Z\/]+)\s?\(/);
             if (isoMatch) {
                 let iso2 = isoMatch[1];
-                if (iso2 === "UK") iso2 = "GB";
+                if (iso2 === "UK" || iso2 === "GB") iso2 = "UK";
                 matchedCountry = Object.entries(countryNameToISO2).find(([name, code]) =>
                     code === iso2 || iso2.includes(code) || code.includes(iso2)
             )?.[0];
@@ -504,11 +506,12 @@ function extractBracketedValues(entry, prefix) {
 
 function openDbModal(code) {
     previousModalState = null;
+    updateBackButtonVisibility();
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
     
     // Normalizza eventuali sinonimi noti
-    if (decodedCode === "UK" || decodedCode.includes("England")) {
+    if (decodedCode === "UK" || decodedCode === "GB" || decodedCode.includes("England")) {
         normalizedCode = "United Kingdom";
     }
     
@@ -558,7 +561,7 @@ function showCountryDetailsInPanel(code) {
     let normalizedCode = decodedCode;
     
     // Normalizza eventuali sinonimi noti
-    if (decodedCode === "UK" || decodedCode.includes("England")) {
+    if (decodedCode === "UK" || decodedCode === "GB" || decodedCode.includes("England")) {
         normalizedCode = "United Kingdom";
     }
     
@@ -899,11 +902,12 @@ function closeDbModal() {
 
 function openSingleDbModal(code, index) {
     previousModalState = { type: "country", code };
+    updateBackButtonVisibility();
     const decodedCode = decodeURIComponent(code);
     let normalizedCode = decodedCode;
     
     // Normalizza eventuali sinonimi noti
-    if (decodedCode === "UK" || decodedCode.includes("England")) {
+    if (decodedCode === "UK" || decodedCode === "GB" || decodedCode.includes("England")) {
         normalizedCode = "United Kingdom";
     }
     
@@ -1210,35 +1214,58 @@ let countryBorders = {};
 let highlightedLayer = null;
 
 function zoomToCountry(codeOrName) {
-    const iso2 = countryNameToISO2[codeOrName] || codeOrName;
+    if (!codeOrName) return;
+
+    // 1) Decodifica eventuale URL encoding (es. "United%20Kingdom")
+    const decoded = decodeURIComponent(String(codeOrName));
+
+    // 2) Normalizza alias noti -> chiave del tuo dizionario (countries/countryNameToISO2)
+    let name = decoded;
+    if (
+        decoded === "UK" ||
+        decoded === "GB" ||
+        /England|Scotland|Wales|Northern Ireland/i.test(decoded)
+    ) {
+        name = "United Kingdom";
+    }
+
+    // 3) Dal nome ricava ISO2 (o usa direttamente se già ISO)
+    let iso2 = countryNameToISO2[name] || name;
+
+    // 4) Aggiusta gli ISO che non coincidono con il GeoJSON
+    //    - UK -> GB (nel GeoJSON è "GB")
+    //    - EL -> GR (Greece nei dati EU è "EL", nel GeoJSON di solito "GR")
+    //    - BE-FL / BE-WA -> BE (se non hai i confini regionali)
+    const isoFix = { "UK": "GB", "EL": "GR", "BE-FL": "BE", "BE-WA": "BE" };
+    iso2 = isoFix[iso2] || iso2;
+
     const feature = countryBorders[iso2];
+
     if (!feature) {
-        console.warn('Confini non trovati per il codice paese:', codeOrName);
+        console.warn("Confini non trovati per:", {
+            input: codeOrName, decoded, name, iso2,
+            available: Object.keys(countryBorders)
+        });
+
+        // fallback: centra sulla coordinata del marker se esiste
+        if (countries[name]) {
+            map.setView(countries[name], 6);
+        }
         return;
     }
-    
-    // Rimuovi l'evidenziazione precedente, se presente
-    if (highlightedLayer) {
-        map.removeLayer(highlightedLayer);
-    }
-    
-    // Aggiungi il nuovo layer evidenziato
+
+    // Rimuovi evidenziazione precedente
+    if (highlightedLayer) map.removeLayer(highlightedLayer);
+
+    // Evidenzia e fai fit
     highlightedLayer = L.geoJSON(feature, {
-        style: {
-            color: '#ff6600', //Colore del bordo
-            weight: 3,
-            fillOpacity: 0.2
-        }
+        style: { color: "#ff6600", weight: 3, fillOpacity: 0.2 }
     }).addTo(map);
-    
-    // Ottieni i confini del paese e centra la mappa
+
     const bounds = highlightedLayer.getBounds();
-    const center = bounds.getCenter();
-    const offsetCenter = L.latLng(center.lat, center.lng - 3); // Regola questo valore per spostare la mappa a sinistra
-    
     map.fitBounds(bounds, {
         paddingTopLeft: [0, 0],
-        paddingBottomRight: [window.innerWidth * 0.55, 0] // La mappa occuperà il 55% a sinistra
+        paddingBottomRight: [window.innerWidth * 0.33, 0]
     });
 }
 
@@ -2068,17 +2095,21 @@ function popoutDataset(code, index) {
 }
 
 function handleBackButton() {
-    if (!previousModalState) {
-        closeDbModal(); // Nessun stato precedente → chiudi
-        return;
-    }
 
-    if (previousModalState.type === "country") {
+    if (previousModalState?.type === "country" && previousModalState.code) {
         const { code } = previousModalState;
-        previousModalState = null; // Evitiamo loop infiniti
-        openDbModal(code);
+        openDbModal(previousModalState.code);
+    }
+    previousModalState = null;
+    updateBackButtonVisibility();
+}
+
+function updateBackButtonVisibility() {
+    const backButton = document.getElementById("modal-back-button");
+    if (previousModalState) {
+        backButton.style.display = "inline-block";
     } else {
-        closeDbModal();
+        backButton.style.display = "none";
     }
 }
 
