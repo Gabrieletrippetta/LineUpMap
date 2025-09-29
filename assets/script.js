@@ -191,17 +191,81 @@ function assignUniqueColor(isoCode) {
 
 function drawAllCountriesColored() {
     Object.entries(countryBorders).forEach(([iso2, feature]) => {
-        const color = assignUniqueColor(iso2);
-        
-        L.geoJSON(feature, {
-            style: {
-                color: '#444',
-                weight: 1,
-                fillColor: color,
-                fillOpacity: 0.5
+        const baseFill = assignUniqueColor(iso2);
+        const baseStyle = {
+            color: '#444',
+            weight: 1,
+            fillColor: baseFill,
+            fillOpacity: 0.5
+        };
+
+        const layer = L.geoJSON(feature, {
+            style: baseStyle,
+            onEachFeature: (feat, lyr) => {
+                // per dare feedback visivo anche al cursore
+                const el = () => (lyr.getElement ? lyr.getElement() : lyr._path);
+
+                lyr.on('mouseover', (e) => {
+                    e.target.setStyle({
+                        weight: 3,          // bordo più spesso
+                        fillOpacity: 0.75   // leggermente più pieno
+                    });
+                    // porta in primo piano la nazione per far "uscire" il bordo
+                    if (e.target.bringToFront) e.target.bringToFront();
+
+                    // ombra morbida + cursore
+                    const elem = el();
+                    if (elem) {
+                        elem.classList.add('country-pop', 'country-pointer');
+                    }
+                });
+
+                lyr.on('mouseout', (e) => {
+                    // ripristina lo stile base
+                    e.target.setStyle(baseStyle);
+
+                    const elem = el();
+                    if (elem) {
+                        elem.classList.remove('country-pop', 'country-pointer');
+                    }
+                });
+
+                // (opzionale: tocco su mobile = effetto hover rapido)
+                lyr.on('touchstart', (e) => {
+                    e.target.setStyle({ weight: 3, fillOpacity: 0.75 });
+                    const elem = el();
+                    if (elem) elem.classList.add('country-pop', 'country-pointer');
+                    setTimeout(() => {
+                        e.target.setStyle(baseStyle);
+                        if (elem) elem.classList.remove('country-pop', 'country-pointer');
+                    }, 300);
+                });
+                lyr.on('click', (e) => {
+                    const iso2 = feat.properties.ISO2;
+                    const name = getCountryNameFromISO2(iso2);
+                    if (!name) return;
+
+                    // Assicuriamoci che i dati per quel paese siano già stati popolati
+                    // (renderMapWithCounts li inserisce in countryEntryStore)
+                    const popupHtml = buildCountryPopupHTML(name);
+
+                    L.popup({ autoPan: true, maxWidth: 320 })
+                    .setLatLng(e.latlng)
+                    .setContent(popupHtml)
+                    .openOn(map);
+                });
             }
-        }).addTo(map);
+        });
+
+        layer.addTo(map);
     });
+}
+
+function getCountryNameFromISO2(iso2) {
+    for (const [name, code] of Object.entries(countryNameToISO2)) {
+        if (code === iso2) return name;
+    }
+    return null;
 }
 
 var markers = {};
@@ -388,6 +452,49 @@ function renderMapWithCounts(counts, groupedData) {
     // console.log("COUNTS:", counts);
     // console.log("GROUPED:", groupedData);
 }
+
+function buildCountryPopupHTML(countryName) {
+    const entries = (countryEntryStore[countryName] || []).slice().sort((a, b) => {
+        const aName = getField(a, "Name").toLowerCase();
+        const bName = getField(b, "Name").toLowerCase();
+        return aName.localeCompare(bName);
+    });
+    const count = entries.length;
+
+    let html = `<p class="popup-country">Datasets in <b>${countryName}</b></p>`;
+    if (count === 0) {
+        html += `<i>No data available</i>`;
+        return html;
+    }
+
+    html += `<div id="entryList-${countryName}" style="display:block;">`;
+    entries.slice(0, 3).forEach((e, i) => {
+        const name = getField(e, "Name");
+        const acronym = getField(e, "Acronym");
+        const encoded = encodeURIComponent(countryName);
+        html += `
+        <div class="entry-preview">
+            <strong>Name: </strong><span>${name}</span><br>
+            <strong>Acronym: </strong><i>${acronym}</i><br>
+            <div style="text-align:right;">
+            <button class="expand-button" onclick="openSingleDbModal('${encoded}', ${i})">Show more</button>
+            </div>
+        </div><hr>`;
+    });
+    html += `</div>`;
+
+    if (count > 3) {
+        const encoded = encodeURIComponent(countryName);
+        html += `
+        <div class="popup-buttons">
+            <button class="show-button" onclick="zoomToCountry('${encoded}'); openDbModal('${encoded}')">
+            Show all datasets (${count})
+            </button>
+        </div>`;
+    }
+    return html;
+}
+
 
 function toggleEntries(code, encodedEntries, showAll) {
     const entries = JSON.parse(decodeURIComponent(encodedEntries));
@@ -1561,6 +1668,10 @@ function setupMainFilterInteraction(data) {
     const container = document.getElementById("main-filter-labels");
     container.innerHTML = ""; // Pulisce il contenuto esistente
     
+    const accordion = document.createElement("div");
+    accordion.className = "accordion";
+    accordion.id = "mainFiltersAccordion";
+
     const filters = {
         "Country": Object.keys(groupDataByCountry(data)),
         "Longitudinal Data Structure": extractUniqueValues(data, "Longitudinal Data Structure").sort((a, b) => {
@@ -1596,61 +1707,71 @@ function setupMainFilterInteraction(data) {
         "Access to Micro Data": extractUniqueValues(data, "Access to Micro Data")
     };
     
+    let idx=0;
     Object.entries(filters).forEach(([label, options]) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "filter-group";
-        
-        const toggle = document.createElement("div");
-        toggle.className = "filter-toggle";
-        toggle.textContent = label;
-        toggle.addEventListener("click", () => {
-            wrapper.classList.toggle("expanded");
+    const itemId = `mainFilter-${idx++}`;
+    const item = document.createElement("div");
+    item.className = "accordion-item";
+
+    // Header/button
+    const h = document.createElement("h2");
+    h.className = "accordion-header";
+    const btn = document.createElement("button");
+    btn.className = "accordion-button collapsed";
+    btn.type = "button";
+    btn.setAttribute("data-bs-toggle", "collapse");
+    btn.setAttribute("data-bs-target", `#${itemId}`);
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-controls", itemId);
+    btn.textContent = label;
+    h.appendChild(btn);
+
+    // Corpo/collapse
+    const collapse = document.createElement("div");
+    collapse.id = itemId;
+    collapse.className = "accordion-collapse collapse";
+    collapse.setAttribute("data-bs-parent", "#mainFiltersAccordion");
+
+    const body = document.createElement("div");
+    body.className = "accordion-body";
+
+    // Opzioni (manteniamo il layout a due colonne per Country)
+    if (label === "Country") {
+        const perCol = Math.ceil(options.length / 3);
+        const row = document.createElement("div");
+        row.className = "row";
+        const col1 = document.createElement("div");
+        const col2 = document.createElement("div");
+        const col3 = document.createElement("div");
+        col1.className = "col-4";
+        col2.className = "col-4";
+        col3.className = "col-4";
+
+        options.forEach((opt, i) => {
+            const chk = createCheckbox(label, opt); // già esistente nel file
+            if (i < perCol) col1.appendChild(chk);
+            else if (i < perCol * 2) col2.appendChild(chk);
+            else col3.appendChild(chk);
         });
-        
-        const content = document.createElement("div");
-        content.className = "filter-options";
-        
-        if (label === "Country") {
-            const half = Math.ceil(options.length / 2);
-            const col1 = document.createElement("div");
-            const col2 = document.createElement("div");
-            col1.className = "filter-column";
-            col2.className = "filter-column";
-            const row = document.createElement("div");
-            row.className = "filter-row";
-            
-            options.forEach((opt, i) => {
-                const checkbox = createCheckbox(label, opt);
-                if (i < half) col1.appendChild(checkbox);
-                else col2.appendChild(checkbox);
-            });
-            
-            row.appendChild(col1);
-            row.appendChild(col2);
-            content.appendChild(row);
-            // } else if (["Data Collection Frequency", "Sample Level", "Access to Micro Data"].includes(label)) {
-            //     // Usa radio button
-            //     options.forEach(opt => {
-                //         const radio = createCheckbox(label, opt, true); // Passa true per radio
-            //         content.appendChild(radio);
-            //     });
+
+        row.appendChild(col1);
+        row.appendChild(col2);
+        row.appendChild(col3);
+        body.appendChild(row);
         } else {
-            // Tutti gli altri filtri usano checkbox
-            options.forEach(opt => {
-                const checkbox = createCheckbox(label, opt);
-                content.appendChild(checkbox);
-            });
+        options.forEach(opt => {
+            const chk = createCheckbox(label, opt); // già esistente nel file
+            body.appendChild(chk);
+        });
         }
-        
-        
-        wrapper.appendChild(toggle);
-        wrapper.appendChild(content);
-        container.appendChild(wrapper);
-        
-        // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            //     cb.addEventListener("change", applyFilters);
-        // });
+
+        collapse.appendChild(body);
+        item.appendChild(h);
+        item.appendChild(collapse);
+        accordion.appendChild(item);
     });
+
+    container.appendChild(accordion);
     
     
 }
@@ -1670,163 +1791,250 @@ function setupAdvancedFilterInteraction(data) {
         // "Data Linkability At Individual Level": extractSubOptionsIfMainIsYes(data, "Data Linkability At Individual Level")
     };
     
+    const accordion = document.createElement("div");
+    accordion.className = "accordion";
+    accordion.id = "advancedFiltersAccordion";
+
+    let idx=0;
     Object.entries(filters).forEach(([label, options]) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "filter-group";
-        
-        const toggle = document.createElement("div");
-        toggle.className = "filter-toggle";
-        toggle.textContent = label;
-        toggle.addEventListener("click", () => {
-            wrapper.classList.toggle("expanded");
+    const itemId = `advFilter-${idx++}`;
+    const item = document.createElement("div");
+    item.className = "accordion-item";
+
+    // Header
+    const h = document.createElement("h2");
+    h.className = "accordion-header";
+
+    const btn = document.createElement("button");
+    btn.className = "accordion-button collapsed";
+    btn.type = "button";
+    btn.setAttribute("data-bs-toggle", "collapse");
+    btn.setAttribute("data-bs-target", `#${itemId}`);
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-controls", itemId);
+    btn.textContent = label;
+    h.appendChild(btn);
+
+    // Corpo/collapse
+    const collapse = document.createElement("div");
+    collapse.id = itemId;
+    collapse.className = "accordion-collapse collapse";
+    collapse.setAttribute("data-bs-parent", "#advancedFiltersAccordion");
+
+    const body = document.createElement("div");
+    body.className = "accordion-body";
+
+    // Layout speciale per "School Grades Included" (3 colonne). Cambia a 2 se preferisci.
+    if (label.toLowerCase().includes("school grades")) {
+        const perCol = Math.ceil(options.length / 3);
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const mkCol = () => {
+            const c = document.createElement("div");
+            c.className = "col-12 col-md-4";
+            return c;
+        };
+        const col1 = mkCol(), col2 = mkCol(), col3 = mkCol();
+
+        options.forEach((opt, i) => {
+            const checkbox = createCheckbox(label, opt);
+            if (i < perCol) col1.appendChild(checkbox);
+            else if (i < perCol * 2) col2.appendChild(checkbox);
+            else col3.appendChild(checkbox);
         });
-        
-        const content = document.createElement("div");
-        content.className = "filter-options";
-        
-        if (label.toLowerCase().includes("school grades")) {
-            const half = Math.ceil(options.length / 2);
-            const col1 = document.createElement("div");
-            const col2 = document.createElement("div");
-            col1.className = "filter-column";
-            col2.className = "filter-column";
-            const row = document.createElement("div");
-            row.className = "filter-row";
-            
-            options.forEach((opt, i) => {
-                const checkbox = createCheckbox(label, opt);
-                if (i < half) col1.appendChild(checkbox);
-                else col2.appendChild(checkbox);
-            });
-            
-            row.appendChild(col1);
-            row.appendChild(col2);
-            content.appendChild(row);
+
+        row.appendChild(col1);
+        row.appendChild(col2);
+        row.appendChild(col3);
+        body.appendChild(row);
         } else {
-            // Tutti gli altri filtri usano checkbox
-            options.forEach(opt => {
-                const checkbox = createCheckbox(label, opt);
-                content.appendChild(checkbox);
-            });
+        // Tutti gli altri: semplice lista di checkbox
+        options.forEach(opt => {
+            const checkbox = createCheckbox(label, opt);
+            body.appendChild(checkbox);
+        });
         }
-        
-        
-        wrapper.appendChild(toggle);
-        wrapper.appendChild(content);
-        container.appendChild(wrapper);
-        
-        // container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            //     cb.addEventListener("change", applyFilters);
-        // });
+
+        collapse.appendChild(body);
+        item.appendChild(h);
+        item.appendChild(collapse);
+        accordion.appendChild(item);
     });
+
+    container.appendChild(accordion);
     
     
 }
 
 function setupDataVariablesInteraction(data) {
     const container = document.getElementById("data-variables-labels");
-    container.innerHTML = ""; // pulisce il contenuto esistente
-    
+    container.innerHTML = "";
+
     const groupedFields = {
         "Students' Information": [
-            { label: "Student Gender", value: extractUniqueValues(data, "Student Gender") },
-            { label: "Student Age", value: extractUniqueValues(data, "Student Age") },
-            { label: "Student Citizenship", value: extractUniqueValues(data, "Student Citizenship") },
-            { label: "Student Foreign Birth Country", value: extractUniqueValues(data, "Student Foreign Birth Country") },
-            { label: "Student Specific Birth Country", value: extractUniqueValues(data, "Student Specific Birth Country") },
-            { label: "Student Town of Residence", value: extractUniqueValues(data, "Student Town of Residence") },
-            { label: "Student Province of Residence", value: extractUniqueValues(data, "Student Province of Residence") },
-            { label: "Student Region of Residence", value: extractUniqueValues(data, "Student Region of Residence") },
-            { label: "Student Belonging to a Recognized Ethnic Minority", value: extractUniqueValues(data, "Student Belonging to a Recognized Ethnic Minority") },
-            { label: "Student ECEC Attendance", value: extractUniqueValues(data, "Student ECEC Attendance") },
-            { label: "Student Previous Grade Retention", value: extractUniqueValues(data, "Student Previous Grade Retention") },
-            { label: "Student Learning Impairments", value: extractUniqueValues(data, "Student Learning Impairments") },
-            { label: "Student Physical Impairments", value: extractUniqueValues(data, "Student Physical Impairments") },
-            { label: "Student School Attitude or Motivation", value: extractUniqueValues(data, "Student School Attitude or Motivation") },
-            { label: "Student Assigned Teacher Grades", value: extractUniqueValues(data, "Student Assigned Teacher Grades") },
-            { label: "Student Allowance/Scholarship", value: extractUniqueValues(data, "Student Allowance/Scholarship") }
+        { label: "Student Gender", value: extractUniqueValues(data, "Student Gender") },
+        { label: "Student Age", value: extractUniqueValues(data, "Student Age") },
+        { label: "Student Citizenship", value: extractUniqueValues(data, "Student Citizenship") },
+        { label: "Student Foreign Birth Country", value: extractUniqueValues(data, "Student Foreign Birth Country") },
+        { label: "Student Specific Birth Country", value: extractUniqueValues(data, "Student Specific Birth Country") },
+        { label: "Student Town of Residence", value: extractUniqueValues(data, "Student Town of Residence") },
+        { label: "Student Province of Residence", value: extractUniqueValues(data, "Student Province of Residence") },
+        { label: "Student Region of Residence", value: extractUniqueValues(data, "Student Region of Residence") },
+        { label: "Student Belonging to a Recognized Ethnic Minority", value: extractUniqueValues(data, "Student Belonging to a Recognized Ethnic Minority") },
+        { label: "Student ECEC Attendance", value: extractUniqueValues(data, "Student ECEC Attendance") },
+        { label: "Student Previous Grade Retention", value: extractUniqueValues(data, "Student Previous Grade Retention") },
+        { label: "Student Learning Impairments", value: extractUniqueValues(data, "Student Learning Impairments") },
+        { label: "Student Physical Impairments", value: extractUniqueValues(data, "Student Physical Impairments") },
+        { label: "Student School Attitude or Motivation", value: extractUniqueValues(data, "Student School Attitude or Motivation") },
+        { label: "Student Assigned Teacher Grades", value: extractUniqueValues(data, "Student Assigned Teacher Grades") },
+        { label: "Student Allowance/Scholarship", value: extractUniqueValues(data, "Student Allowance/Scholarship") }
         ],
         "Household's Information": [
-            { label: "Number of Parents", value: extractUniqueValues(data, "Number of Parents") },
-            { label: "Presence of Stepparents", value: extractUniqueValues(data, "Presence of Stepparents") },
-            { label: "Siblings", value: extractUniqueValues(data, "Siblings") },
-            { label: "Parental Working Status", value: extractUniqueValues(data, "Parental Working Status") },
-            { label: "Parental Occupation", value: extractUniqueValues(data, "Parental Occupation") },
-            { label: "Parental Education", value: extractUniqueValues(data, "Parental Education") },
-            { label: "Parental Education Level (ISCED)", value: extractUniqueValues(data, "Parental Education Level (ISCED)") },
-            { label: "Parental Migratory Background", value: extractUniqueValues(data, "Parental Migratory Background") },
-            { label: "Parents Age", value: extractUniqueValues(data, "Parents Age") },
-            { label: "Parents Place of Birth", value: extractUniqueValues(data, "Parents Place of Birth") },
-            { label: "Parental Income or Wealth", value: extractUniqueValues(data, "Parental Income or Wealth") },
-            { label: "Parental Host Country’s Language Proficiency", value: extractUniqueValues(data, "Parental Host Country’s Language Proficiency") },
-            { label: "Number of Books", value: extractUniqueValues(data, "Number of Books") },
-            { label: "Number of Digital Devices", value: extractUniqueValues(data, "Number of Digital Devices") },
-            { label: "Ownership of the Apartment/House", value: extractUniqueValues(data, "Ownership of the Apartment/House") }
+        { label: "Number of Parents", value: extractUniqueValues(data, "Number of Parents") },
+        { label: "Presence of Stepparents", value: extractUniqueValues(data, "Presence of Stepparents") },
+        { label: "Siblings", value: extractUniqueValues(data, "Siblings") },
+        { label: "Parental Working Status", value: extractUniqueValues(data, "Parental Working Status") },
+        { label: "Parental Occupation", value: extractUniqueValues(data, "Parental Occupation") },
+        { label: "Parental Education", value: extractUniqueValues(data, "Parental Education") },
+        { label: "Parental Education Level (ISCED)", value: extractUniqueValues(data, "Parental Education Level (ISCED)") },
+        { label: "Parental Migratory Background", value: extractUniqueValues(data, "Parental Migratory Background") },
+        { label: "Parents Age", value: extractUniqueValues(data, "Parents Age") },
+        { label: "Parents Place of Birth", value: extractUniqueValues(data, "Parents Place of Birth") },
+        { label: "Parental Income or Wealth", value: extractUniqueValues(data, "Parental Income or Wealth") },
+        { label: "Parental Host Country’s Language Proficiency", value: extractUniqueValues(data, "Parental Host Country’s Language Proficiency") },
+        { label: "Number of Books", value: extractUniqueValues(data, "Number of Books") },
+        { label: "Number of Digital Devices", value: extractUniqueValues(data, "Number of Digital Devices") },
+        { label: "Ownership of the Apartment/House", value: extractUniqueValues(data, "Ownership of the Apartment/House") }
         ],
         "Teachers' Information": [
-            { label: "Teacher Age", value: extractUniqueValues(data, "Teacher Age") },
-            { label: "Teacher Gender", value: extractUniqueValues(data, "Teacher Gender") },
-            { label: "Teacher Seniority", value: extractUniqueValues(data, "Teacher Seniority") },
-            { label: "Teacher Educational Degree", value: extractUniqueValues(data, "Teacher Educational Degree") },
-            { label: "Teacher Contract Type", value: extractUniqueValues(data, "Teacher Contract Type") },
-            // { label: "Student-Teacher Linkability", value: extractUniqueValues(data, "Student-Teacher Linkability") }
+        { label: "Teacher Age", value: extractUniqueValues(data, "Teacher Age") },
+        { label: "Teacher Gender", value: extractUniqueValues(data, "Teacher Gender") },
+        { label: "Teacher Seniority", value: extractUniqueValues(data, "Teacher Seniority") },
+        { label: "Teacher Educational Degree", value: extractUniqueValues(data, "Teacher Educational Degree") },
+        { label: "Teacher Contract Type", value: extractUniqueValues(data, "Teacher Contract Type") },
         ],
         "School/Class Information": [
-            { label: "School Geo Referencing", value: extractUniqueValues(data, "School Geo Referencing") },
-            { label: "School Type", value: extractUniqueValues(data, "School Type") },
-            { label: "School Track", value: extractUniqueValues(data, "School Track") },
-            { label: "School Size", value: extractUniqueValues(data, "School Size") },
-            { label: "Class Size", value: extractUniqueValues(data, "Class Size") },
-            { label: "School Composition", value: extractUniqueValues(data, "School Composition") },
-            { label: "Class Composition", value: extractUniqueValues(data, "Class Composition") }
+        { label: "School Geo Referencing", value: extractUniqueValues(data, "School Geo Referencing") },
+        { label: "School Type", value: extractUniqueValues(data, "School Type") },
+        { label: "School Track", value: extractUniqueValues(data, "School Track") },
+        { label: "School Size", value: extractUniqueValues(data, "School Size") },
+        { label: "Class Size", value: extractUniqueValues(data, "Class Size") },
+        { label: "School Composition", value: extractUniqueValues(data, "School Composition") },
+        { label: "Class Composition", value: extractUniqueValues(data, "Class Composition") }
         ]
     };
-    
-    Object.entries(groupedFields).forEach(([label, fields]) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "filter-group";
-        
-        const toggle = document.createElement("div");
-        toggle.className = "filter-toggle";
-        toggle.textContent = label;
-        toggle.addEventListener("click", () => {
-            wrapper.classList.toggle("expanded");
+
+    // Wrapper accordion
+    const accordion = document.createElement("div");
+    accordion.className = "accordion";
+    accordion.id = "dataVarsAccordion";
+
+    let idx = 0;
+    Object.entries(groupedFields).forEach(([sectionLabel, fields]) => {
+    const itemId = `dataVars-${idx++}`;
+    const item = document.createElement("div");
+    item.className = "accordion-item";
+
+    // Header
+    const h = document.createElement("h2");
+    h.className = "accordion-header";
+
+    const btn = document.createElement("button");
+    btn.className = "accordion-button collapsed";
+    btn.type = "button";
+    btn.setAttribute("data-bs-toggle", "collapse");
+    btn.setAttribute("data-bs-target", `#${itemId}`);
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-controls", itemId);
+    btn.textContent = sectionLabel;
+    h.appendChild(btn);
+
+    // Corpo/collapse
+    const collapse = document.createElement("div");
+    collapse.id = itemId;
+    collapse.className = "accordion-collapse collapse";
+    collapse.setAttribute("data-bs-parent", "#dataVarsAccordion");
+
+    const body = document.createElement("div");
+    body.className = "accordion-body";
+
+    // Costruisco l’elenco di variabili disponibili (come nel tuo codice)
+    const uniqueVars = new Set();
+    data.forEach(entry => {
+        fields.forEach(field => {
+            const fieldName = field.label;
+            if (entry[fieldName] && entry[fieldName].toLowerCase() !== "n/a" && entry[fieldName] !== "-") {
+            uniqueVars.add(fieldName);
+            }
         });
-        
-        const content = document.createElement("div");
-        content.className = "filter-options";
-        
-        const uniqueVars = new Set();
-        
-        data.forEach(entry => {
-            fields.forEach(field => {
-                const fieldName = field.label;
-                if (entry[fieldName] && entry[fieldName].toLowerCase() !== "n/a" && entry[fieldName] !== "-") {
-                    uniqueVars.add(fieldName);
-                }
-            });
-        });
-        
-        Array.from(uniqueVars).forEach(varName => {
-            const labelEl = document.createElement("label");
-            labelEl.className = "checkbox-label";
-            
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.value = varName;
-            input.dataset.filter = varName; // 🔑 fondamentale per far funzionare la ricerca
-            
-            labelEl.appendChild(input);
-            labelEl.append(` ${varName}`);
-            content.appendChild(labelEl);
-        });
-        
-        wrapper.appendChild(toggle);
-        wrapper.appendChild(content);
-        container.appendChild(wrapper);
     });
-    
+
+    // Render checkbox variabili
+   const varsArr = Array.from(uniqueVars); // se vuoi ordine alfabetico: .sort()
+
+    const isTwoColsSection =
+    sectionLabel === "Students' Information" ||
+    sectionLabel === "Household's Information";
+
+    if (isTwoColsSection) {
+    const perCol = Math.ceil(varsArr.length / 2);
+
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const mkCol = () => {
+        const c = document.createElement("div");
+        c.className = "col-12 col-md-6"; // 1 colonna su mobile, 2 da md in su
+        return c;
+    };
+    const col1 = mkCol(), col2 = mkCol();
+
+    varsArr.forEach((varName, i) => {
+        const labelEl = document.createElement("label");
+        labelEl.className = "checkbox-label";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = varName;
+        input.dataset.filter = varName; // fondamentale per i filtri
+
+        labelEl.appendChild(input);
+        labelEl.append(` ${varName}`);
+
+        if (i < perCol) col1.appendChild(labelEl);
+        else col2.appendChild(labelEl);
+    });
+
+    row.appendChild(col1);
+    row.appendChild(col2);
+    body.appendChild(row);
+    } else {
+    // Sezioni restanti: lista singola
+    varsArr.forEach(varName => {
+        const labelEl = document.createElement("label");
+        labelEl.className = "checkbox-label";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = varName;
+        input.dataset.filter = varName;
+
+        labelEl.appendChild(input);
+        labelEl.append(` ${varName}`);
+        body.appendChild(labelEl);
+    });
+    }
+
+    collapse.appendChild(body);
+    item.appendChild(h);
+    item.appendChild(collapse);
+    accordion.appendChild(item);
+    });
+
+    container.appendChild(accordion);
 }
+
 
 function createCheckbox(groupLabel, optionLabel, isRadio = false) {
     const label = document.createElement("label");

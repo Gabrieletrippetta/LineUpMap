@@ -149,30 +149,7 @@ ul {
     gap: 10px;
 }
 
-/* Stile generale per input e select */
-input[type="text"], select {
-    background-color: #ffffff; /* Bianco */
-    color: #333333; /* Testo grigio scuro */
-    font-size: 16px;
-    border: 1px solid #cccccc; /* Bordo grigio chiaro */
-    border-radius: 4px;
-    padding: 10px;
-    width: 250px; /* Larghezza uniforme */
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
 
-/* Effetto al passaggio del mouse */
-input[type="text"]:hover, select:hover {
-    border-color: #999999; /* Bordo grigio medio */
-}
-
-/* Effetto quando l'elemento è focalizzato */
-input[type="text"]:focus, select:focus {
-    border-color: #0056b3; /* Bordo blu scuro */
-    box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
-    outline: none;
-}
 
 /* Stile per il pulsante */
 button {
@@ -285,7 +262,7 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: auto;         /* fondamentale */
+    pointer-events: none;         /* mettere auto per click sul pin */
     background-color: transparent;
     z-index: 1;
 }
@@ -580,37 +557,6 @@ button:hover {
     padding: 20px;
 }
 
-input[type="radio"].form-check-input {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    width: 12px;
-    height: 12px;
-    border: 1px solid #000000; 
-    border-radius: 3px;
-    background-color: white;
-    cursor: pointer;
-    position: relative;
-    transition: background-color 0.2s;
-    outline: none;
-}
-
-input[type="radio"].form-check-input:checked {
-    background-color: white; 
-}
-
-input[type="radio"].form-check-input:checked::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 14px;
-    height: 14px;
-    background-color: #0d6efd;
-    border-radius: 2px;
-    transform: translate(-50%, -50%);
-}
-
 #filter-area {
     margin: 0;
     padding: 20px;
@@ -634,3 +580,13 @@ input[type="radio"].form-check-input:checked::after {
 .accordion-body li {
     margin-bottom: 2px;
 }
+
+/* Effetto pop-out sui path SVG di Leaflet */
+.leaflet-overlay-pane svg path.leaflet-interactive {
+    transition: stroke-width 150ms ease, fill-opacity 150ms ease, filter 150ms ease;
+}
+
+.country-pop {
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+}
+
