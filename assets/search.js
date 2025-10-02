@@ -280,7 +280,7 @@ function showResultsModal(filteredData) {
         const website = getField(entry, "Official Website");
         
         const advancedInfo = `
-        <h3>Detailed information</h3>
+        <h3 class="mt-4">Detailed information</h3>
         <div class="accordion" id="advancedInfo-${index}">
             <div class="accordion-item">
                 <h2 class="accordion-header">
@@ -433,7 +433,7 @@ function showResultsModal(filteredData) {
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
 
-            <button type-button class="btn btn-secondary btn-sm mt-2 mr-4" onclick="popoutDataset('${getCountryFromEntry(entry)}', ${index})">&#x2197; Popout</button>
+            <button type-button class="btn btn-secondary btn-sm mt-2 mr-4 popout" onclick="popoutDataset('${getCountryFromEntry(entry)}', ${index})">&#x2197; Popout</button>
 
             <div id="details-${index}" class="collapse">
                 ${advancedInfo}
@@ -448,7 +448,7 @@ function showResultsModal(filteredData) {
             </button>
         
             <div id="variables-${index}" class="collapse">
-                <h3 class="mt-3">Dataset Variables</h3>
+                <h3 class="mt-4">Dataset Variables</h3>
                 ${variablesInfo(entry)}
             </div>
         

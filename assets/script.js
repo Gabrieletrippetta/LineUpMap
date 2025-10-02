@@ -168,14 +168,17 @@ const countryNameToISO2 = {
 };
 
 const colorPalette = [
-    '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#0a007f',
-    '#ffff33', '#a65628', '#f781bf', '#999999', '#66c2a5',
-    '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#00d92f',
-    '#e5c494', '#b3b3b3', '#1b9e77', '#d95f02', '#7570b3',
-    '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666',
-    '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99',
-    '#e31a1c', '#fdbf6f', '#00b2d6', '#6a3d9a', '#ff7f00',
-    '#ffff99', '#b15928'
+    '#AFCA00',
+    '#1a82ccff',
+    '#999', 
+    '#637E00',
+    '#93bbd8ff',
+    '#a1b45aff',
+    '#64c9c4ff',
+    '#7a7a7aff',
+    '#c5c5c5ff', 
+    '#b7cf73ff',
+    '#6490c9ff'
 ];
 
 const countryColors = {};
@@ -189,6 +192,11 @@ function assignUniqueColor(isoCode) {
     return countryColors[isoCode];
 }
 
+function normalizeISO(iso2) {
+    const isoFix = { "UK": "GB", "GB": "UK", "EL": "GR", "GR": "EL", "BE-FL": "BE", "BE-WA": "BE" };
+    return isoFix[iso2] || iso2;
+}
+
 function drawAllCountriesColored() {
     Object.entries(countryBorders).forEach(([iso2, feature]) => {
         const baseFill = assignUniqueColor(iso2);
@@ -196,7 +204,7 @@ function drawAllCountriesColored() {
             color: '#444',
             weight: 1,
             fillColor: baseFill,
-            fillOpacity: 0.5
+            fillOpacity: 1
         };
 
         const layer = L.geoJSON(feature, {
@@ -208,7 +216,7 @@ function drawAllCountriesColored() {
                 lyr.on('mouseover', (e) => {
                     e.target.setStyle({
                         weight: 3,          // bordo più spesso
-                        fillOpacity: 0.75   // leggermente più pieno
+                        fillOpacity: 0.5   // leggermente più pieno
                     });
                     // porta in primo piano la nazione per far "uscire" il bordo
                     if (e.target.bringToFront) e.target.bringToFront();
@@ -241,12 +249,13 @@ function drawAllCountriesColored() {
                     }, 300);
                 });
                 lyr.on('click', (e) => {
-                    const iso2 = feat.properties.ISO2;
+                    let iso2 = normalizeISO(feat.properties.ISO2);  // 👈 normalizzazione
                     const name = getCountryNameFromISO2(iso2);
-                    if (!name) return;
+                    if (!name) {
+                        console.warn("Nessun nome trovato per ISO:", iso2);
+                        return;
+                    }
 
-                    // Assicuriamoci che i dati per quel paese siano già stati popolati
-                    // (renderMapWithCounts li inserisce in countryEntryStore)
                     const popupHtml = buildCountryPopupHTML(name);
 
                     L.popup({ autoPan: true, maxWidth: 320 })
@@ -373,12 +382,12 @@ function renderMapWithCounts(counts, groupedData) {
         const count = counts[code] || 0;
         const latlng = countries[code];
         
-        const pinColor = count > 0 ? "#007bff" : "#999999";
+        const pinColor = count > 0 ? "#006EC4" : "#38383E ";
         
         const iconHtml = `
             <div class="svg-pin">
-            <svg width="40" height="50" viewBox="0 0 24 24" fill="${pinColor}" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            <svg width="50" height="60" viewBox="0 0 24 24" fill="${pinColor}" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#FFFFFF" stroke-width="1" />
             </svg>
             <span class="pin-count">${count}</span>
             </div>`;
@@ -386,7 +395,7 @@ function renderMapWithCounts(counts, groupedData) {
         const icon = L.divIcon({
             className: '',
             html: iconHtml,
-            iconSize: [40, 50],
+            iconSize: [50, 60],
             iconAnchor: [20, 50]
         });
         
@@ -733,7 +742,7 @@ function showCountryDetailsInPanel(code) {
         const website = getField(entry, "Official Website");
         
         const advancedInfo = `
-        <h3>Detailed information</h3>
+        <h3 class="mt-4">Detailed information</h3>
         <div class="accordion" id="advancedInfo-${index}">
             <div class="accordion-item">
                 <h2 class="accordion-header">
@@ -887,7 +896,7 @@ function showCountryDetailsInPanel(code) {
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
         
-            <button type-button class="btn btn-secondary btn-sm mt-2" onclick="popoutDataset('${readableCode}', ${index})">&#x2197; Popout</button>
+            <button type-button class="btn btn-secondary btn-sm mt-2 popout" onclick="popoutDataset('${readableCode}', ${index})">&#x2197; Popout</button>
         
             <div id="details-${index}" class="collapse">
                 ${advancedInfo}
@@ -902,7 +911,7 @@ function showCountryDetailsInPanel(code) {
             </button>
         
             <div id="variables-${index}" class="collapse">
-                <h3 class="mt-3">Dataset Variables</h3>
+                <h3 class="mt-4">Dataset Variables</h3>
                 ${variablesInfo(entry)}
             </div>
         
@@ -1082,7 +1091,7 @@ function openSingleDbModal(code, index) {
     const website = getField(entry, "Official Website");
     
     const advancedInfo = `
-    <h3>Detailed information</h3>
+    <h3 class="mt-4">Detailed information</h3>
     <div class="accordion" id="advancedInfo-${index}">
         <div class="accordion-item">
             <h2 class="accordion-header">
@@ -1235,7 +1244,7 @@ function openSingleDbModal(code, index) {
         <b>Ending Year:</b> ${endingYear}<br>
         <b>Sample Level:</b> ${sampleLevel}<br>
     
-        <button type-button class="btn btn-secondary btn-sm mt-2 mr-4" onclick="popoutDataset('${code}', ${index})">&#x2197; Popout</button>
+        <button type-button class="btn btn-secondary btn-sm mt-2 mr-4 popout" onclick="popoutDataset('${code}', ${index})">&#x2197; Popout</button>
         
         <div id="details-${index}" class="collapse">
             ${advancedInfo}
@@ -1250,7 +1259,7 @@ function openSingleDbModal(code, index) {
         </button>
     
         <div id="variables-${index}" class="collapse">
-            <h3 class="mt-3">Dataset Variables</h3>
+            <h3 class="mt-4">Dataset Variables</h3>
             ${variablesInfo(entry)}
         </div>
     
@@ -1366,7 +1375,7 @@ function zoomToCountry(codeOrName) {
 
     // Evidenzia e fai fit
     highlightedLayer = L.geoJSON(feature, {
-        style: { color: "#ff6600", weight: 3, fillOpacity: 0.2 }
+        style: { color: "#444", weight: 5, fillOpacity: 0.2 }
     }).addTo(map);
 
     const bounds = highlightedLayer.getBounds();
@@ -2234,14 +2243,14 @@ function popoutDataset(code, index) {
         <html>
         <head>
             <title>${name} - (${acronym}) - ${decodeURIComponent(code)}</title>
+             <link rel='stylesheet' href='assets/style.css'>
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.5; }
-                h1 { font-size: 2em; margin-bottom: 0.5em; }
-                h2 { margin-top: 2em; }
-                h3 { margin-top: 1.5em; }
-                h4 { margin-top: 1.2em; }
-                ul { padding-left: 20px; }
-                li { margin-bottom: 0.4em; }
+                body {padding: 20px}
+                h1 {font-size: 35px !important} 
+                h2 {margin-top:40px}    
+                h3, h4 {margin-bottom:0}    
+                a {color: #006EC4}  
+                a:hover {color: #666}           
             </style>
         </head>
         <body>

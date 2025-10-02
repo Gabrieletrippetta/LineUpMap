@@ -1,7 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+
 body {
     margin: 0;
-    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
+    font-family: "Raleway", sans-serif;
+    color: #38383E
 }
+
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Josefin Sans", sans-serif;
+    text-transform: uppercase;
+    color: #AFCA0B;
+    font-weight: 700;
+} 
+h1 {
+    font-weight: 900 !important;
+    color: #AFCA0B !important;
+    font-size: 40px !important
+}
+header h2 {
+    font-size: 23px !important;
+    font-weight: 600 !important;
+}
+.accordion a {color: #006EC4}
+.accordion a:hover {color: #666}
 
 #map {
     top: 0;
@@ -25,6 +48,29 @@ body {
 .popup-country {
     font-size: 21px;
     /* color: #004494; */
+}
+
+.leaflet-popup-content {
+    font-family: "Raleway", sans-serif;
+    font-size:14px
+}
+
+.leaflet-popup-content .expand-button,
+.entry-preview .expand-button,
+.db-entry .expand-button  {
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 15px;
+    padding: 5px 10px;
+    background-color: #AFCA0B;
+    transition: background-color .3s ease;
+}
+
+.leaflet-popup-content .expand-button:hover,
+.entry-preview .expand-button:hover,
+.db-entry .expand-button:hover {
+    background-color: #666;
 }
 
 #chart-list {
@@ -121,16 +167,19 @@ ul {
     font-size: 0.8rem;
 }
 
-.show-button {
-    margin-top: 10px;
-    padding: 10px 10px;
-    background: #0056b3;
-    color: white;
+.show-button,
+.btn.popout {
+    background: #006EC4;
+    color: #ffffff;
+    font-size: 12px;
+    font-family: "Josefin Sans", sans-serif;
+    text-transform: uppercase;
+    font-weight: 600;
     border: none;
-    border-radius: 5px;
+    border-radius: 20px;
+    padding: 5px 10px;
     cursor: pointer;
-    font-weight: bold;
-    margin-right: 5px;
+    transition: background-color 0.3s ease;
 }
 
 /* Contenitore per allineare gli elementi in linea */
@@ -152,20 +201,50 @@ ul {
 
 
 /* Stile per il pulsante */
-button {
-    background-color: #0056b3; 
+.btn {
+    background-color: #AFCA0B; 
     color: #ffffff;
-    font-size: 16px;
+    font-size: 12px;
+    font-family: "Josefin Sans", sans-serif;
+    text-transform: uppercase;
+    font-weight: 600;
     border: none;
-    border-radius: 4px;
-    padding: 10px 20px;
+    border-radius: 20px;
+    padding: 5px 10px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
 /* Effetto al passaggio del mouse sul pulsante */
-button:hover {
-    background-color: #004494; 
+.btn:hover,
+.btn:active,
+.db-modal-header .btn:hover,
+.show-button:hover,
+.btn.popout:hover {
+    background-color: #666; 
+}
+
+
+.btn-success,
+.btn-outline-success {
+    --bs-btn-active-bg: #666;
+}
+
+.db-modal-header .btn {
+    background-color: #006EC4;
+    color: #fff; 
+    font-weight: 700;
+    padding: 5px 10px;
+    transition: background-color 0.3s ease;
+}
+
+
+#selected-filters-button {
+    background-color: #006EC4 !important; 
+}
+
+.list-group li {
+    font-size: 15px
 }
 
 
@@ -257,14 +336,15 @@ button:hover {
 
 .svg-pin {
     position: relative;
-    width: 40px;
-    height: 50px;
+    width: 50px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: none;         /* mettere auto per click sul pin */
     background-color: transparent;
     z-index: 1;
+
 }
 
 .svg-pin svg {
@@ -273,15 +353,17 @@ button:hover {
     height: 100%;
     pointer-events: none;         /* lascia passare eventi al contenitore */
     z-index: 1;
-}
+     filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+     }
 
 .pin-count {
     position: absolute;
-    top: 12px;
+    top: 14px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 18px;
+    font-family: "Josefin Sans", sans-serif;
+    font-weight: 900;
     color: white;
     pointer-events: none;         /* evita che il testo faccia chiudere il popup */
     z-index: 2;
@@ -379,6 +461,7 @@ button:hover {
 
 /* Linguetta laterale verticale */
 .contact-tab {
+    font-family: "Josefin Sans", sans-serif;
     position: fixed;
     left: 0;
     top: 60%;
@@ -395,6 +478,12 @@ button:hover {
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     cursor: pointer;
     z-index: 1001;
+    transition: background-color 0.3s ease;
+}
+
+.contact-tab:hover {
+    background-color: #666;
+    transition: background-color 0.3s ease;
 }
 
 /* Pannello contact form */
@@ -423,11 +512,20 @@ button:hover {
     right: 15px;
     background: none;
     border: none;
-    font-size: 22px;
-    color: #7C9E3D;
+    color: #444;
     cursor: pointer;
     background-color: white;
-    margin-right: 6px;
+    margin-right: 10px;
+    border-radius: 20px;
+    padding: 0 10px;
+    font-size: 30px;
+    line-height: 1.2em;
+    transition: background-color .3s ease;
+}
+
+
+.close-panel:hover {
+    background-color: #c6db3f;
 }
 
 .contact-panel-description{
@@ -524,8 +622,11 @@ button:hover {
     display: flex;
     align-items: center;
     padding: 1px 2px;
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 500;
 }
+
+.checkbox-label input {margin-right: 8px;}
 
 .filter-group.expanded .filter-options {
     display: block;
@@ -565,6 +666,10 @@ button:hover {
     overflow-y: auto;
 }
 
+.accordion-button:not(.collapsed) {
+    background-color: #f4fdbd !important;
+}
+
 .accordion-body p {
     margin-top: 0.2rem;
     margin-bottom: 0.2rem;
@@ -583,10 +688,9 @@ button:hover {
 
 /* Effetto pop-out sui path SVG di Leaflet */
 .leaflet-overlay-pane svg path.leaflet-interactive {
-    transition: stroke-width 150ms ease, fill-opacity 150ms ease, filter 150ms ease;
+    transition: all .5s ease-out;
 }
 
 .country-pop {
     filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
 }
-
