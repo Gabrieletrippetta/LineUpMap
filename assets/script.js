@@ -81,7 +81,7 @@ var map = L.map('map', {
     zoom: currentZoom,
     minZoom: 4.2,
     worldCopyJump: false,
-    zoomControl: false,
+    zoomControl: true,
     maxBounds: [
         [15, -40],  // Sud-ovest (lat, lon)
         [80, 80]    // Nord-est (lat, lon)
@@ -169,20 +169,21 @@ const countryNameToISO2 = {
 
 const colorPalette = [
     '#AFCA00',
-    '#1a82ccff',
+    '#1a82cc',
     '#999', 
     '#637E00',
-    '#93bbd8ff',
-    '#a1b45aff',
-    '#64c9c4ff',
-    '#7a7a7aff',
-    '#c5c5c5ff', 
-    '#b7cf73ff',
-    '#6490c9ff'
+    '#93bbd8',
+    '#a1b45a',
+    '#64c9c4',
+    '#7a7a7a',
+    '#c5c5c5', 
+    '#b7cf73',
+    '#6490c9'
 ];
 
 const countryColors = {};
 let colorIndex = 0;
+let countryCountsGlobal = {};
 
 function assignUniqueColor(isoCode) {
     if (!countryColors[isoCode]) {
