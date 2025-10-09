@@ -238,6 +238,18 @@ ul {
     transition: background-color 0.3s ease;
 }
 
+#search_bottom_cont {
+    position:sticky;
+    bottom: 0;
+    z-index: 10000;
+    background: white;
+    padding-bottom: 20px;
+    padding-top: 20px
+}
+#search_bottom_cont button {
+     font-size: 15px;
+     padding-top: 10px
+}
 
 #selected-filters-button {
     background-color: #006EC4 !important; 
@@ -353,7 +365,7 @@ ul {
     height: 100%;
     pointer-events: none;         /* lascia passare eventi al contenitore */
     z-index: 1;
-     filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
      }
 
 .pin-count {
@@ -419,7 +431,7 @@ ul {
     transform: translateX(100%);
     transition: transform 0.3s ease;
     overflow-y: auto;
-    padding: 30px;
+    padding: 0 30px 30px 30px;
 }
 
 .db-modal.show {
@@ -437,6 +449,12 @@ ul {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    background-color: white;
+    position: sticky;
+    top: 0px;
+    padding-bottom: 30px;
+    padding-top:30px;
+    z-index: 10000
 }
 
 .db-modal-close {
@@ -489,10 +507,10 @@ ul {
 /* Pannello contact form */
 .contact-panel {
     position: fixed;
-    left: -320px;
+    left: -450px;
     top: 0;
     height: 100%;
-    width: 320px;
+    width: 450px;
     background-color: #fff;
     box-shadow: 2px 0 5px rgba(0,0,0,0.3);
     z-index: 1002; /* maggiore dei controlli Leaflet */
@@ -660,7 +678,7 @@ ul {
 
 #filter-area {
     margin: 0;
-    padding: 20px;
+    padding: 20px 20px 0 20px;
     width: 33.33vw;
     height: 100vh;
     overflow-y: auto;

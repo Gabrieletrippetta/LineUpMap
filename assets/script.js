@@ -1,3 +1,44 @@
+function getFillColorByCount(n) {
+    if (!n || n === 0) return '#7a7a7a';   
+    if (n >= 20) return '#AFCA00';         
+    if (n >= 9)  return '#637E00';         
+    if (n >= 7)  return '#93bbd8';        
+    if (n >= 5)  return '#64c9c4';         
+    if (n >= 3)  return '#6490c9';         
+    return '#1a82cc';                      
+}
+
+// Restituisce il "count" da usare per il fill, con la regola speciale del Belgio = somma Flanders + Wallonia
+// Count da usare per il fill (Belgio = somma Flanders + Wallonia)
+function getCountryFillCount(iso2FromGeo, counts) {
+    const isoData = toDataISO(iso2FromGeo); // GR->EL, GB->UK
+
+    if (isoData === 'BE') {
+        const fl = counts['Belgium (Flanders)'] || 0;
+        const wa = counts['Belgium (Wallonia)'] || 0;
+        return fl + wa;
+    }   
+
+    // countryNameToISO2 mappa "United Kingdom"->"UK", "Greece"->"EL", ecc.
+    const name = Object.entries(countryNameToISO2)
+        .find(([n, c]) => c === isoData)?.[0];
+    return name ? (counts[name] || 0) : 0;
+}
+
+
+// const colorPalette = [
+//     '#AFCA00',
+//     '#1a82cc',
+//     '#999', 
+//     '#637E00',
+//     '#93bbd8',
+//     '#a1b45a',
+//     '#64c9c4',
+//     '#7a7a7a',
+//     '#c5c5c5', 
+//     '#b7cf73',
+//     '#6490c9'
+// ];
 
 function getField(entry, ...possibleKeys) {
     for (let key of possibleKeys) {
@@ -74,24 +115,28 @@ function populateCountryFilter() {
 }
 
 // MAPPA
-
+let countryLayers = {}; // iso2 -> layer geoJSON
 var currentZoom = 3;
+const {center, zoom, isBig} = getInitialMapView();
+const defaultBounds = [[15, -40], [80, 80]];
+const bigScreenBounds = [[34, -15], [72, 40]];
 var map = L.map('map', {
-    center: [54.5260, 14.5551],
-    zoom: currentZoom,
+    center: center,
+    zoom: zoom,
     minZoom: 4.2,
     worldCopyJump: false,
     zoomControl: true,
-    maxBounds: [
-        [15, -40],  // Sud-ovest (lat, lon)
-        [80, 80]    // Nord-est (lat, lon)
-    ],
+    maxBounds: isBig ? bigScreenBounds : defaultBounds,
     maxBoundsViscosity: 1.0
 });
+
 // var map = L.map('map').setView([54.5260, 14.5551], 4.4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
+let __bordersReady = false;        // confini pronti
+let __initialCounts = null;        // primi conteggi disponibili
+
 
 // var countries = { "AT": [47.5162, 14.5501], "BE": [50.6203, 4.3517], "BG": [42.7339, 25.4858], "HR": [43.6, 15.2], "CY": [35.1264, 33.4299], "CZ": [49.8175, 15.4729], "DK": [56.2639, 9.5018], "EE": [58.5953, 25.0136], "FI": [61.9241, 25.7482], "FR": [46.6034, 1.8883], "DE": [51.1657, 10.4515], "GR": [39.0742, 21.8243], "HU": [47.1625, 19.5033], "IE": [53.4129, -8.2439], "IT": [41.8719, 12.5674], "LV": [56.8796, 24.6032], "LT": [55.1694, 23.8813], "LU": [49.5153, 6.1296], "MT": [35.9375, 14.3754], "NL": [52.1326, 5.2913], "PL": [51.9194, 19.1451], "PT": [39.3999, -8.2245], "RO": [45.9432, 24.9668], "SK": [48.669, 19.699], "SI": [46.1512, 14.9955], "ES": [40.4637, -3.7492], "SE": [60.1282, 16.0435], "IS": [64.9631, -19.0208], "LI": [47.166, 9.5554], "NO": [60.472, 8.4689], "CH": [46.8182, 7.2275], "GB": [53.3781, -1.436] };
 
@@ -167,19 +212,7 @@ const countryNameToISO2 = {
     "United Kingdom": "UK"
 };
 
-const colorPalette = [
-    '#AFCA00',
-    '#1a82cc',
-    '#999', 
-    '#637E00',
-    '#93bbd8',
-    '#a1b45a',
-    '#64c9c4',
-    '#7a7a7a',
-    '#c5c5c5', 
-    '#b7cf73',
-    '#6490c9'
-];
+
 
 const countryColors = {};
 let colorIndex = 0;
@@ -193,90 +226,111 @@ function assignUniqueColor(isoCode) {
     return countryColors[isoCode];
 }
 
-function normalizeISO(iso2) {
-    const isoFix = { "UK": "GB", "GB": "UK", "EL": "GR", "GR": "EL", "BE-FL": "BE", "BE-WA": "BE" };
-    return isoFix[iso2] || iso2;
+// function normalizeISO(iso2) {
+//     const isoFix = { "UK": "GB", "GB": "UK", "EL": "GR", "GR": "EL", "BE-FL": "BE", "BE-WA": "BE" };
+//     return isoFix[iso2] || iso2;
+// }
+// Da codice "dei dati" -> codice per il GeoJSON (confini)
+function toGeoJSONISO(iso) {
+    const map = { "UK": "GB", "EL": "GR", "BE-FL": "BE", "BE-WA": "BE" };
+    return map[iso] || iso;
 }
 
-function drawAllCountriesColored() {
+// Da codice del GeoJSON -> codice "dei dati" (countryNameToISO2 / counts)
+function toDataISO(iso) {
+    const map = { "GB": "UK", "GR": "EL" };
+    return map[iso] || iso;
+}
+
+function drawAllCountriesColored(counts = null) {
+    // Se non abbiamo i counts (es. geojson caricato prima dei dati), inizializziamo a 0
+    const safeCounts = counts || {};
     Object.entries(countryBorders).forEach(([iso2, feature]) => {
-        const baseFill = assignUniqueColor(iso2);
+        const baseCount = getCountryFillCount(iso2, safeCounts);
         const baseStyle = {
-            color: '#444',
-            weight: 1,
-            fillColor: baseFill,
-            fillOpacity: 1
+        color: '#444',
+        weight: 1,
+        fillColor: getFillColorByCount(baseCount),
+        fillOpacity: 1
         };
 
         const layer = L.geoJSON(feature, {
-            style: baseStyle,
-            onEachFeature: (feat, lyr) => {
-                // per dare feedback visivo anche al cursore
-                const el = () => (lyr.getElement ? lyr.getElement() : lyr._path);
+        style: baseStyle,
+        onEachFeature: (feat, lyr) => {
+            const el = () => (lyr.getElement ? lyr.getElement() : lyr._path);
 
-                lyr.on('mouseover', (e) => {
-                    e.target.setStyle({
-                        weight: 3,          // bordo più spesso
-                        fillOpacity: 0.5   // leggermente più pieno
-                    });
-                    // porta in primo piano la nazione per far "uscire" il bordo
-                    if (e.target.bringToFront) e.target.bringToFront();
+            lyr.on('mouseover', (e) => {
+            e.target.setStyle({ weight: 3, fillOpacity: 0.5 });
+            if (e.target.bringToFront) e.target.bringToFront();
+            const elem = el();
+            if (elem) elem.classList.add('country-pop', 'country-pointer');
+            });
 
-                    // ombra morbida + cursore
-                    const elem = el();
-                    if (elem) {
-                        elem.classList.add('country-pop', 'country-pointer');
-                    }
-                });
+            lyr.on('mouseout', (e) => {
+            // ripristina lo stile in base ai counts correnti
+            const iso2x = toDataISO(feat.properties.ISO2);
+            const cur = getCountryFillCount(iso2x, window.__latestCountsForFill || {});
+            e.target.setStyle({ color:'#444', weight:1, fillColor:getFillColorByCount(cur), fillOpacity:1 });
+            const elem = el();
+            if (elem) elem.classList.remove('country-pop', 'country-pointer');
+            });
 
-                lyr.on('mouseout', (e) => {
-                    // ripristina lo stile base
-                    e.target.setStyle(baseStyle);
+            lyr.on('touchstart', (e) => {
+            e.target.setStyle({ weight: 3, fillOpacity: 0.75 });
+            const elem = el();
+            if (elem) elem.classList.add('country-pop', 'country-pointer');
+            setTimeout(() => {
+                const iso2x = toDataISO(feat.properties.ISO2);
+                const cur = getCountryFillCount(iso2x, window.__latestCountsForFill || {});
+                e.target.setStyle({ color:'#444', weight:1, fillColor:getFillColorByCount(cur), fillOpacity:1 });
+                if (elem) elem.classList.remove('country-pop', 'country-pointer');
+            }, 300);
+            });
 
-                    const elem = el();
-                    if (elem) {
-                        elem.classList.remove('country-pop', 'country-pointer');
-                    }
-                });
-
-                // (opzionale: tocco su mobile = effetto hover rapido)
-                lyr.on('touchstart', (e) => {
-                    e.target.setStyle({ weight: 3, fillOpacity: 0.75 });
-                    const elem = el();
-                    if (elem) elem.classList.add('country-pop', 'country-pointer');
-                    setTimeout(() => {
-                        e.target.setStyle(baseStyle);
-                        if (elem) elem.classList.remove('country-pop', 'country-pointer');
-                    }, 300);
-                });
-                lyr.on('click', (e) => {
-                    let iso2 = normalizeISO(feat.properties.ISO2);  // 👈 normalizzazione
-                    const name = getCountryNameFromISO2(iso2);
-                    if (!name) {
-                        console.warn("Nessun nome trovato per ISO:", iso2);
-                        return;
-                    }
-
-                    const popupHtml = buildCountryPopupHTML(name);
-
-                    L.popup({ autoPan: true, maxWidth: 320 })
-                    .setLatLng(e.latlng)
-                    .setContent(popupHtml)
-                    .openOn(map);
-                });
-            }
+            lyr.on('click', (e) => {
+            let iso2x = toDataISO(feat.properties.ISO2);
+            const name = getCountryNameFromISO2(iso2x);
+            if (!name) return console.warn("Nessun nome trovato per ISO:", iso2x);
+            const popupHtml = buildCountryPopupHTML(name);
+            L.popup({ autoPan: true, maxWidth: 320 })
+                .setLatLng(e.latlng)
+                .setContent(popupHtml)
+                .openOn(map);
+            });
+        }
         });
 
+        
+        // salva il layer per recolor successivi
+        countryLayers[iso2] = layer;
         layer.addTo(map);
+    });
+
+    __bordersReady = true;
+    if (window.__latestCountsForFill) {
+    colorCountriesByCounts(window.__latestCountsForFill);
+    }
+}
+
+function colorCountriesByCounts(counts) {
+    // memorizziamo l’ultima mappa counts per gestire mouseout/touchend
+    window.__latestCountsForFill = counts || {};
+    Object.entries(countryLayers).forEach(([iso2, layer]) => {
+        const n = getCountryFillCount(iso2, window.__latestCountsForFill);
+        const fill = getFillColorByCount(n);
+        layer.setStyle({ fillColor: fill, fillOpacity: 1, color:'#444', weight:1 });
     });
 }
 
-function getCountryNameFromISO2(iso2) {
+
+function getCountryNameFromISO2(iso2FromGeo) {
+    const isoData = toDataISO(iso2FromGeo); // GR->EL, GB->UK
     for (const [name, code] of Object.entries(countryNameToISO2)) {
-        if (code === iso2) return name;
+        if (code === isoData) return name;
     }
     return null;
 }
+
 
 var markers = {};
 
@@ -298,7 +352,8 @@ function countEntriesByCountry(data) {
     data.forEach(row => {
         const match = row["Country"]?.match(/^([A-Z\/]+)\s?\(/);
         if (match) {
-            const iso2 = match[1];
+            let iso2 = match[1];
+            iso2 = toDataISO(iso2);
             const countryName = Object.entries(countryNameToISO2).find(([name, code]) => code === iso2 || iso2.includes(code) || code.includes(iso2))?.[0];
             
             if (countryName) {
@@ -459,6 +514,10 @@ function renderMapWithCounts(counts, groupedData) {
         marker.on("click", () => marker.openPopup());
     });
     
+    // aggiorna il fill dei paesi in base ai counts correnti (inclusi i filtri)
+    if (typeof colorCountriesByCounts === 'function') {
+        colorCountriesByCounts(counts);
+    }
     // console.log("COUNTS:", counts);
     // console.log("GROUPED:", groupedData);
 }
@@ -557,7 +616,7 @@ fetch("./assets/europe.geojson")
         console.log("Chiamo initMap da geojson");
         initMap();
     }
-    drawAllCountriesColored();
+    drawAllCountriesColored({});
 })
 .catch(err => console.error("Errore nel caricamento dei confini:", err));
 
@@ -592,11 +651,28 @@ document.addEventListener("DOMContentLoaded", () => {
     window.mappingDataReady = true;
 });
 
+// Zoom iniziale basato sulla larghezza *effettiva* del contenitore mappa
+function getInitialMapView() {
+    const mapEl = document.getElementById('map');
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const containerW = mapEl?.clientWidth || vw;
+
+    // la tua #map è ~ 2/3 dello schermo: 2000px * 0.666 ≈ 1333
+    const cutoff = 2000 * 0.666;
+
+    const isBig = containerW >= cutoff;
+    const center = isBig ? [54, 10] : [54, 15];
+    const zoom   = isBig ? 5.8      : 4.4;
+
+    return { center, zoom, isBig };
+}
+
 
 function initMap() {
     const countryCounts = countEntriesByCountry(mappingData);
     const grouped = groupDataByCountry(mappingData);
     renderMapWithCounts(countryCounts, grouped);
+    colorCountriesByCounts(countryCounts);
     setupMainFilterInteraction(mappingData);
     setupAdvancedFilterInteraction(mappingData);
     setupDataVariablesInteraction(mappingData);
@@ -605,7 +681,63 @@ function initMap() {
         const color = countryColors[iso2];
         console.log(`${country} (${iso2}): ${color}`);
     });
+    window.__latestCountsForFill = countryCounts; // usato anche da mouseout
+    __initialCounts = countryCounts;
+
+    if (__bordersReady) {
+    colorCountriesByCounts(countryCounts);
+    }
 }
+
+// stile leggero per la legenda
+(function addLegendStyles(){
+    if (document.getElementById('choropleth-legend-style')) return;
+    const style = document.createElement('style');
+    style.id = 'choropleth-legend-style';
+    style.textContent = `
+        .choropleth-legend {
+        background: #fff;
+        padding: 10px 12px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,.15);
+        font: 12px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+        color: #222;
+        }
+        .choropleth-legend .legend-title { font-weight: 600; margin-bottom: 6px; }
+        .choropleth-legend ul { list-style: none; margin: 0; padding: 0; }
+        .choropleth-legend li { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+        .choropleth-legend .swatch {
+        width: 16px; height: 12px; border: 1px solid #0003; flex: 0 0 16px;
+        }
+        .choropleth-legend .legend-note { margin-top: 8px; opacity: .7; font-size: 11px; }
+    `;
+    document.head.appendChild(style);
+})();
+
+// legenda choropleth (bottom-right)
+const legend = L.control({ position: 'bottomright' });
+legend.onAdd = function (map) {
+    const div = L.DomUtil.create('div', 'choropleth-legend');
+    // NB: colori identici a getFillColorByCount
+    div.innerHTML = `
+        <div class="legend-title">Dataset per country</div>
+        <ul>
+        <li><span class="swatch" style="background:#7a7a7a"></span> 0</li>
+        <li><span class="swatch" style="background:#1a82cc"></span> 1–2</li>
+        <li><span class="swatch" style="background:#6490c9"></span> 3–4</li>
+        <li><span class="swatch" style="background:#64c9c4"></span> 5–6</li>
+        <li><span class="swatch" style="background:#93bbd8"></span> 7–8</li>
+        <li><span class="swatch" style="background:#637E00"></span> 9–19</li>
+        <li><span class="swatch" style="background:#AFCA00"></span> 20+</li>
+        </ul>
+        <div class="legend-note">Belgium = Flanders + Wallonia</div>
+    `;
+    // evita che il mouse sulla legenda trascini/zoomi la mappa
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+};
+legend.addTo(map);
 
 // EXTRACT IN SQUARE BRACKETS CONTENT
 function extractBracketedValues(entry, prefix) {
@@ -1014,7 +1146,8 @@ function closeDbModal() {
     }
     
     // Torna alla vista iniziale della mappa (Europa)
-    map.setView([54.5260, 14.5551], 4.4);
+    const { center: initCenter, zoom: initZoom } = getInitialMapView();
+    map.setView(initCenter, initZoom);
 }
 
 function openSingleDbModal(code, index) {
@@ -2302,7 +2435,7 @@ function popoutDataset(code, index) {
         </html>
     `;
 
-    const popup = window.open("", "_blank", "width=1200,height=800,scrollbars=yes,resizable=yes");
+    const popup = window.open("", "_blank");
     if (popup) {
         popup.document.open();
         popup.document.write(htmlContent);
