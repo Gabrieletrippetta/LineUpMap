@@ -55,6 +55,10 @@ header h2 {
     font-size:14px
 }
 
+.legend-title, .swatch, .legend-note {
+    font-family: "Josefin Sans", sans-serif;
+}
+
 .leaflet-popup-content .expand-button,
 .entry-preview .expand-button,
 .db-entry .expand-button  {

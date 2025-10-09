@@ -662,7 +662,7 @@ function getInitialMapView() {
 
     const isBig = containerW >= cutoff;
     const center = isBig ? [54, 10] : [54, 15];
-    const zoom   = isBig ? 5.8      : 4.4;
+    const zoom   = isBig ? 3.5   : 4.4;
 
     return { center, zoom, isBig };
 }
@@ -2377,7 +2377,7 @@ function popoutDataset(code, index) {
         <html>
         <head>
             <title>${name} - (${acronym}) - ${decodeURIComponent(code)}</title>
-             <link rel='stylesheet' href='assets/style.css'>
+                <link rel='stylesheet' href='assets/style.css'>
             <style>
                 body {padding: 20px}
                 h1 {font-size: 35px !important} 

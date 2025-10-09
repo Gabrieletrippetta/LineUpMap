@@ -179,6 +179,17 @@ if (filters.search || Object.keys(selectedGroupedFilters).length > 0) {
 }
 
 updateSelectedFiltersDisplay();
+
+// 📍 Ricentra la mappa a sinistra dello schermo
+setTimeout(() => {
+    const center = map.getCenter();
+    const bounds = map.getBounds();
+    const lngSpan = bounds.getEast() - bounds.getWest();
+
+    // Sposta il centro di 1/3 della larghezza verso destra → la mappa apparirà centrata a sinistra
+    const newLng = center.lng + (lngSpan / 3);
+    map.setView([center.lat, newLng], map.getZoom(), { animate: true });
+}, 300);
 }
 
 function showResultsModal(filteredData) {
