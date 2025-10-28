@@ -19,12 +19,32 @@ h1 {
     color: #AFCA0B !important;
     font-size: 40px !important
 }
+
+body.contact-open #header-title h1 {
+    font-size: var(--h1-size, 40px) !important;
+}
+
 header h2 {
     font-size: 23px !important;
     font-weight: 600 !important;
 }
 .accordion a {color: #006EC4}
 .accordion a:hover {color: #666}
+
+/* Stato con pannello aperto: il body riceve la classe 'contact-open' */
+body.contact-open #header-title {
+    margin-left: 425px;                     /* sposta l’area del titolo a destra */
+    width: calc(100% - 425px - 16px);       /* limita davvero lo spazio disponibile */
+    max-width: calc(100% - 425px - 16px);
+    box-sizing: border-box;
+}
+
+/* L'H1 deve poter essere "misurato" e tagliato mentre lo riduciamo */
+#header-title h1 {
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+}
 
 #map {
     top: 0;
@@ -715,4 +735,11 @@ ul {
 
 .country-pop {
     filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+}
+
+body.contact-open #header-title h1.wrap {
+    white-space: normal !important;   
+    overflow-wrap: anywhere;          
+    word-break: break-word;           
+    line-height: 1.1;                 
 }

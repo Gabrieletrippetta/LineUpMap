@@ -1525,14 +1525,75 @@ document.addEventListener('DOMContentLoaded', function () {
     const contactTab = document.getElementById('contact-tab');
     const contactPanel = document.getElementById('contact-panel');
     const closePanel = document.getElementById('close-panel');
-    
-    contactTab.addEventListener('click', function () {
+    const headerTitle = document.getElementById('header-title');
+    const h1 = headerTitle ? headerTitle.querySelector('h1') : null;
+
+    function shrinkTitleToFit(minPx = 6) {
+        if (!headerTitle || !h1) return;
+
+        // Reset: riparti dal 40px !important (via var CSS) e una sola riga per misurare
+        headerTitle.style.removeProperty('--h1-size');
+        h1.classList.remove('wrap', 'clamp-2');
+        h1.style.whiteSpace = 'nowrap';
+        h1.style.overflow = 'visible';   // <-- niente overflow hidden
+
+        const available = headerTitle.clientWidth;
+        if (!available) return;
+
+        // Se già entra su una riga, finito
+        if (h1.scrollWidth <= available) return;
+
+        // Riduci anche sotto i 10px: minimo 6px (puoi scendere a 5 o 4 se vuoi)
+        let size  = parseFloat(getComputedStyle(h1).fontSize) || 24;
+        let guard = 160;
+
+        while (h1.scrollWidth > available && size > minPx && guard-- > 0) {
+            size -= 0.5;
+            headerTitle.style.setProperty('--h1-size', size + 'px'); // batte il 40px !important
+        }
+
+        // Se a font minimo ancora non entra, abilita il WRAP
+        if (h1.scrollWidth > available) {
+            h1.classList.add('wrap');       // ora può andare su 2+ righe
+            // (se vuoi massimo 2 righe, posso aggiungere una clamp)
+        }
+    }
+
+    function openContactPanel() {
+        if (!contactPanel) return;
         contactPanel.classList.add('show');
-    });
-    
-    closePanel.addEventListener('click', function () {
+        document.body.classList.add('contact-open');
+        
+        requestAnimationFrame(() => shrinkTitleToFit(6));
+    }
+
+    function closeContactPanel() {
+        if (!contactPanel) return;
         contactPanel.classList.remove('show');
+        document.body.classList.remove('contact-open');
+
+        headerTitle.style.removeProperty('--h1-size');
+        if (h1) h1.style.whiteSpace = '';
+    }
+    
+    if (contactTab) contactTab.addEventListener('click', openContactPanel);
+    if (closePanel) closePanel.addEventListener('click', closeContactPanel);
+
+    window.addEventListener('resize', () => {
+        if (document.body.classList.contains('contact-open')) {
+            requestAnimationFrame(() => shrinkTitleToFit(6));
+        }
     });
+
+    // contactTab.addEventListener('click', function () {
+    //     contactPanel.classList.add('show');
+    //     headerTitle.style.marginLeft = '425px';
+    // });
+    
+    // closePanel.addEventListener('click', function () {
+    //     contactPanel.classList.remove('show');
+    //     headerTitle.style.marginLeft = '0';
+    // });
     
 });
 
