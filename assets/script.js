@@ -2319,7 +2319,7 @@ function popoutDataset(code, index) {
     const includedGrades = extractBracketedValues(entry, "School Grades Included [");
     const afterSchool = getField(entry, "Students Followed After School Education");
 
-   let skills = extractBracketedValues(entry, "Type of Skills Analysed [");
+    let skills = extractBracketedValues(entry, "Type of Skills Analysed [");
     const otherDetails = getField(entry, "Other Skills (Details)");
 
     skills = skills.map(skill => {
@@ -2374,66 +2374,127 @@ function popoutDataset(code, index) {
     };
 
     const htmlContent = `
-        <html>
-        <head>
-            <title>${name} - (${acronym}) - ${decodeURIComponent(code)}</title>
-                <link rel='stylesheet' href='assets/style.css'>
-            <style>
-                body {padding: 20px}
-                h1 {font-size: 35px !important} 
-                h2 {margin-top:40px}    
-                h3, h4 {margin-bottom:0}    
-                a {color: #006EC4}  
-                a:hover {color: #666}           
-            </style>
-        </head>
-        <body>
-            <h1>${name}</h1>
-            <p><strong>Acronym:</strong> ${acronym}</p>
-            <p>${description}</p>
-            <h2>Main Information</h2>
-            <p><strong>Country:</strong> ${decodeURIComponent(code)}</p>
-            <p><strong>Responsible Organization(s):</strong> ${responsibleOrgs.join(", ") || "N/A"}</p>
-            <p><strong>Longitudinal Data Structure:</strong> ${longitudinalStructure || "N/A"} Data</p>
-            <p><strong>Type of Longitudinal Data:</strong> ${longitudinalTypes || "N/A"} Data</p>
-            <p><strong>Purpose of Data Collection:</strong> ${purposesList.join(", ") || "N/A"}</p>
-            <p><strong>Data Collection Focus:</strong> ${focusList.join(", ") || "N/A"}</p>
-            <p><strong>Data Collection Frequency:</strong> ${frequency}</p>
-            <p><strong>Starting Year:</strong> ${startingYear}</p>
-            <p><strong>Ending Year:</strong> ${endingYear}</p>
-            <p><strong>Sample Level:</strong> ${sampleLevel}</p>
+    <html>
+    <head>
+    <title>${name} - (${acronym}) - ${decodeURIComponent(code)}</title>
+    <link rel='stylesheet' href='assets/style.css'>
+    <style>
+        body {padding:20px}
+        h1 {font-size:35px !important}
+        h2 {margin-top:40px}
+        h3, h4 {margin-bottom:0}
+        a {color:#006EC4} a:hover {color:#666}
+        .toolbar {position:sticky; top:0; background:#fff; padding:10px 0 16px; display:flex; gap:10px; border-bottom:1px solid #eee; margin-bottom:16px}
+        .btn-dl {border:1px solid #ccc; border-radius:8px; padding:8px 12px; cursor:pointer; background:#f7f7f7}
+        .btn-dl:hover {background:#eee}
+        .muted {color:#666; font-size:12px}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    </head>
+    <body>
 
-            <h2>Detailed information</h2>
-            <h3>School Grades</h3>
-            <p><strong>ECEC:</strong> ${ecec}</p>
-            <p><strong>Included Grades:</strong> ${includedGrades.join(", ") || "None"}</p>
-            <p><strong>Students followed after school education:</strong> ${afterSchool}</p>
+    <div class="toolbar">
+        <button id="btnXlsx" class="btn-dl">⬇️ Download XLSX</button>
+        <button id="btnCsv"  class="btn-dl">⬇️ Download CSV</button>
+        <span class="muted">Esporta tutti i campi del dataset</span>
+    </div>
 
-            <h3>Students’ Skills and Achievement</h3>
-            <p><strong>Skills Analysed:</strong> ${skills.join(", ") || "N/A"}</p>
-            <p><strong>Measure Types:</strong> ${measureTypes.join(", ") || "N/A"}</p>
-            <p><strong>Administration Method:</strong> ${adminMethod}</p>
+    <h1>${name}</h1>
+    <p><strong>Acronym:</strong> ${acronym}</p>
+    <p>${description}</p>
 
-            <h3>Sample</h3>
-            <p><strong>Sample Types:</strong> ${sampleTypes.join(", ") || "N/A"}</p>
-            ${showSamplingCriteria && samplingCriteria !== "N/A" ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
-            <p><strong>Avg Sample Size x Wave:</strong> ${sampleSize}</p>
-            <p><strong>Sample Units:</strong> ${sampleUnits.join(", ") || "N/A"}</p>
+    <h2>Main Information</h2>
+    <p><strong>Country:</strong> ${decodeURIComponent(code)}</p>
+    <p><strong>Responsible Organization(s):</strong> ${responsibleOrgs.join(", ") || "N/A"}</p>
+    <p><strong>Longitudinal Data Structure:</strong> ${longitudinalStructure || "N/A"} Data</p>
+    <p><strong>Type of Longitudinal Data:</strong> ${longitudinalTypes || "N/A"} Data</p>
+    <p><strong>Purpose of Data Collection:</strong> ${purposesList.join(", ") || "N/A"}</p>
+    <p><strong>Data Collection Focus:</strong> ${focusList.join(", ") || "N/A"}</p>
+    <p><strong>Data Collection Frequency:</strong> ${frequency}</p>
+    <p><strong>Starting Year:</strong> ${startingYear}</p>
+    <p><strong>Ending Year:</strong> ${endingYear}</p>
+    <p><strong>Sample Level:</strong> ${sampleLevel}</p>
 
-            <h3>Linkability</h3>
-            <p><strong>Linkability:</strong> ${linkabilityRaw}</p>
-            <p><strong>Details:</strong> ${linkability.join(", ") || "N/A"}</p>
+    <h2>Detailed information</h2>
+    <h3>School Grades</h3>
+    <p><strong>ECEC:</strong> ${ecec}</p>
+    <p><strong>Included Grades:</strong> ${includedGrades.join(", ") || "None"}</p>
+    <p><strong>Students followed after school education:</strong> ${afterSchool}</p>
 
-            <h3>Accessibility</h3>
-            <p><strong>Access to Microdata:</strong> ${microdata}</p>
-            <p><strong>Constraints:</strong> ${constraints}</p>
-            <p><strong>Website:</strong> <a href="${website}" target="_blank">${website}</a></p>
+    <h3>Students’ Skills and Achievement</h3>
+    <p><strong>Skills Analysed:</strong> ${skills.join(", ") || "N/A"}</p>
+    <p><strong>Measure Types:</strong> ${measureTypes.join(", ") || "N/A"}</p>
+    <p><strong>Administration Method:</strong> ${adminMethod}</p>
 
-            <h2>Dataset Variables</h2>
-            ${variablesInfo(entry)}
-        </body>
-        </html>
+    <h3>Sample</h3>
+    <p><strong>Sample Types:</strong> ${sampleTypes.join(", ") || "N/A"}</p>
+    ${showSamplingCriteria && samplingCriteria !== "N/A" ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
+    <p><strong>Avg Sample Size x Wave:</strong> ${sampleSize}</p>
+    <p><strong>Sample Units:</strong> ${sampleUnits.join(", ") || "N/A"}</p>
+
+    <h3>Linkability</h3>
+    <p><strong>Linkability:</strong> ${linkabilityRaw}</p>
+    <p><strong>Details:</strong> ${linkability.join(", ") || "N/A"}</p>
+
+    <h3>Accessibility</h3>
+    <p><strong>Access to Microdata:</strong> ${microdata}</p>
+    <p><strong>Constraints:</strong> ${constraints}</p>
+    <p><strong>Website:</strong> <a href="${website}" target="_blank">${website}</a></p>
+
+    <h2>Dataset Variables</h2>
+    ${variablesInfo(entry)}
+
+    <script>
+        // 1) Prepara un oggetto "piatto" con TUTTI i campi dell'entry
+        const raw = ${JSON.stringify(entry)};
+        const flat = {};
+        for (const [k, v] of Object.entries(raw)) {
+        if (v === null || v === undefined) { flat[k] = ""; continue; }
+        // i valori del JSON sono già stringhe; comunque serializziamo in sicurezza
+        flat[k] = (typeof v === "string") ? v : JSON.stringify(v);
+        }
+
+        // 2) CSV (Field,Value)
+        function escCSV(val){
+        if (val == null) return "";
+        const s = String(val);
+        const needsQuotes = /[",\\n]/.test(s);
+        const out = s.replace(/"/g, '""');
+        return needsQuotes ? '"' + out + '"' : out;
+        }
+        function downloadCSV(){
+        const rows = [["Field","Value"]];
+        for (const [k,v] of Object.entries(flat)) rows.push([k, v]);
+        const csv = rows.map(r => r.map(escCSV).join(",")).join("\\n");
+        const blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (${JSON.stringify(acronym || name)} || "dataset") + ".csv";
+        document.body.appendChild(a); a.click(); a.remove();
+        }
+
+        // 3) XLSX con SheetJS se disponibile; altrimenti mostra un avviso
+        function downloadXLSX(){
+        if (!window.XLSX || !XLSX.utils || !XLSX.writeFile) {
+            alert("Per l'export XLSX aggiungi SheetJS: \\n\\n<script src=\\"https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js\\"></script>");
+            return;
+        }
+        const aoa = [["Field","Value"], ...Object.entries(flat)];
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Dataset");
+        XLSX.writeFile(wb, (${JSON.stringify(acronym || name)} || "dataset") + ".xlsx");
+        }
+
+        document.getElementById("btnCsv").addEventListener("click",  downloadCSV);
+        document.getElementById("btnXlsx").addEventListener("click", downloadXLSX);
+    </script>
+
+    </body>
+    </html>
     `;
+
+
 
     const popup = window.open("", "_blank");
     if (popup) {

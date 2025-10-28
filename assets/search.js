@@ -136,7 +136,7 @@ function applyFilters() {
             const cleanVal = val.replace(/ Data$/, "").toLowerCase();
             // 1. Chiave diretta: group = "Parental Education", val = "for both parents"
             const directVal = entry[group]?.toLowerCase() || "";
-
+            
             if (group === "Data Collection Frequency") {
                 return directVal === cleanVal || directVal.includes(cleanVal);
             }
@@ -185,7 +185,7 @@ setTimeout(() => {
     const center = map.getCenter();
     const bounds = map.getBounds();
     const lngSpan = bounds.getEast() - bounds.getWest();
-
+    
     // Sposta il centro di 1/3 della larghezza verso destra → la mappa apparirà centrata a sinistra
     const newLng = center.lng + (lngSpan / 3);
     map.setView([center.lat, newLng], map.getZoom(), { animate: true });
@@ -216,28 +216,28 @@ function showResultsModal(filteredData) {
         "every three years": 3,
         "every four year or more": 4
     };
-
+    
     function normalize(text) {
         return text
-            .toLowerCase()
-            .replace(/\s+/g, " ")       // rimuove spazi multipli
-            .replace(/[’']/g, "'")      // normalizza apostrofi
-            .trim();
+        .toLowerCase()
+        .replace(/\s+/g, " ")       // rimuove spazi multipli
+        .replace(/[’']/g, "'")      // normalizza apostrofi
+        .trim();
     }
-
+    
     filteredData.sort((a, b) => {
         const aFreqRaw = a["Data Collection Frequency"] || "";
         const bFreqRaw = b["Data Collection Frequency"] || "";
-
+        
         const aFreqNorm = normalize(aFreqRaw);
         const bFreqNorm = normalize(bFreqRaw);
-
+        
         const aVal = frequencyOrder[aFreqNorm] || 99;
         const bVal = frequencyOrder[bFreqNorm] || 99;
-
+        
         return aVal - bVal;
     });
-
+    
     filteredData.forEach((entry, index) => {
         const dbDiv = document.createElement("div");
         dbDiv.className = "db-entry";
@@ -263,7 +263,7 @@ function showResultsModal(filteredData) {
         
         let skills = extractBracketedValues(entry, "Type of Skills Analysed [");
         const otherDetails = getField(entry, "Other Skills (Details)");
-
+        
         skills = skills.map(skill => {
             if (skill.toLowerCase() === "other skills" && otherDetails && otherDetails !== "N/A") {
                 return `Other Skills: ${otherDetails.replace(/;/g, ", ")}`;
@@ -275,11 +275,11 @@ function showResultsModal(filteredData) {
         
         const sampleTypes = extractBracketedValues(entry, "Sample Type [");
         const samplingCriteria = getField(entry, "Sampling Weights/Criteria");
-
+        
         const showSamplingCriteria = sampleTypes.some(t =>
             t.toLowerCase() === "non-random students' sample" || t.toLowerCase() === "other"
         );
-
+        
         const sampleSize = getField(entry, "Average Sample Size x Wave");
         const sampleUnits = extractBracketedValues(entry, "Sample Unit [");
         
@@ -328,7 +328,7 @@ function showResultsModal(filteredData) {
                     <div class="accordion-body">
                         <p><strong>Sample Types:</strong> ${sampleTypes.join(", ") || "N/A"}</p>
                         ${showSamplingCriteria && samplingCriteria !== "N/A" ? `<p><strong>Sampling Weights/Criteria:</strong> ${samplingCriteria}</p>` : ""}
-
+        
                         <p><strong>Avg Sample Size x Wave:</strong> ${sampleSize}</p>
                         <p><strong>Sample Units:</strong> ${sampleUnits.join(", ") || "N/A"}</p>
                     </div>
@@ -443,9 +443,9 @@ function showResultsModal(filteredData) {
             <b>Starting Year:</b> ${startingYear}<br>
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
-
+        
             <button type-button class="btn btn-secondary btn-sm mt-2 mr-4 popout" onclick="popoutDataset('${getCountryFromEntry(entry)}', ${index})">&#x2197; Popout</button>
-
+        
             <div id="details-${index}" class="collapse">
                 ${advancedInfo}
             </div>
