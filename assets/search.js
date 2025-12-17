@@ -266,10 +266,12 @@ function showResultsModal(filteredData) {
         
         skills = skills.map(skill => {
             if (skill.toLowerCase() === "other skills" && otherDetails && otherDetails !== "N/A") {
-                return `Other Skills: ${otherDetails.replace(/;/g, ", ")}`;
+                const clickableDetails = makeLinksClickable(otherDetails.replace(/;/g, ", "));
+                return `Other Skills: ${clickableDetails}`;
             }
             return skill;
         });
+        
         const measureTypes = extractBracketedValues(entry, "Measure Type [");
         const adminMethod = getField(entry, "Administration Method");
         
@@ -444,7 +446,7 @@ function showResultsModal(filteredData) {
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
         
-            <button type-button class="btn btn-secondary btn-sm mt-2 mr-4 popout" onclick="popoutDataset('${getCountryFromEntry(entry)}', ${index})">&#x2197; Popout</button>
+            <button type-button class="btn btn-secondary btn-sm mt-2 mr-4 popout" onclick="popoutDatasetByAcronym('${getCountryFromEntry(entry)}', '${getField(entry, "Acronym")}')">&#x2197; Popout</button>
         
             <div id="details-${index}" class="collapse">
                 ${advancedInfo}

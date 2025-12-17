@@ -52,6 +52,27 @@ function getField(entry, ...possibleKeys) {
     return "N/A";
 }
 
+/**
+ * Converte URL in testo in link HTML cliccabili
+ * @param {string} text - Testo che può contenere URL
+ * @returns {string} - HTML con link cliccabili
+ */
+function makeLinksClickable(text) {
+    if (!text || text === "N/A" || text === "-" || text === "null") {
+        return text;
+    }
+    
+    // Pattern per riconoscere URL (http, https, www)
+    const urlPattern = /(https?:\/\/[^\s,;]+|www\.[^\s,;]+)/gi;
+    
+    // Sostituisci ogni URL con un tag <a>
+    return text.replace(urlPattern, (url) => {
+        // Aggiungi https:// se l'URL inizia con www
+        const href = url.startsWith('www.') ? `https://${url}` : url;
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+}
+
 let previousModalState = null;
 
 
@@ -155,13 +176,16 @@ var countries = {
     "Germany": [51.1657, 10.4515],
     "Greece": [39.0742, 21.8243],
     "Hungary": [47.1625, 19.5033],
+    "Iceland": [64.9631, -19.0208],
     "Ireland": [53.4129, -8.2439],
     "Italy": [41.8719, 12.5674],
     "Latvia": [56.8796, 24.6032],
+    "Liechtenstein": [47.166, 9.5554],
     "Lithuania": [55.1694, 23.8813],
     "Luxembourg": [49.5153, 6.1296],
     "Malta": [35.9375, 14.3754],
     "Netherlands": [52.1326, 5.2913],
+    "Norway": [60.472, 8.4689],
     "Poland": [51.9194, 19.1451],
     "Portugal": [39.3999, -8.2245],
     "Romania": [45.9432, 24.9668],
@@ -169,9 +193,6 @@ var countries = {
     "Slovenia": [46.1512, 14.9955],
     "Spain": [40.4637, -3.7492],
     "Sweden": [60.1282, 16.0435],
-    "Iceland": [64.9631, -19.0208],
-    "Liechtenstein": [47.166, 9.5554],
-    "Norway": [60.472, 8.4689],
     "Switzerland": [46.8182, 7.2275],
     "United Kingdom": [53.3781, -1.436]
 };
@@ -851,10 +872,12 @@ function showCountryDetailsInPanel(code) {
 
         skills = skills.map(skill => {
             if (skill.toLowerCase() === "other skills" && otherDetails && otherDetails !== "N/A") {
-                return `Other Skills: ${otherDetails.replace(/;/g, ", ")}`;
+                const clickableDetails = makeLinksClickable(otherDetails.replace(/;/g, ", "));
+                return `Other Skills: ${clickableDetails}`;
             }
             return skill;
         });
+
         const measureTypes = extractBracketedValues(entry, "Measure Type [");
         const adminMethod = getField(entry, "Administration Method");
         
@@ -1029,7 +1052,7 @@ function showCountryDetailsInPanel(code) {
             <b>Ending Year:</b> ${endingYear}<br>
             <b>Sample Level:</b> ${sampleLevel}<br>
         
-            <button type-button class="btn btn-secondary btn-sm mt-2 popout" onclick="popoutDataset('${readableCode}', ${index})">&#x2197; Popout</button>
+            <button type-button class="btn btn-secondary btn-sm mt-2 popout" onclick="popoutDataset('${normalizedCode}', ${index})">&#x2197; Popout</button>
         
             <div id="details-${index}" class="collapse">
                 ${advancedInfo}
@@ -1199,7 +1222,8 @@ function openSingleDbModal(code, index) {
 
     skills = skills.map(skill => {
         if (skill.toLowerCase() === "other skills" && otherDetails && otherDetails !== "N/A") {
-            return `Other Skills: ${otherDetails.replace(/;/g, ", ")}`;
+            const clickableDetails = makeLinksClickable(otherDetails.replace(/;/g, ", "));
+            return `Other Skills: ${clickableDetails}`;
         }
         return skill;
     });
@@ -1378,7 +1402,7 @@ function openSingleDbModal(code, index) {
         <b>Ending Year:</b> ${endingYear}<br>
         <b>Sample Level:</b> ${sampleLevel}<br>
     
-        <button type-button class="btn btn-secondary btn-sm mt-2 mr-4 popout" onclick="popoutDataset('${code}', ${index})">&#x2197; Popout</button>
+        <button type-button class="btn btn-secondary btn-sm mt-2 mr-4 popout" onclick="popoutDataset('${normalizedCode}', ${index})">&#x2197; Popout</button>
         
         <div id="details-${index}" class="collapse">
             ${advancedInfo}
@@ -2385,10 +2409,12 @@ function popoutDataset(code, index) {
 
     skills = skills.map(skill => {
         if (skill.toLowerCase() === "other skills" && otherDetails && otherDetails !== "N/A") {
-            return `Other Skills: ${otherDetails.replace(/;/g, ", ")}`;
+            const clickableDetails = makeLinksClickable(otherDetails.replace(/;/g, ", "));
+            return `Other Skills: ${clickableDetails}`;
         }
         return skill;
     });
+    
     const measureTypes = extractBracketedValues(entry, "Measure Type [");
     const adminMethod = getField(entry, "Administration Method");
 
@@ -2453,12 +2479,6 @@ function popoutDataset(code, index) {
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     </head>
     <body>
-
-    <div class="toolbar">
-        <button id="btnXlsx" class="btn-dl">⬇️ Download XLSX</button>
-        <button id="btnCsv"  class="btn-dl">⬇️ Download CSV</button>
-        <span class="muted">Esporta tutti i campi del dataset</span>
-    </div>
 
     <h1>${name}</h1>
     <p><strong>Acronym:</strong> ${acronym}</p>
@@ -2565,6 +2585,21 @@ function popoutDataset(code, index) {
     } else {
         alert("Pop-up blocked. Please allow pop-ups for this site.");
     }
+}
+
+function popoutDatasetByAcronym(countryName, acronym) {
+    // Trova l'entry nel countryEntryStore usando l'acronimo
+    const entries = countryEntryStore[countryName] || [];
+    const index = entries.findIndex(e => getField(e, "Acronym") === acronym);
+    
+    if (index === -1) {
+        console.error(`Dataset con acronimo "${acronym}" non trovato in ${countryName}`);
+        alert(`Errore: Dataset "${acronym}" non trovato.`);
+        return;
+    }
+    
+    // Richiama la funzione popoutDataset con i parametri corretti
+    popoutDataset(countryName, index);
 }
 
 function handleBackButton() {
