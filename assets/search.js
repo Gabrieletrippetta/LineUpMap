@@ -9,8 +9,47 @@ function getSearchFilters() {
     return { search, selectedFilters };
 }
 
+/**
+ * Improved text search that searches through ALL fields in the dataset
+ * Supports multiple words (all words must be present in the entry)
+ * @param {Object} entry - Single dataset entry
+ * @param {string} searchQuery - Search query (can contain multiple words)
+ * @returns {boolean} - True if all search terms are found in any field
+ */
+function matchesTextSearch(entry, searchQuery) {
+    if (!searchQuery || searchQuery.trim() === "") {
+        return true; // No search query means match all
+    }
+    
+    // Split search query into individual words and filter out empty strings
+    const searchTerms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    
+    if (searchTerms.length === 0) {
+        return true;
+    }
+    
+    // Concatenate all field values into a single searchable string
+    const entryText = Object.entries(entry)
+        .filter(([key, value]) => {
+            // Include all string values and convert numbers to strings
+            return value !== null && value !== undefined;
+        })
+        .map(([key, value]) => {
+            // Convert value to string and include the field name for context
+            return `${key}: ${String(value)}`;
+        })
+        .join(" ")
+        .toLowerCase();
+    
+    // Check if ALL search terms are present in the entry text
+    const allTermsFound = searchTerms.every(term => entryText.includes(term));
+    
+    return allTermsFound;
+}
+
 function filterMappingData(data, filters) {
     return data.filter(entry => {
+        const matchesSearch = matchesTextSearch(entry, filters.search);
         
         const matchesDropdowns = filters.selectedFilters.length === 0 || filters.selectedFilters.every(val => {
             return Object.values(entry).some(v => v && typeof v === "string" && v.toLowerCase().includes(val.toLowerCase()));
@@ -117,16 +156,8 @@ function applyFilters() {
         }
     }
     
-    // 🔍 RICERCA TESTUALE SU TUTTI I CAMPI
-    const entryText = Object.values(entry)
-    .filter(v => typeof v === "string")
-    .join(" ")
-    .toLowerCase();
-    
-    const searchTerms = filters.search.split(/\s+/).filter(Boolean);
-    const allTermsMatch = (text) => searchTerms.every(term => text.includes(term));
-    
-    const matchesSearch = !filters.search || allTermsMatch(entryText);
+    // 🔍 RICERCA TESTUALE SU TUTTI I CAMPI - usando la funzione migliorata
+    const matchesSearch = matchesTextSearch(entry, filters.search);
     
     // filtraggio applicato con values.some (OR)
     const matchesGrouped = Object.entries(selectedGroupedFilters)
@@ -532,4 +563,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
