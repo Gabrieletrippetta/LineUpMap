@@ -271,12 +271,24 @@ ul {
     padding-top: 20px
 }
 #search_bottom_cont button {
-     font-size: 15px;
-     padding-top: 10px
+    font-size: 15px;
+    padding-top: 10px
 }
 
 #selected-filters-button {
     background-color: #006EC4 !important; 
+}
+
+#selected-filters-button:hover {
+    cursor: pointer;
+}
+
+.guide-faq-button {
+    background-color: #006EC4 !important;
+}
+
+.guide-faq-button:hover {
+    background-color: #666 !important; 
 }
 
 .list-group li {
