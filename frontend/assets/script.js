@@ -1871,8 +1871,8 @@ function extractByPrefix(data, prefix) {
 
 function extractGrades(data) {
     const order = [
-        "First", "Second", "Third", "Fourth", "Fifth", "Sixth",
-        "Seventh", "Eighth", "Ninth", "Tenth", "Eleventh", "Twelfth", "Thirteenth"
+        "First grade", "Second grade", "Third grade", "Fourth grade", "Fifth grade", "Sixth grade",
+        "Seventh grade", "Eighth grade", "Ninth grade", "Tenth grade", "Eleventh grade", "Twelfth grade", "Thirteenth grade"
     ];
     
     const values = new Set();
@@ -1946,14 +1946,31 @@ function setupMainFilterInteraction(data) {
             return order.indexOf(a) - order.indexOf(b);
         })
         .map(label => `${label} Data`),
-        "Data Collection Focus": extractByPrefix(data, "Data Collection Focus ["),
-        "Data Collection Purpose": extractByPrefix(data, "Data Collection Purpose ["),
+        "Data Collection Focus": extractByPrefix(data, "Data Collection Focus [").sort((a, b) => {
+            const order = [
+                "School Education",
+                "School-to-Work Transition",
+                "Household and Family Choices",
+                "Child Development"
+            ];
+            return order.indexOf(a) - order.indexOf(b);
+        }),
+        "Data Collection Purpose": extractByPrefix(data, "Data Collection Purpose [").sort((a, b) => {
+            const order = [
+                "Academic Research",
+                "School System Monitoring/Evaluation",
+                "Educational Institution Monitoring/Evaluation",
+                "Low-stake Individual Assessment",
+                "High-stake Individual Assessment"
+            ];
+            return order.indexOf(a) - order.indexOf(b);
+        }),
         "Data Collection Frequency": extractUniqueValues(data, "Data Collection Frequency").sort((a, b) => {
             const order = [
                 "Yearly (or more than once per year)",
                 "Every other year",
                 "Every three years",
-                "Every four year or more"
+                "Every four years or more"
             ];
             return order.indexOf(a) - order.indexOf(b);
         }),
@@ -2035,14 +2052,53 @@ function setupAdvancedFilterInteraction(data) {
     container.innerHTML = ""; // Pulisce il contenuto esistente
     
     const filters = {
-        "School Grades Included": extractGrades(data),
-        // "Information on ECEC or Pre-Primary Education": extractUniqueValues(data, "Information on ECEC or Pre-Primary Education"),
-        // "Students Followed After School Education": extractUniqueValues(data, "Students Followed After School Education"),
-        "Type of Skills Analysed": extractByPrefix(data, "Type of Skills Analysed ["),
+        "School Grades Included": extractGrades(data).sort((a, b) => {
+            const order = [
+                "First Grade",
+                "Second Grade",
+                "Third Grade",
+                "Fourth Grade",
+                "Fifth Grade",
+                "Sixth Grade",
+                "Seventh Grade",
+                "Eighth Grade",
+                "Ninth Grade",
+                "Tenth Grade",
+                "Eleventh Grade",
+                "Twelfth Grade",
+                "Thirteenth Grade"
+            ];
+            return order.indexOf(a) - order.indexOf(b);
+        }),
+        "Type of Skills Analysed": extractByPrefix(data, "Type of Skills Analysed [").sort((a, b) => {
+            const order = [
+                "Literacy",
+                "Numeracy",
+                "Science",
+                "Foreign Language",
+                "Other Skills"
+            ];
+            return order.indexOf(a) - order.indexOf(b);
+        }),
         "Measure Type": extractByPrefix(data, "Measure Type ["),
-        "Sample Type": extractByPrefix(data, "Sample Type ["),
-        "Sample Unit": extractByPrefix(data, "Sample Unit ["),
-        // "Data Linkability At Individual Level": extractSubOptionsIfMainIsYes(data, "Data Linkability At Individual Level")
+        "Sample Type": extractByPrefix(data, "Sample Type [").sort((a, b) => {
+            const order = [
+                "Student Population",
+                "Random Student Sample",
+                "Non-random Student Sample",
+                "Other"
+            ];
+            return order.indexOf(a) - order.indexOf(b);
+        }),
+        "Sample Unit": extractByPrefix(data, "Sample Unit [").sort((a, b) => {
+            const order = [
+                "Countries/Cities",
+                "Schools",
+                "Classes",
+                "Pupils"
+            ];
+            return order.indexOf(a) - order.indexOf(b);
+        })
     };
     
     const accordion = document.createElement("div");

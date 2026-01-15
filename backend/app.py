@@ -147,7 +147,7 @@ def transform_dataset(raw_data):
         'Responsible Organization(s)': ', '.join(responsible_orgs) if responsible_orgs else None,
         'Longitudinal Data Structure': raw_data.get('long_data_struct'),
         'Type of Longitudinal Data': raw_data.get('type_of_long_data'),
-        'Data Collection Frequency': raw_data.get('data_coll_freq'),
+        'Data Collection Frequency': raw_data.get('data_coll_freq').replace('Every four year or more', 'Every four years or more'),
         'Starting Year': raw_data.get('starting_year'),
         'Ending Year': raw_data.get('ending_year'),
         'Sample Level': raw_data.get('samp_level'),
@@ -200,12 +200,66 @@ def transform_dataset(raw_data):
     grade_labels = [
         'First Grade', 'Second Grade', 'Third Grade', 'Fourth Grade',
         'Fifth Grade', 'Sixth Grade', 'Seventh Grade', 'Eighth Grade',
-        'Nineth Grade', 'Tenth Grade', 'Eleventh Grade', 'Twelfth Grade',
+        'Ninth Grade', 'Tenth Grade', 'Eleventh Grade', 'Twelfth Grade',
         'Thirteenth Grade'
     ]
     for i, field in enumerate(grade_fields, 0):
         if raw_data.get(field) == 'Yes' or raw_data.get(field) == '1':
             transformed[f'School Grades Included [{grade_labels[i]}]'] = 'Yes'
+    
+    # ============================================================================
+    # DATA VARIABLES - Mapping dei campi dal database ai nomi del frontend
+    # ============================================================================
+    
+    # Helper function to add non-empty values
+    def add_if_present(db_field, frontend_field):
+        value = raw_data.get(db_field)
+        if value and value not in ['N/A', '-', 'null', '']:
+            transformed[frontend_field] = value
+    
+    # STUDENT INFORMATION (14 campi)
+    add_if_present('st_gender', 'Student Gender')
+    add_if_present('st_age', 'Student Age')
+    add_if_present('st_citizen', 'Student Citizenship')
+    add_if_present('st_for_brth_cntry', 'Student Foreign Birth Country')
+    add_if_present('st_spec_brth_cntry', 'Student Specific Birth Country')
+    add_if_present('st_town_of_resid', 'Student Town of Residence')
+    add_if_present('st_prov_of_resid', 'Student Province of Residence')
+    add_if_present('st_reg_of_resid', 'Student Region of Residence')
+    add_if_present('st_prev_grade_retent', 'Student Previous Grade Retention')
+    add_if_present('st_learn_impair', 'Student Learning Impairments')
+    add_if_present('st_phys_impair', 'Student Physical Impairments')
+    add_if_present('st_school_attit_or_motiv', 'Student School Attitude or Motivation')
+    add_if_present('st_assgn_teach_grd', 'Student Assigned Teacher Grades')
+    add_if_present('st_allowschlr', 'Student Allowance/Scholarship')
+    
+    # HOUSEHOLD INFORMATION (13 campi)
+    add_if_present('num_of_par', 'Number of Parents')
+    add_if_present('pres_of_steppar', 'Presence of Stepparents')
+    add_if_present('sibl', 'Siblings')
+    add_if_present('paral_work_stat', 'Parental Working Status')
+    add_if_present('paral_occup', 'Parental Occupation')
+    add_if_present('paral_edu', 'Parental Education')
+    add_if_present('paral_edu_level_iscd', 'Parental Education Level (ISCED)')
+    add_if_present('paral_migr_bg', 'Parental Migratory Background')
+    add_if_present('par_age', 'Parents Age')
+    add_if_present('paral_inc_or_wlth', 'Parental Income or Wealth')
+    add_if_present('num_of_bks', 'Number of Books')
+    add_if_present('num_of_dgtl_dev', 'Number of Digital Devices')
+    add_if_present('own_of_the_apthse', 'Ownership of the Apartment/House')
+    
+    # TEACHER INFORMATION (5 campi)
+    add_if_present('teach_age', 'Teacher Age')
+    add_if_present('teach_gender', 'Teacher Gender')
+    add_if_present('teach_senior', 'Teacher Seniority')
+    add_if_present('teach_edu_deg', 'Teacher Educational Degree')
+    add_if_present('teach_contr_type', 'Teacher Contract Type')
+    
+    # SCHOOL/CLASS INFORMATION (4 campi)
+    add_if_present('school_size', 'School Size')
+    add_if_present('class_size', 'Class Size')
+    add_if_present('school_comp', 'School Composition')
+    add_if_present('class_comp', 'Class Composition')
     
     return transformed
 
