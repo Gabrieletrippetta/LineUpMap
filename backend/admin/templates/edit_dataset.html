@@ -2,8 +2,81 @@
 
 {% block title %}{% if is_new %}Nuovo Dataset{% else %}Modifica Dataset{% endif %}{% endblock %}
 
+{% block extra_css %}
+<style>
+.macro-category {
+    margin-bottom: 30px;
+}
+.macro-category-title {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: 15px 20px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+    margin: 0;
+}
+.macro-category-content {
+    background: white;
+    padding: 0;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.subsection {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+}
+.subsection:last-child {
+    border-bottom: none;
+}
+.subsection-title {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--secondary-color);
+}
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+.form-check {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+.form-check:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.form-check-input:checked ~ .form-check-label {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+.sticky-save {
+    position: sticky;
+    bottom: 0;
+    z-index: 1000;
+    background: white;
+    padding: 15px 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    margin-top: 40px;
+}
+.accordion-button:not(.collapsed) {
+    background-color: var(--secondary-color);
+    color: #333;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
+    <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
@@ -13,191 +86,679 @@
                         {% if is_new %}Nuovo Dataset{% else %}Modifica Dataset{% endif %}
                     </h2>
                     {% if not is_new %}
-                    <p class="text-muted">ID: {{ dataset.id }} - {{ dataset.Name or 'N/A' }}</p>
+                    <p class="text-muted">ID: {{ dataset.id }} - {{ dataset.name or dataset.acronym or 'N/A' }}</p>
                     {% endif %}
                 </div>
                 <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Torna alla Dashboard
+                    <i class="bi bi-arrow-left"></i> Dashboard
                 </a>
             </div>
         </div>
     </div>
     
     <form method="POST" id="datasetForm">
-        <!-- Basic Information -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-info-circle"></i> Informazioni Base
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <!-- Name -->
-                    <div class="col-md-6 mb-3">
-                        <label for="Name" class="form-label">
-                            Nome Dataset <span class="badge badge-required">OBBLIGATORIO</span>
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="Name" 
-                               name="Name" 
-                               value="{{ dataset.Name or '' }}"
-                               required>
+        
+        <!-- ================================================================ -->
+        <!-- MACRO CATEGORIA 1: BASIC INFORMATION (sempre visibile) -->
+        <!-- ================================================================ -->
+        <div class="macro-category">
+            <h3 class="macro-category-title">
+                <i class="bi bi-info-circle"></i> Basic Information
+            </h3>
+            <div class="macro-category-content">
+                <!-- Name, Acronym, Description -->
+                <div class="subsection">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="name" class="form-label">
+                                Name <span class="badge badge-required">REQUIRED</span>
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ dataset.name or '' }}" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="acronym" class="form-label">
+                                Acronym <span class="badge badge-required">REQUIRED</span>
+                            </label>
+                            <input type="text" class="form-control" id="acronym" name="acronym" 
+                                   value="{{ dataset.acronym or '' }}" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="cntry" class="form-label">
+                                Country <span class="badge badge-required">REQUIRED</span>
+                            </label>
+                            <select class="form-select" id="cntry" name="cntry" required>
+                                <option value="">-- Select --</option>
+                                {% for c in ['AT (Austria)', 'BE (Flanders)', 'BE (Wallonia)', 'BG (Bulgaria)', 'HR (Croatia)', 'CY (Cyprus)', 'CZ (Czech Republic)', 'DK (Denmark)', 'EE (Estonia)', 'FI (Finland)', 'FR (France)', 'DE (Germany)', 'GR (Greece)', 'HU (Hungary)', 'IS (Iceland)', 'IE (Ireland)', 'IT (Italy)', 'LV (Latvia)', 'LI (Liechtenstein)', 'LT (Lithuania)', 'LU (Luxembourg)', 'MT (Malta)', 'NL (Netherlands)', 'NO (Norway)', 'PL (Poland)', 'PT (Portugal)', 'RO (Romania)', 'SK (Slovakia)', 'SI (Slovenia)', 'ES (Spain)', 'SE (Sweden)', 'CH (Switzerland)', 'UK (United Kingdom)'] %}
+                                    <option value="{{ c }}" {% if dataset.cntry == c %}selected{% endif %}>{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="short_description" class="form-label">Short Description</label>
+                            <textarea class="form-control" id="short_description" name="short_description" 
+                                      rows="3">{{ dataset.short_description or '' }}</textarea>
+                        </div>
                     </div>
-                    
-                    <!-- Acronym -->
-                    <div class="col-md-6 mb-3">
-                        <label for="Acronym" class="form-label">
-                            Acronimo <span class="badge badge-required">OBBLIGATORIO</span>
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="Acronym" 
-                               name="Acronym" 
-                               value="{{ dataset.Acronym or '' }}"
-                               required>
+                </div>
+                
+                <!-- Responsible Organization -->
+                <div class="subsection">
+                    <h6 class="subsection-title">Responsible Organization(s)</h6>
+                    <div class="checkbox-grid">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="resp_org_pub_auth" name="resp_org_pub_auth" 
+                                   value="Yes" {% if dataset.resp_org_pub_auth == 'Yes' or dataset.resp_org_pub_auth == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="resp_org_pub_auth">Public Authority</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="resp_org_univ_or_pub_res_ctr" name="resp_org_univ_or_pub_res_ctr" 
+                                   value="Yes" {% if dataset.resp_org_univ_or_pub_res_ctr == 'Yes' or dataset.resp_org_univ_or_pub_res_ctr == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="resp_org_univ_or_pub_res_ctr">University or Public Research Centre</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="resp_org_priv_org" name="resp_org_priv_org" 
+                                   value="Yes" {% if dataset.resp_org_priv_org == 'Yes' or dataset.resp_org_priv_org == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="resp_org_priv_org">Private Organization</label>
+                        </div>
                     </div>
-                    
-                    <!-- Country -->
-                    <div class="col-md-6 mb-3">
-                        <label for="Country" class="form-label">
-                            Paese <span class="badge badge-required">OBBLIGATORIO</span>
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="Country" 
-                               name="Country" 
-                               value="{{ dataset.Country or '' }}"
-                               placeholder="es. IT (Italy)"
-                               required>
-                        <small class="form-text text-muted">Formato: ISO2 (Nome Completo)</small>
+                </div>
+                
+                <!-- Longitudinal Data Structure & Type -->
+                <div class="subsection">
+                    <h6 class="subsection-title">Longitudinal Data Structure & Type</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="long_data_struct" class="form-label">
+                                Longitudinal Data Structure <span class="badge badge-required">REQUIRED</span>
+                            </label>
+                            <select class="form-select" id="long_data_struct" name="long_data_struct" required>
+                                <option value="">-- Select --</option>
+                                {% for opt in ['Panel', 'Cohort', 'Repeated Cross-Sectional', 'Other'] %}
+                                    <option value="{{ opt }}" {% if dataset.long_data_struct == opt %}selected{% endif %}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="type_of_long_data" class="form-label">Type of Longitudinal Data</label>
+                            <select class="form-select" id="type_of_long_data" name="type_of_long_data">
+                                <option value="">-- Select --</option>
+                                {% for opt in ['Prospective', 'Retrospective', 'Both', 'Not clear'] %}
+                                    <option value="{{ opt }}" {% if dataset.type_of_long_data == opt %}selected{% endif %}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    
-                    <!-- Official Website -->
-                    <div class="col-md-6 mb-3">
-                        <label for="Official Website" class="form-label">
-                            Sito Web Ufficiale
-                        </label>
-                        <input type="url" 
-                               class="form-control" 
-                               id="Official Website" 
-                               name="Official Website" 
-                               value="{{ dataset['Official Website'] or '' }}"
-                               placeholder="https://...">
+                </div>
+                
+                <!-- Purpose & Focus -->
+                <div class="subsection">
+                    <h6 class="subsection-title">Purpose of Data Collection</h6>
+                    <div class="checkbox-grid">
+                        {% for field, label in [
+                            ('data_coll_purp_acad_res', 'Academic Research'),
+                            ('data_coll_purp_school_sys_moneval', 'School System Monitoring/Evaluation'),
+                            ('data_coll_purp_edu_inst_moneval', 'Educational Institution Monitoring/Evaluation'),
+                            ('data_coll_purp_low_stake_indiv_asmt', 'Low-stake Individual Assessment'),
+                            ('data_coll_purp_high_stake_indiv_asmt', 'High-stake Individual Assessment')
+                        ] %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
+                                   value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ field }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
                     </div>
-                    
-                    <!-- Short Description -->
-                    <div class="col-12 mb-3">
-                        <label for="Short Description" class="form-label">
-                            Breve Descrizione
-                        </label>
-                        <textarea class="form-control" 
-                                  id="Short Description" 
-                                  name="Short Description" 
-                                  rows="3">{{ dataset['Short Description'] or '' }}</textarea>
+                </div>
+                
+                <div class="subsection">
+                    <h6 class="subsection-title">Data Collection Focus</h6>
+                    <div class="checkbox-grid">
+                        {% for field, label in [
+                            ('data_coll_focus_school_edu', 'School Education'),
+                            ('data_coll_focus_school_to_work_trans', 'School-to-Work Transition'),
+                            ('data_coll_focus_hse_and_fam_choices', 'Household and Family Choices'),
+                            ('data_coll_focus_child_dev', 'Child Development')
+                        ] %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
+                                   value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ field }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Frequency, Years, Sample Level -->
+                <div class="subsection">
+                    <h6 class="subsection-title">Data Collection Details</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="data_coll_freq" class="form-label">Data Collection Frequency</label>
+                            <select class="form-select" id="data_coll_freq" name="data_coll_freq">
+                                <option value="">-- Select --</option>
+                                {% for opt in ['Annual', 'Biennial', 'Every 3 years', 'Every 4 years', 'Every 5 years', 'Every four years or more', 'Irregular', 'One-off', 'Other'] %}
+                                    <option value="{{ opt }}" {% if dataset.data_coll_freq == opt %}selected{% endif %}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="starting_year" class="form-label">
+                                Starting Year <span class="badge badge-required">REQUIRED</span>
+                            </label>
+                            <input type="number" class="form-control" id="starting_year" name="starting_year" 
+                                   value="{{ dataset.starting_year or '' }}" min="1900" max="2100" required>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="ending_year" class="form-label">Ending Year</label>
+                            <input type="number" class="form-control" id="ending_year" name="ending_year" 
+                                   value="{{ dataset.ending_year or '' }}" min="1900" max="2100">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="samp_level" class="form-label">Sample Level</label>
+                            <select class="form-select" id="samp_level" name="samp_level">
+                                <option value="">-- Select --</option>
+                                {% for opt in ['National', 'Limited to specific regions/areas', 'Other'] %}
+                                    <option value="{{ opt }}" {% if dataset.samp_level == opt %}selected{% endif %}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="samp_level_det" class="form-label">Sample Level (Details)</label>
+                            <textarea class="form-control" id="samp_level_det" name="samp_level_det" 
+                                      rows="2">{{ dataset.samp_level_det or '' }}</textarea>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Longitudinal Data -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-graph-up"></i> Dati Longitudinali
+
+        <!-- ================================================================ -->
+        <!-- MACRO CATEGORIA 2: DETAILED INFORMATION (accordion collapsable) -->
+        <!-- ================================================================ -->
+        <div class="macro-category">
+            <h3 class="macro-category-title">
+                <i class="bi bi-list-details"></i> Detailed Information
+            </h3>
+            <div class="macro-category-content p-0">
+                <div class="accordion" id="detailedInfoAccordion">
+                    
+                    <!-- School Grades -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#schoolGrades">
+                                <i class="bi bi-mortarboard me-2"></i> School Grades
+                            </button>
+                        </h2>
+                        <div id="schoolGrades" class="accordion-collapse collapse show" data-bs-parent="#detailedInfoAccordion">
+                            <div class="accordion-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="info_on_ecec_or_preprim_edu" class="form-label">ECEC / Pre-Primary Education</label>
+                                        <select class="form-select" id="info_on_ecec_or_preprim_edu" name="info_on_ecec_or_preprim_edu">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset.info_on_ecec_or_preprim_edu == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="stud_foll_after_school_edu" class="form-label">Students Followed After School Education</label>
+                                        <select class="form-select" id="stud_foll_after_school_edu" name="stud_foll_after_school_edu">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset.stud_foll_after_school_edu == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <h6 class="mb-3">Included Grades:</h6>
+                                <div class="checkbox-grid">
+                                    {% for grade_num, grade_field in [
+                                        (1, 'school_grd_incl_first_grade'),
+                                        (2, 'school_grd_incl_second_grade'),
+                                        (3, 'school_grd_incl_third_grade'),
+                                        (4, 'school_grd_incl_fourth_grade'),
+                                        (5, 'school_grd_incl_fifth_grade'),
+                                        (6, 'school_grd_incl_sixth_grade'),
+                                        (7, 'school_grd_incl_seventh_grade'),
+                                        (8, 'school_grd_incl_eighth_grade'),
+                                        (9, 'school_grd_incl_ninth_grade'),
+                                        (10, 'school_grd_incl_tenth_grade'),
+                                        (11, 'school_grd_incl_eleventh_grade'),
+                                        (12, 'school_grd_incl_twelfth_grade'),
+                                        (13, 'school_grd_incl_thirteenth_grade')
+                                    ] %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ grade_field }}" name="{{ grade_field }}" 
+                                               value="Yes" {% if dataset[grade_field] == 'Yes' or dataset[grade_field] == '1' %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ grade_field }}">Grade {{ grade_num }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Students' Skills and Achievement -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#studentsSkills">
+                                <i class="bi bi-award me-2"></i> Students' Skills and Achievement
+                            </button>
+                        </h2>
+                        <div id="studentsSkills" class="accordion-collapse collapse" data-bs-parent="#detailedInfoAccordion">
+                            <div class="accordion-body">
+                                <h6 class="mb-3">Skills Analysed:</h6>
+                                <div class="checkbox-grid mb-3">
+                                    {% for field, label in [
+                                        ('type_of_skl_anlyz_lit', 'Literacy'),
+                                        ('type_of_skl_anlyz_num', 'Numeracy'),
+                                        ('type_of_skl_anlyz_sci', 'Science'),
+                                        ('type_of_skl_anlyz_for_lang', 'Foreign Language'),
+                                        ('type_of_skl_anlyz_other_skl', 'Other Skills')
+                                    ] %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
+                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ field }}">{{ label }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="other_skl_det" class="form-label">Other Skills (Details)</label>
+                                    <textarea class="form-control" id="other_skl_det" name="other_skl_det" 
+                                              rows="2">{{ dataset.other_skl_det or '' }}</textarea>
+                                </div>
+                                
+                                <h6 class="mb-3 mt-4">Measure Types:</h6>
+                                <div class="checkbox-grid mb-3">
+                                    {% for field, label in [
+                                        ('meas_type_cont_score', 'Continuous Score'),
+                                        ('meas_type_prof_levels', 'Proficiency Levels'),
+                                        ('meas_type_not_clear', 'Not Clear')
+                                    ] %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
+                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ field }}">{{ label }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="admin_meth" class="form-label">Administration Method</label>
+                                        <select class="form-select" id="admin_meth" name="admin_meth">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Paper-based', 'Computer-based', 'Both', 'Other', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset.admin_meth == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sample -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sample">
+                                <i class="bi bi-people me-2"></i> Sample
+                            </button>
+                        </h2>
+                        <div id="sample" class="accordion-collapse collapse" data-bs-parent="#detailedInfoAccordion">
+                            <div class="accordion-body">
+                                <h6 class="mb-3">Sample Types:</h6>
+                                <div class="checkbox-grid mb-3">
+                                    {% for field, label in [
+                                        ('samp_type_stud_pop', 'Student Population'),
+                                        ('samp_type_rand_stud_samp', 'Random Student Sample'),
+                                        ('samp_type_nonrand_stud_samp', 'Non-random Student Sample'),
+                                        ('samp_type_other', 'Other')
+                                    ] %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
+                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ field }}">{{ label }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="samp_weig_crit" class="form-label">Sampling Weights/Criteria</label>
+                                    <textarea class="form-control" id="samp_weig_crit" name="samp_weig_crit" 
+                                              rows="2">{{ dataset.samp_weig_crit or '' }}</textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="avg_samp_size_x_wave" class="form-label">Average Sample Size x Wave</label>
+                                    <input type="number" class="form-control" id="avg_samp_size_x_wave" name="avg_samp_size_x_wave" 
+                                           value="{{ dataset.avg_samp_size_x_wave or '' }}" min="0">
+                                </div>
+                                
+                                <h6 class="mb-3 mt-4">Sample Units:</h6>
+                                <div class="checkbox-grid">
+                                    {% for field, label in [
+                                        ('samp_unit_countriescities', 'Countries/Cities'),
+                                        ('samp_unit_schools', 'Schools'),
+                                        ('samp_unit_classes', 'Classes'),
+                                        ('samp_unit_pupils', 'Pupils')
+                                    ] %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
+                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ field }}">{{ label }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Linkability -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linkability">
+                                <i class="bi bi-link-45deg me-2"></i> Linkability
+                            </button>
+                        </h2>
+                        <div id="linkability" class="accordion-collapse collapse" data-bs-parent="#detailedInfoAccordion">
+                            <div class="accordion-body">
+                                <div class="mb-3">
+                                    <label for="data_link_at_indiv_level" class="form-label">Data Linkability At Individual Level</label>
+                                    <select class="form-select" id="data_link_at_indiv_level" name="data_link_at_indiv_level">
+                                        <option value="">-- Select --</option>
+                                        {% for opt in ['Yes', 'No', 'Partially', 'Not clear'] %}
+                                            <option value="{{ opt }}" {% if dataset.data_link_at_indiv_level == opt %}selected{% endif %}>{{ opt }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <h6 class="mb-3">Linkability Details:</h6>
+                                <div class="checkbox-grid">
+                                    {% for field, label in [
+                                        ('data_link_at_indiv_level_stud_quest', "Students' Questionnaire"),
+                                        ('data_link_at_indiv_level_stud_test', "Students' Test"),
+                                        ('data_link_at_indiv_level_school_quest', 'School Questionnaire'),
+                                        ('data_link_at_indiv_level_heads_quest', "Headmaster's Questionnaire"),
+                                        ('data_link_at_indiv_level_teach_quest', "Teachers' Questionnaire"),
+                                        ('data_link_at_indiv_level_par_quest', "Parents' Questionnaire")
+                                    ] %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
+                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ field }}">{{ label }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Accessibility -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accessibility">
+                                <i class="bi bi-unlock me-2"></i> Accessibility
+                            </button>
+                        </h2>
+                        <div id="accessibility" class="accordion-collapse collapse" data-bs-parent="#detailedInfoAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="acc_to_mic_data" class="form-label">Access to Micro Data</label>
+                                        <select class="form-select" id="acc_to_mic_data" name="acc_to_mic_data">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Yes, freely available', 'Yes, upon request', 'Yes, with restrictions', 'No', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset.acc_to_mic_data == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="constr_for_data_dwnld_and_mgmt" class="form-label">Constraints for Data Download/Management</label>
+                                        <select class="form-select" id="constr_for_data_dwnld_and_mgmt" name="constr_for_data_dwnld_and_mgmt">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['No constraints', 'Registration required', 'Application/proposal required', 'Fee required', 'Data use agreement required', 'On-site access only', 'Multiple constraints', 'Other', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset.constr_for_data_dwnld_and_mgmt == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label for="off_web" class="form-label">Official Website</label>
+                                        <input type="url" class="form-control" id="off_web" name="off_web" 
+                                               value="{{ dataset.off_web or '' }}" placeholder="https://...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <!-- Longitudinal Data Structure -->
-                    <div class="col-md-6 mb-3">
-                        <label for="Longitudinal Data Structure" class="form-label">
-                            Struttura Dati Longitudinali <span class="badge badge-required">OBBLIGATORIO</span>
-                        </label>
-                        <select class="form-select" 
-                                id="Longitudinal Data Structure" 
-                                name="Longitudinal Data Structure"
-                                required>
-                            <option value="">-- Seleziona --</option>
-                            <option value="Panel" {% if dataset['Longitudinal Data Structure'] == 'Panel' %}selected{% endif %}>Panel</option>
-                            <option value="Cohort" {% if dataset['Longitudinal Data Structure'] == 'Cohort' %}selected{% endif %}>Cohort</option>
-                            <option value="Repeated Cross-Sectional" {% if dataset['Longitudinal Data Structure'] == 'Repeated Cross-Sectional' %}selected{% endif %}>Repeated Cross-Sectional</option>
-                        </select>
+        </div>
+
+        <!-- ================================================================ -->
+        <!-- MACRO CATEGORIA 3: DATASET VARIABLES (accordion collapsable) -->
+        <!-- ================================================================ -->
+        <div class="macro-category">
+            <h3 class="macro-category-title">
+                <i class="bi bi-database"></i> Dataset Variables
+            </h3>
+            <div class="macro-category-content p-0">
+                <div class="accordion" id="datasetVariablesAccordion">
+                    
+                    <!-- Students' Information -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#studentsInfo">
+                                <i class="bi bi-person me-2"></i> Students' Information
+                            </button>
+                        </h2>
+                        <div id="studentsInfo" class="accordion-collapse collapse show" data-bs-parent="#datasetVariablesAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    {% for field_name, field_label in [
+                                        ('stud_gen', 'Student Gender'),
+                                        ('stud_age', 'Student Age'),
+                                        ('stud_citz', 'Student Citizenship'),
+                                        ('stud_for_brth_cntry', 'Student Foreign Birth Country'),
+                                        ('stud_spec_brth_cntry', 'Student Specific Birth Country'),
+                                        ('stud_town_of_res', 'Student Town of Residence'),
+                                        ('stud_prov_of_res', 'Student Province of Residence'),
+                                        ('stud_reg_of_res', 'Student Region of Residence'),
+                                        ('stud_bel_to_rec_eth_min', 'Student Belonging to a Recognized Ethnic Minority'),
+                                        ('stud_ecec_att', 'Student ECEC Attendance'),
+                                        ('stud_prev_grd_ret', 'Student Previous Grade Retention'),
+                                        ('stud_learn_imp', 'Student Learning Impairments'),
+                                        ('stud_phys_imp', 'Student Physical Impairments'),
+                                        ('stud_school_att_or_motiv', 'Student School Attitude or Motivation'),
+                                        ('stud_asgn_teach_grds', 'Student Assigned Teacher Grades'),
+                                        ('stud_allow_schol', 'Student Allowance/Scholarship')
+                                    ] %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
+                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Type of Longitudinal Data -->
-                    <div class="col-md-6 mb-3">
-                        <label for="Type of Longitudinal Data" class="form-label">
-                            Tipo di Dati Longitudinali
-                        </label>
-                        <select class="form-select" 
-                                id="Type of Longitudinal Data" 
-                                name="Type of Longitudinal Data">
-                            <option value="">-- Seleziona --</option>
-                            <option value="Prospective" {% if dataset['Type of Longitudinal Data'] == 'Prospective' %}selected{% endif %}>Prospective</option>
-                            <option value="Retrospective" {% if dataset['Type of Longitudinal Data'] == 'Retrospective' %}selected{% endif %}>Retrospective</option>
-                            <option value="Both" {% if dataset['Type of Longitudinal Data'] == 'Both' %}selected{% endif %}>Both</option>
-                        </select>
+                    <!-- Household's Information -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#householdInfo">
+                                <i class="bi bi-house me-2"></i> Household's Information
+                            </button>
+                        </h2>
+                        <div id="householdInfo" class="accordion-collapse collapse" data-bs-parent="#datasetVariablesAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    {% for field_name, field_label in [
+                                        ('num_of_par', 'Number of Parents'),
+                                        ('pres_of_steppar', 'Presence of Stepparents'),
+                                        ('sibl', 'Siblings'),
+                                        ('par_work_stat', 'Parental Working Status'),
+                                        ('par_occ', 'Parental Occupation'),
+                                        ('par_edu', 'Parental Education'),
+                                        ('par_edu_level_isced', 'Parental Education Level (ISCED)'),
+                                        ('par_migr_backg', 'Parental Migratory Background'),
+                                        ('par_age', 'Parents Age'),
+                                        ('par_place_of_brth', 'Parents Place of Birth'),
+                                        ('par_inc_or_wlth', 'Parental Income or Wealth'),
+                                        ('par_host_cntry_lang_prof', "Parental Host Country's Language Proficiency"),
+                                        ('num_of_books', 'Number of Books'),
+                                        ('num_of_dig_dev', 'Number of Digital Devices'),
+                                        ('own_of_apt_hse', 'Ownership of the Apartment/House')
+                                    ] %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
+                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Data Collection Frequency -->
-                    <div class="col-md-6 mb-3">
-                        <label for="Data Collection Frequency" class="form-label">
-                            Frequenza Raccolta Dati
-                        </label>
-                        <select class="form-select" 
-                                id="Data Collection Frequency" 
-                                name="Data Collection Frequency">
-                            <option value="">-- Seleziona --</option>
-                            <option value="Annual" {% if dataset['Data Collection Frequency'] == 'Annual' %}selected{% endif %}>Annual</option>
-                            <option value="Biennial" {% if dataset['Data Collection Frequency'] == 'Biennial' %}selected{% endif %}>Biennial</option>
-                            <option value="Every 3 years" {% if dataset['Data Collection Frequency'] == 'Every 3 years' %}selected{% endif %}>Every 3 years</option>
-                            <option value="Every 4 years" {% if dataset['Data Collection Frequency'] == 'Every 4 years' %}selected{% endif %}>Every 4 years</option>
-                            <option value="Every 5 years" {% if dataset['Data Collection Frequency'] == 'Every 5 years' %}selected{% endif %}>Every 5 years</option>
-                            <option value="Irregular" {% if dataset['Data Collection Frequency'] == 'Irregular' %}selected{% endif %}>Irregular</option>
-                            <option value="One-off" {% if dataset['Data Collection Frequency'] == 'One-off' %}selected{% endif %}>One-off</option>
-                            <option value="Other" {% if dataset['Data Collection Frequency'] == 'Other' %}selected{% endif %}>Other</option>
-                        </select>
+                    <!-- Teachers' Information -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#teachersInfo">
+                                <i class="bi bi-person-workspace me-2"></i> Teachers' Information
+                            </button>
+                        </h2>
+                        <div id="teachersInfo" class="accordion-collapse collapse" data-bs-parent="#datasetVariablesAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    {% for field_name, field_label in [
+                                        ('teach_age', 'Teacher Age'),
+                                        ('teach_gen', 'Teacher Gender'),
+                                        ('teach_sen', 'Teacher Seniority'),
+                                        ('teach_edu_deg', 'Teacher Educational Degree'),
+                                        ('teach_contr_type', 'Teacher Contract Type')
+                                    ] %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
+                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Starting Year -->
-                    <div class="col-md-3 mb-3">
-                        <label for="Starting Year" class="form-label">
-                            Anno Inizio <span class="badge badge-required">OBBLIGATORIO</span>
-                        </label>
-                        <input type="number" 
-                               class="form-control" 
-                               id="Starting Year" 
-                               name="Starting Year" 
-                               value="{{ dataset['Starting Year'] or '' }}"
-                               min="1900"
-                               max="2100"
-                               required>
+                    <!-- School/Class Information -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schoolInfo">
+                                <i class="bi bi-building me-2"></i> School/Class Information
+                            </button>
+                        </h2>
+                        <div id="schoolInfo" class="accordion-collapse collapse" data-bs-parent="#datasetVariablesAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    {% for field_name, field_label in [
+                                        ('school_geo_ref', 'School Geo-Referencing'),
+                                        ('school_type', 'School Type'),
+                                        ('school_trck', 'School Track'),
+                                        ('school_size', 'School Size'),
+                                        ('class_size', 'Class Size'),
+                                        ('school_comp', 'School Composition'),
+                                        ('class_comp', 'Class Composition')
+                                    ] %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
+                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                            <option value="">-- Select --</option>
+                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
+                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Ending Year -->
-                    <div class="col-md-3 mb-3">
-                        <label for="Ending Year" class="form-label">
-                            Anno Fine
-                        </label>
-                        <input type="number" 
-                               class="form-control" 
-                               id="Ending Year" 
-                               name="Ending Year" 
-                               value="{{ dataset['Ending Year'] or '' }}"
-                               min="1900"
-                               max="2100">
-                        <small class="form-text text-muted">Lascia vuoto se ancora in corso</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================ -->
+        <!-- STICKY SAVE BUTTONS -->
+        <!-- ================================================================ -->
+        <div class="sticky-save">
+            <div class="container-fluid">
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success btn-lg px-5 me-3">
+                        <i class="bi bi-check-circle"></i> Save Dataset
+                    </button>
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-lg px-5">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> 
+                            Required fields: Name, Acronym, Country, Longitudinal Data Structure, Starting Year
+                        </small>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- FILE TROPPO LUNGO - CONTINUA NELLA PARTE 2 -->
-        
-        {% include 'edit_dataset_part2.html' %}
         
     </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='admin.js') }}"></script>
+<script>
+// Form submission
+document.getElementById('datasetForm').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+});
+
+// Unsaved changes warning
+let formChanged = false;
+document.querySelectorAll('input, select, textarea').forEach(field => {
+    field.addEventListener('change', () => { formChanged = true; });
+});
+
+window.addEventListener('beforeunload', (e) => {
+    if (formChanged) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+    }
+});
+
+document.getElementById('datasetForm').addEventListener('submit', () => {
+    formChanged = false;
+});
+</script>
 {% endblock %}

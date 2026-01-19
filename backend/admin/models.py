@@ -52,7 +52,7 @@ def get_all_datasets(limit=None, offset=0, search=None):
         params = []
         
         if search:
-            where_clause = " WHERE Name LIKE %s OR Acronym LIKE %s OR Country LIKE %s"
+            where_clause = " WHERE name LIKE %s OR acronym LIKE %s OR cntry LIKE %s"
             search_term = f"%{search}%"
             params = [search_term, search_term, search_term]
             count_query += where_clause
@@ -64,7 +64,7 @@ def get_all_datasets(limit=None, offset=0, search=None):
         query = "SELECT * FROM datasets"
         if where_clause:
             query += where_clause
-        query += " ORDER BY Name ASC"
+        query += " ORDER BY id ASC"
         
         if limit:
             query += f" LIMIT {limit} OFFSET {offset}"

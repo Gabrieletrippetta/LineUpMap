@@ -24,7 +24,7 @@ class Config:
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'admin'
     # Password di default: "admin123" - CAMBIALA IN PRODUZIONE!
     # Hash generato con: from werkzeug.security import generate_password_hash
-    ADMIN_PASSWORD_HASH = os.environ.get('ADMIN_PASSWORD_HASH') or 'sct:32768:8:1$Lu7bBHtXBKfOuI6P$dbee5206cf690365b99e2d384e61bc88fcbfe99a2c828cff730ab98d61f48d49b646ab67cfa288f78950ee7a67f3e8b7afa317a8a92a3849f7434482226be1a2'
+    ADMIN_PASSWORD_HASH = os.environ.get('ADMIN_PASSWORD_HASH') or 'scrypt:32768:8:1$EFAZCzAFLkHD8gHc$5d324f34ccdf64f5b4361dc0335a0471040dac5aa49f0f3ea0446a470844c897bcee49f0d3a9b80b548e4f7f13e9ed01b008c14facdaa22fdda9b5cbb2e5f0bc'
     
     # CORS
     CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:5000']

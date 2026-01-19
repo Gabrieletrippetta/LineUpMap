@@ -49,10 +49,10 @@
                 <div class="col-md-6">
                     <form method="GET" action="{{ url_for('admin.dashboard') }}" class="d-flex">
                         <input type="text" 
-                               class="form-control me-2" 
-                               name="search" 
-                               placeholder="Cerca per nome, acronimo o paese..." 
-                               value="{{ search }}">
+                            class="form-control me-2" 
+                            name="search" 
+                            placeholder="Cerca per Nome, Acronimo o Paese" 
+                            value="{{ search }}">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Cerca
                         </button>
@@ -99,24 +99,24 @@
                         <tr>
                             <td>{{ dataset.id }}</td>
                             <td>
-                                <strong>{{ dataset.Name or 'N/A' }}</strong>
-                                {% if dataset['Short Description'] %}
-                                <br><small class="text-muted">{{ dataset['Short Description'][:100] }}{% if dataset['Short Description']|length > 100 %}...{% endif %}</small>
+                                <strong>{{ dataset.name or 'N/A' }}</strong>
+                                {% if dataset.short_description %}
+                                <br><small class="text-muted">{{ dataset.short_description[:100] }}{% if dataset.short_description|length > 100 %}...{% endif %}</small>
                                 {% endif %}
                             </td>
-                            <td><span class="badge bg-info">{{ dataset.Acronym or 'N/A' }}</span></td>
-                            <td>{{ dataset.Country or 'N/A' }}</td>
-                            <td>{{ dataset['Starting Year'] or 'N/A' }}</td>
+                            <td><span class="badge bg-info">{{ dataset.acronym or 'N/A' }}</span></td>
+                            <td>{{ dataset.cntry or 'N/A' }}</td>
+                            <td>{{ dataset.starting_year or 'N/A' }}</td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm" role="group">
                                     <a href="{{ url_for('admin.edit_dataset', dataset_id=dataset.id) }}" 
-                                       class="btn btn-outline-primary"
-                                       title="Modifica">
+                                        class="btn btn-outline-primary"
+                                        title="Modifica">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <button type="button" 
                                             class="btn btn-outline-danger"
-                                            onclick=`confirmDelete({{ dataset.id }}, "{{ dataset.Name or dataset.Acronym or 'questo dataset' }}")`
+                                            onclick="confirmDelete({{ dataset.id }}, `{{ dataset.name or dataset.acronym or 'questo dataset' }}`)"
                                             title="Elimina">
                                         <i class="bi bi-trash"></i>
                                     </button>
