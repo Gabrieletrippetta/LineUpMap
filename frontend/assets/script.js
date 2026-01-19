@@ -798,6 +798,34 @@ function extractBracketedValues(entry, prefix) {
     return result;
 }
 
+/**
+ * Ordina i gradi scolastici in ordine numerico
+ */
+function sortSchoolGrades(grades) {
+    const order = [
+        "First Grade", "Second Grade", "Third Grade", "Fourth Grade", 
+        "Fifth Grade", "Sixth Grade", "Seventh Grade", "Eighth Grade", 
+        "Ninth Grade", "Tenth Grade", "Eleventh Grade", "Twelfth Grade", 
+        "Thirteenth Grade"
+    ];
+    
+    return grades.sort((a, b) => {
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+        const orderLower = order.map(o => o.toLowerCase());
+        
+        const indexA = orderLower.indexOf(aLower);
+        const indexB = orderLower.indexOf(bLower);
+        
+        // Se uno dei due non è nell'array, mettilo alla fine
+        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        
+        return indexA - indexB;
+    });
+}
+
 // SHOW REALLY BASIC INFO ON DB
 
 function openDbModal(code) {
@@ -889,7 +917,7 @@ function showCountryDetailsInPanel(code) {
         const endingYear = getField(entry, "Ending Year");
         
         const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
-        const includedGrades = extractBracketedValues(entry, "School Grades Included [");
+        const includedGrades = sortSchoolGrades(extractBracketedValues(entry, "School Grades Included ["));
         // const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
         const afterSchool = getField(entry, "Students Followed After School Education")
         
@@ -1239,7 +1267,7 @@ function openSingleDbModal(code, index) {
     const endingYear = getField(entry, "Ending Year");
     
     const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
-    const includedGrades = extractBracketedValues(entry, "School Grades Included [");
+    const includedGrades = sortSchoolGrades(extractBracketedValues(entry, "School Grades Included ["));
     // const primarySecondary = getField(entry, "Data Collection on Both Primary and Secondary Education");
     const afterSchool = getField(entry, "Students Followed After School Education")
     
@@ -2483,7 +2511,7 @@ function popoutDataset(code, index) {
     const endingYear = getField(entry, "Ending Year");
 
     const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
-    const includedGrades = extractBracketedValues(entry, "School Grades Included [");
+    const includedGrades = sortSchoolGrades(extractBracketedValues(entry, "School Grades Included ["));
     const afterSchool = getField(entry, "Students Followed After School Education");
 
     let skills = extractBracketedValues(entry, "Type of Skills Analysed [");

@@ -289,7 +289,7 @@ function showResultsModal(filteredData) {
         const endingYear = getField(entry, "Ending Year");
         
         const ecec = getField(entry, "Information on ECEC or Pre-Primary Education");
-        const includedGrades = extractBracketedValues(entry, "School Grades Included [");
+        const includedGrades = sortSchoolGrades(extractBracketedValues(entry, "School Grades Included ["));
         const afterSchool = getField(entry, "Students Followed After School Education")
         
         let skills = extractBracketedValues(entry, "Type of Skills Analysed [");

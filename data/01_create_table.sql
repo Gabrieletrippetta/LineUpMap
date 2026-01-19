@@ -36,7 +36,7 @@ CREATE TABLE `mapping_data` (
     `school_grades_included_sixth_grade` VARCHAR(100),
     `school_grades_included_seventh_grade` VARCHAR(100),
     `school_grades_included_eighth_grade` VARCHAR(100),
-    `school_grades_included_nineth_grade` VARCHAR(100),
+    `school_grades_included_ninth_grade` VARCHAR(100),
     `school_grades_included_tenth_grade` VARCHAR(100),
     `school_grades_included_eleventh_grade` VARCHAR(100),
     `school_grades_included_twelfth_grade` VARCHAR(100),

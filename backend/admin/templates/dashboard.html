@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-speedometer2"></i> Dashboard Admin</h2>
+            <p class="text-muted">Gestisci i dataset del LINEup Education Data Explorer</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-database-fill text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ total }}</h3>
+                    <p class="text-muted mb-0">Dataset Totali</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-globe text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ datasets|length }}</h3>
+                    <p class="text-muted mb-0">Visualizzati</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-person-circle text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ username }}</h3>
+                    <p class="text-muted mb-0">Logged In</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <form method="GET" action="{{ url_for('admin.dashboard') }}" class="d-flex">
+                        <input type="text" 
+                               class="form-control me-2" 
+                               name="search" 
+                               placeholder="Cerca per nome, acronimo o paese..." 
+                               value="{{ search }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Cerca
+                        </button>
+                        {% if search %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary ms-2">
+                            <i class="bi bi-x"></i> Reset
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="{{ url_for('admin.new_dataset') }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Nuovo Dataset
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Datasets Table -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-table"></i> Lista Dataset
+            {% if search %}
+            <span class="badge bg-secondary ms-2">Filtrato: "{{ search }}"</span>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            {% if datasets %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">ID</th>
+                            <th>Nome</th>
+                            <th>Acronimo</th>
+                            <th>Paese</th>
+                            <th>Anno Inizio</th>
+                            <th style="width: 200px;" class="text-center">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dataset in datasets %}
+                        <tr>
+                            <td>{{ dataset.id }}</td>
+                            <td>
+                                <strong>{{ dataset.Name or 'N/A' }}</strong>
+                                {% if dataset['Short Description'] %}
+                                <br><small class="text-muted">{{ dataset['Short Description'][:100] }}{% if dataset['Short Description']|length > 100 %}...{% endif %}</small>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-info">{{ dataset.Acronym or 'N/A' }}</span></td>
+                            <td>{{ dataset.Country or 'N/A' }}</td>
+                            <td>{{ dataset['Starting Year'] or 'N/A' }}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('admin.edit_dataset', dataset_id=dataset.id) }}" 
+                                       class="btn btn-outline-primary"
+                                       title="Modifica">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger"
+                                            onclick=`confirmDelete({{ dataset.id }}, "{{ dataset.Name or dataset.Acronym or 'questo dataset' }}")`
+                                            title="Elimina">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                <p class="text-muted mt-3">
+                    {% if search %}
+                    Nessun dataset trovato per "{{ search }}"
+                    {% else %}
+                    Nessun dataset presente nel database
+                    {% endif %}
+                </p>
+                {% if not search %}
+                <a href="{{ url_for('admin.new_dataset') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Crea il primo dataset
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="card-footer">
+            <nav aria-label="Paginazione dataset">
+                <ul class="pagination justify-content-center mb-0">
+                    <!-- Previous -->
+                    <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.dashboard', page=page-1, search=search) }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    
+                    <!-- Page numbers -->
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ p }}</span>
+                        </li>
+                        {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.dashboard', page=p, search=search) }}">{{ p }}</a>
+                        </li>
+                        {% elif p == page - 3 or p == page + 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Next -->
+                    <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.dashboard', page=page+1, search=search) }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <p class="text-center text-muted mt-2 mb-0">
+                Pagina {{ page }} di {{ total_pages }} ({{ total }} dataset totali)
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal per conferma eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Conferma Eliminazione
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare <strong id="deleteDatasetName"></strong>?</p>
+                <p class="text-danger mb-0">
+                    <i class="bi bi-info-circle"></i> Questa azione è irreversibile!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Elimina
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(datasetId, datasetName) {
+    // Imposta il nome del dataset nel modal
+    document.getElementById('deleteDatasetName').textContent = datasetName;
+    
+    // Imposta l'action del form
+    const form = document.getElementById('deleteForm');
+    form.action = `/admin/dataset/${datasetId}/delete`;
+    
+    // Mostra il modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

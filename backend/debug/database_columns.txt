@@ -103,7 +103,7 @@ school_grd_incl_eleventh_grade
 school_grd_incl_fifth_grade
 school_grd_incl_first_grade
 school_grd_incl_fourth_grade
-school_grd_incl_nineth_grade
+school_grd_incl_ninth_grade
 school_grd_incl_second_grade
 school_grd_incl_seventh_grade
 school_grd_incl_sixth_grade
@@ -203,7 +203,7 @@ school_grd_incl_eleventh_grade
 school_grd_incl_fifth_grade
 school_grd_incl_first_grade
 school_grd_incl_fourth_grade
-school_grd_incl_nineth_grade
+school_grd_incl_ninth_grade
 school_grd_incl_second_grade
 school_grd_incl_seventh_grade
 school_grd_incl_sixth_grade

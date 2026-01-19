@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_new %}Nuovo Dataset{% else %}Modifica Dataset{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>
+                        <i class="bi bi-{% if is_new %}plus-circle{% else %}pencil-square{% endif %}"></i>
+                        {% if is_new %}Nuovo Dataset{% else %}Modifica Dataset{% endif %}
+                    </h2>
+                    {% if not is_new %}
+                    <p class="text-muted">ID: {{ dataset.id }} - {{ dataset.Name or 'N/A' }}</p>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Torna alla Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <form method="POST" id="datasetForm">
+        <!-- Basic Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Informazioni Base
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Name -->
+                    <div class="col-md-6 mb-3">
+                        <label for="Name" class="form-label">
+                            Nome Dataset <span class="badge badge-required">OBBLIGATORIO</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="Name" 
+                               name="Name" 
+                               value="{{ dataset.Name or '' }}"
+                               required>
+                    </div>
+                    
+                    <!-- Acronym -->
+                    <div class="col-md-6 mb-3">
+                        <label for="Acronym" class="form-label">
+                            Acronimo <span class="badge badge-required">OBBLIGATORIO</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="Acronym" 
+                               name="Acronym" 
+                               value="{{ dataset.Acronym or '' }}"
+                               required>
+                    </div>
+                    
+                    <!-- Country -->
+                    <div class="col-md-6 mb-3">
+                        <label for="Country" class="form-label">
+                            Paese <span class="badge badge-required">OBBLIGATORIO</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="Country" 
+                               name="Country" 
+                               value="{{ dataset.Country or '' }}"
+                               placeholder="es. IT (Italy)"
+                               required>
+                        <small class="form-text text-muted">Formato: ISO2 (Nome Completo)</small>
+                    </div>
+                    
+                    <!-- Official Website -->
+                    <div class="col-md-6 mb-3">
+                        <label for="Official Website" class="form-label">
+                            Sito Web Ufficiale
+                        </label>
+                        <input type="url" 
+                               class="form-control" 
+                               id="Official Website" 
+                               name="Official Website" 
+                               value="{{ dataset['Official Website'] or '' }}"
+                               placeholder="https://...">
+                    </div>
+                    
+                    <!-- Short Description -->
+                    <div class="col-12 mb-3">
+                        <label for="Short Description" class="form-label">
+                            Breve Descrizione
+                        </label>
+                        <textarea class="form-control" 
+                                  id="Short Description" 
+                                  name="Short Description" 
+                                  rows="3">{{ dataset['Short Description'] or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Longitudinal Data -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Dati Longitudinali
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Longitudinal Data Structure -->
+                    <div class="col-md-6 mb-3">
+                        <label for="Longitudinal Data Structure" class="form-label">
+                            Struttura Dati Longitudinali <span class="badge badge-required">OBBLIGATORIO</span>
+                        </label>
+                        <select class="form-select" 
+                                id="Longitudinal Data Structure" 
+                                name="Longitudinal Data Structure"
+                                required>
+                            <option value="">-- Seleziona --</option>
+                            <option value="Panel" {% if dataset['Longitudinal Data Structure'] == 'Panel' %}selected{% endif %}>Panel</option>
+                            <option value="Cohort" {% if dataset['Longitudinal Data Structure'] == 'Cohort' %}selected{% endif %}>Cohort</option>
+                            <option value="Repeated Cross-Sectional" {% if dataset['Longitudinal Data Structure'] == 'Repeated Cross-Sectional' %}selected{% endif %}>Repeated Cross-Sectional</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Type of Longitudinal Data -->
+                    <div class="col-md-6 mb-3">
+                        <label for="Type of Longitudinal Data" class="form-label">
+                            Tipo di Dati Longitudinali
+                        </label>
+                        <select class="form-select" 
+                                id="Type of Longitudinal Data" 
+                                name="Type of Longitudinal Data">
+                            <option value="">-- Seleziona --</option>
+                            <option value="Prospective" {% if dataset['Type of Longitudinal Data'] == 'Prospective' %}selected{% endif %}>Prospective</option>
+                            <option value="Retrospective" {% if dataset['Type of Longitudinal Data'] == 'Retrospective' %}selected{% endif %}>Retrospective</option>
+                            <option value="Both" {% if dataset['Type of Longitudinal Data'] == 'Both' %}selected{% endif %}>Both</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Data Collection Frequency -->
+                    <div class="col-md-6 mb-3">
+                        <label for="Data Collection Frequency" class="form-label">
+                            Frequenza Raccolta Dati
+                        </label>
+                        <select class="form-select" 
+                                id="Data Collection Frequency" 
+                                name="Data Collection Frequency">
+                            <option value="">-- Seleziona --</option>
+                            <option value="Annual" {% if dataset['Data Collection Frequency'] == 'Annual' %}selected{% endif %}>Annual</option>
+                            <option value="Biennial" {% if dataset['Data Collection Frequency'] == 'Biennial' %}selected{% endif %}>Biennial</option>
+                            <option value="Every 3 years" {% if dataset['Data Collection Frequency'] == 'Every 3 years' %}selected{% endif %}>Every 3 years</option>
+                            <option value="Every 4 years" {% if dataset['Data Collection Frequency'] == 'Every 4 years' %}selected{% endif %}>Every 4 years</option>
+                            <option value="Every 5 years" {% if dataset['Data Collection Frequency'] == 'Every 5 years' %}selected{% endif %}>Every 5 years</option>
+                            <option value="Irregular" {% if dataset['Data Collection Frequency'] == 'Irregular' %}selected{% endif %}>Irregular</option>
+                            <option value="One-off" {% if dataset['Data Collection Frequency'] == 'One-off' %}selected{% endif %}>One-off</option>
+                            <option value="Other" {% if dataset['Data Collection Frequency'] == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Starting Year -->
+                    <div class="col-md-3 mb-3">
+                        <label for="Starting Year" class="form-label">
+                            Anno Inizio <span class="badge badge-required">OBBLIGATORIO</span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="Starting Year" 
+                               name="Starting Year" 
+                               value="{{ dataset['Starting Year'] or '' }}"
+                               min="1900"
+                               max="2100"
+                               required>
+                    </div>
+                    
+                    <!-- Ending Year -->
+                    <div class="col-md-3 mb-3">
+                        <label for="Ending Year" class="form-label">
+                            Anno Fine
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="Ending Year" 
+                               name="Ending Year" 
+                               value="{{ dataset['Ending Year'] or '' }}"
+                               min="1900"
+                               max="2100">
+                        <small class="form-text text-muted">Lascia vuoto se ancora in corso</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FILE TROPPO LUNGO - CONTINUA NELLA PARTE 2 -->
+        
+        {% include 'edit_dataset_part2.html' %}
+        
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+{% endblock %}

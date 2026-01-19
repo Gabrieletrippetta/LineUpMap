@@ -1,5 +1,6 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from config import config
 import mysql.connector
 from mysql.connector import Error
 import os
@@ -8,8 +9,37 @@ from dotenv import load_dotenv
 # Carica le variabili d'ambiente
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
+
+# Carica configurazione per admin
+env = os.environ.get('FLASK_ENV', 'development')
+app.config.from_object(config[env])
+
 CORS(app)  # Abilita CORS per permettere richieste dal frontend
+
+# ============== FRONTEND ROUTES ==============
+@app.route('/')
+def serve_index():
+    """Servi il file index.html del frontend"""
+    return send_from_directory('../frontend', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static_files(path):
+    """Servi i file statici del frontend (CSS, JS, immagini, ecc.)"""
+    try:
+        return send_from_directory('../frontend', path)
+    except:
+        # Se il file non esiste, ritorna 404
+        return jsonify({'error': 'File not found'}), 404
+
+# ============== API HEALTH CHECK ==============
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Endpoint per verificare che l'API sia attiva"""
+    return jsonify({
+        'status': 'ok',
+        'message': 'API is running'
+    })
 
 # Configurazione database
 DB_CONFIG = {
@@ -42,15 +72,6 @@ def transform_dataset(raw_data):
     if not raw_data:
         return None
     
-    # Combina le organizzazioni responsabili
-    responsible_orgs = []
-    if raw_data.get('resp_org_pub_auth'):
-        responsible_orgs.append(raw_data['resp_org_pub_auth'])
-    if raw_data.get('resp_org_univ_or_pub_res_ctr'):
-        responsible_orgs.append(raw_data['resp_org_univ_or_pub_res_ctr'])
-    if raw_data.get('resp_org_priv_org'):
-        responsible_orgs.append(raw_data['resp_org_priv_org'])
-    
     # Combina i gradi scolastici
     grades = []
     grade_fields = [
@@ -58,7 +79,7 @@ def transform_dataset(raw_data):
         'school_grd_incl_third_grade', 'school_grd_incl_fourth_grade',
         'school_grd_incl_fifth_grade', 'school_grd_incl_sixth_grade',
         'school_grd_incl_seventh_grade', 'school_grd_incl_eighth_grade',
-        'school_grd_incl_nineth_grade', 'school_grd_incl_tenth_grade',
+        'school_grd_incl_ninth_grade', 'school_grd_incl_tenth_grade',
         'school_grd_incl_eleventh_grade', 'school_grd_incl_twelfth_grade',
         'school_grd_incl_thirteenth_grade'
     ]
@@ -142,26 +163,47 @@ def transform_dataset(raw_data):
         'id': raw_data.get('id'),
         'Name': raw_data.get('name'),
         'Acronym': raw_data.get('acronym'),
-        'Description': raw_data.get('short_description'),
+        'Short Description': raw_data.get('short_description'),
         'Country': raw_data.get('cntry'),
-        'Responsible Organization(s)': ', '.join(responsible_orgs) if responsible_orgs else None,
         'Longitudinal Data Structure': raw_data.get('long_data_struct'),
         'Type of Longitudinal Data': raw_data.get('type_of_long_data'),
-        'Data Collection Frequency': raw_data.get('data_coll_freq').replace('Every four year or more', 'Every four years or more'),
+        'Data Collection Frequency': raw_data.get('data_coll_freq').replace('Every four year or more', 'Every four years or more') if raw_data.get('data_coll_freq') else None,
         'Starting Year': raw_data.get('starting_year'),
         'Ending Year': raw_data.get('ending_year'),
         'Sample Level': raw_data.get('samp_level'),
-        'ECEC': raw_data.get('info_on_ecec_or_preprim_edu'),
+        'Information on ECEC or Pre-Primary Education': raw_data.get('info_on_ecec_or_preprim_edu'),
         'Included Grades': ', '.join(grades) if grades else None,
-        'Students followed after school education': raw_data.get('stud_foll_after_school_edu'),
+        'Students Followed After School Education': raw_data.get('stud_foll_after_school_edu'),
         'Administration Method': raw_data.get('admin_meth'),
         'Sampling Weights/Criteria': None,  # Non presente nel DB
-        'Avg Sample Size x Wave': raw_data.get('avg_samp_size_x_wave'),
-        'Linkability': raw_data.get('data_link_at_indiv_level'),
+        'Average Sample Size x Wave': raw_data.get('avg_samp_size_x_wave'),
+        'Data Linkability At Individual Level': raw_data.get('data_link_at_indiv_level'),
         'Access to Micro Data': raw_data.get('acc_to_mic_data'),
-        'Constraints': raw_data.get('constr_for_data_dwnld_and_mgmt'),
-        'Website': raw_data.get('off_web'),
+        'Constraints for Data Download and Management': raw_data.get('constr_for_data_dwnld_and_mgmt'),
+        'Official Website': raw_data.get('off_web'),
     }
+    
+    # Aggiungi Responsible Organization con formato [bracket]
+    if raw_data.get('resp_org_pub_auth') == 'Yes' or raw_data.get('resp_org_pub_auth') == '1':
+        transformed['Responsible Organization [Public Authority]'] = 'Yes'
+    if raw_data.get('resp_org_univ_or_pub_res_ctr') == 'Yes' or raw_data.get('resp_org_univ_or_pub_res_ctr') == '1':
+        transformed['Responsible Organization [University or Public Research Centre]'] = 'Yes'
+    if raw_data.get('resp_org_priv_org') == 'Yes' or raw_data.get('resp_org_priv_org') == '1':
+        transformed['Responsible Organization [Private Organization]'] = 'Yes'
+    
+    # Aggiungi Data Linkability At Individual Level con formato [bracket]
+    if raw_data.get('data_link_at_indiv_level_stud_quest') == 'Yes' or raw_data.get('data_link_at_indiv_level_stud_quest') == '1':
+        transformed["Data Linkability At Individual Level [Students' Questionnaire]"] = 'Yes'
+    if raw_data.get('data_link_at_indiv_level_stud_test') == 'Yes' or raw_data.get('data_link_at_indiv_level_stud_test') == '1':
+        transformed["Data Linkability At Individual Level [Students' Test]"] = 'Yes'
+    if raw_data.get('data_link_at_indiv_level_school_quest') == 'Yes' or raw_data.get('data_link_at_indiv_level_school_quest') == '1':
+        transformed["Data Linkability At Individual Level [School Questionnaire]"] = 'Yes'
+    if raw_data.get('data_link_at_indiv_level_heads_quest') == 'Yes' or raw_data.get('data_link_at_indiv_level_heads_quest') == '1':
+        transformed["Data Linkability At Individual Level [Headmaster's Questionnaire]"] = 'Yes'
+    if raw_data.get('data_link_at_indiv_level_teach_quest') == 'Yes' or raw_data.get('data_link_at_indiv_level_teach_quest') == '1':
+        transformed["Data Linkability At Individual Level [Teachers' Questionnaire]"] = 'Yes'
+    if raw_data.get('data_link_at_indiv_level_par_quest') == 'Yes' or raw_data.get('data_link_at_indiv_level_par_quest') == '1':
+        transformed["Data Linkability At Individual Level [Parents' Questionnaire]"] = 'Yes'
     
     # Aggiungi Purpose con formato [bracket]
     for field, label in purpose_fields.items():
@@ -263,13 +305,10 @@ def transform_dataset(raw_data):
     
     return transformed
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Endpoint per verificare che l'API sia attiva"""
-    return jsonify({
-        'status': 'ok',
-        'message': 'API is running'
-    })
+# Registra il blueprint admin
+from admin import admin_bp
+app.register_blueprint(admin_bp)
+
 
 @app.route('/api/datasets', methods=['GET'])
 def get_all_datasets():
