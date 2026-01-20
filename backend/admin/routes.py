@@ -9,7 +9,7 @@ from .models import (
     get_all_datasets, get_dataset_by_id, update_dataset, 
     create_dataset, delete_dataset, get_column_names, get_unique_values
 )
-from .forms import get_field_type, is_required_field, get_field_options, REQUIRED_FIELDS
+from .forms import get_field_type, is_required_field, get_field_options, REQUIRED_FIELDS, REQUIRED_VARIABLE_FIELDS
 import json
 
 @admin_bp.route('/')
@@ -113,6 +113,10 @@ def new_dataset():
             if not data.get(field):
                 missing_fields.append(field)
         
+        for field in REQUIRED_VARIABLE_FIELDS:
+            if not data.get(field):
+                missing_fields.append(field)
+        
         if missing_fields:
             flash(f'Campi obbligatori mancanti: {", ".join(missing_fields)}', 'error')
             return render_template('edit_dataset.html',
@@ -175,6 +179,10 @@ def edit_dataset(dataset_id):
         # Valida campi obbligatori
         missing_fields = []
         for field in REQUIRED_FIELDS:
+            if not data.get(field):
+                missing_fields.append(field)
+        
+        for field in REQUIRED_VARIABLE_FIELDS:
             if not data.get(field):
                 missing_fields.append(field)
         

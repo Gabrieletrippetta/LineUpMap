@@ -116,7 +116,9 @@
                                     </a>
                                     <button type="button" 
                                             class="btn btn-outline-danger"
-                                            onclick="confirmDelete({{ dataset.id }}, `{{ dataset.name or dataset.acronym or 'questo dataset' }}`)"
+                                            data-dataset-id="{{ dataset.id }}"
+                                            data-dataset-name="{{ dataset.name or dataset.acronym or 'questo dataset' }}"
+                                            onclick="confirmDelete(this.dataset.datasetId, this.dataset.datasetName)"
                                             title="Elimina">
                                         <i class="bi bi-trash"></i>
                                     </button>

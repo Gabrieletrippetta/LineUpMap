@@ -12,6 +12,25 @@ REQUIRED_FIELDS = [
     'starting_year'
 ]
 
+# Campi obbligatori per Dataset Variables (tutte le variabili devono essere specificate)
+REQUIRED_VARIABLE_FIELDS = [
+    # Student's Information
+    'st_gender', 'st_age', 'st_citizen', 'st_for_brth_cntry',
+    'st_spec_brth_cntry', 'st_town_of_resid', 'st_prov_of_resid', 'st_reg_of_resid',
+    'st_belong_to_a_recog_ethn_min', 'st_ecec_attnd', 'st_prev_grade_retent', 'st_learn_impair',
+    'st_phys_impair', 'st_school_attit_or_motiv', 'st_assgn_teach_grd', 'st_allowschlr', 'st_info_type',
+    # Household's Information
+    'num_of_par', 'pres_of_steppar', 'sibl', 'paral_work_stat', 'paral_occup', 'paral_edu',
+    'paral_edu_level_iscd', 'paral_migr_bg', 'par_age', 'par_plc_of_brth',
+    'paral_inc_or_wlth', 'paral_host_cntrys_lang_prof', 'num_of_bks', 'num_of_dgtl_dev',
+    'own_of_the_apthse', 'hse_info_type',
+    # Teachers' Information
+    'teach_age', 'teach_gender', 'teach_senior', 'teach_edu_deg', 'teach_contr_type', 'teach_info_type', 'teach_info_link',
+    # School/Class Information
+    'school_geo', 'school_type', 'school_track', 'school_size', 'class_size',
+    'school_comp', 'class_comp'
+]
+
 # Opzioni per i select dropdown (campi singoli)
 FORM_OPTIONS = {
     'long_data_struct': [
@@ -291,51 +310,55 @@ DATA_LINKABILITY_LABELS = {
 # Campi per le variabili degli studenti/famiglie/insegnanti/scuola (Yes/No/Not clear)
 VARIABLE_FIELDS = {
     # Students' Information
-    "Student Gender": 'stud_gen',
-    "Student Age": 'stud_age',
-    "Student Citizenship": 'stud_citz',
-    "Student Foreign Birth Country": 'stud_for_brth_cntry',
-    "Student Specific Birth Country": 'stud_spec_brth_cntry',
-    "Student Town of Residence": 'stud_town_of_res',
-    "Student Province of Residence": 'stud_prov_of_res',
-    "Student Region of Residence": 'stud_reg_of_res',
-    "Student Belonging to a Recognized Ethnic Minority": 'stud_bel_to_rec_eth_min',
-    "Student ECEC Attendance": 'stud_ecec_att',
-    "Student Previous Grade Retention": 'stud_prev_grd_ret',
-    "Student Learning Impairments": 'stud_learn_imp',
-    "Student Physical Impairments": 'stud_phys_imp',
-    "Student School Attitude or Motivation": 'stud_school_att_or_motiv',
-    "Student Assigned Teacher Grades": 'stud_asgn_teach_grds',
-    "Student Allowance/Scholarship": 'stud_allow_schol',
+    "Student Gender": 'st_gender',
+    "Student Age": 'st_age',
+    "Student Citizenship": 'st_citizen',
+    "Student Foreign Birth Country": 'st_for_brth_cntry',
+    "Student Specific Birth Country": 'st_spec_brth_cntry',
+    "Student Town of Residence": 'st_town_of_resid',
+    "Student Province of Residence": 'st_prov_of_resid',
+    "Student Region of Residence": 'st_reg_of_resid',
+    "Student Belonging to a Recognized Ethnic Minority": 'st_belong_to_a_recog_ethn_min',
+    "Student ECEC Attendance": 'st_ecec_attnd',
+    "Student Previous Grade Retention": 'st_prev_grade_retent',
+    "Student Learning Impairments": 'st_learn_impair',
+    "Student Physical Impairments": 'st_phys_impair',
+    "Student School Attitude or Motivation": 'st_school_attit_or_motiv',
+    "Student Assigned Teacher Grades": 'st_assgn_teach_grd',
+    "Student Allowance/Scholarship": 'st_allowschlr',
+    "Student Information Type": 'st_info_type',
     
     # Household's Information
     "Number of Parents": 'num_of_par',
     "Presence of Stepparents": 'pres_of_steppar',
     "Siblings": 'sibl',
-    "Parental Working Status": 'par_work_stat',
-    "Parental Occupation": 'par_occ',
-    "Parental Education": 'par_edu',
-    "Parental Education Level (ISCED)": 'par_edu_level_isced',
-    "Parental Migratory Background": 'par_migr_backg',
+    "Parental Working Status": 'paral_work_stat',
+    "Parental Occupation": 'paral_occup',
+    "Parental Education": 'paral_edu',
+    "Parental Education Level (ISCED)": 'paral_edu_level_iscd',
+    "Parental Migratory Background": 'paral_migr_bg',
     "Parents Age": 'par_age',
-    "Parents Place of Birth": 'par_place_of_brth',
-    "Parental Income or Wealth": 'par_inc_or_wlth',
-    "Parental Host Country's Language Proficiency": 'par_host_cntry_lang_prof',
-    "Number of Books": 'num_of_books',
-    "Number of Digital Devices": 'num_of_dig_dev',
-    "Ownership of the Apartment/House": 'own_of_apt_hse',
+    "Parents Place of Birth": 'par_plc_of_brth',
+    "Parental Income or Wealth": 'paral_inc_or_wlth',
+    "Parental Host Country's Language Proficiency": 'paral_host_cntrys_lang_prof',
+    "Number of Books": 'num_of_bks',
+    "Number of Digital Devices": 'num_of_dgtl_dev',
+    "Ownership of the Apartment/House": 'own_of_the_apthse', 
+    "Household Information Type": 'hse_info_type',
     
     # Teachers' Information
     "Teacher Age": 'teach_age',
-    "Teacher Gender": 'teach_gen',
-    "Teacher Seniority": 'teach_sen',
+    "Teacher Gender": 'teach_gender',
+    "Teacher Seniority": 'teach_senior',
     "Teacher Educational Degree": 'teach_edu_deg',
-    "Teacher Contract Type": 'teach_contr_type',
+    "Teacher Contract Type": 'teach_contr_type', 
+    "Teacher Information Type": 'teach_info_type',
+    "Teacher Information Link": 'teach_info_link',
     
     # School/Class Information
-    "School Geo-Referencing": 'school_geo_ref',
+    "School Geo-Referencing": 'school_geo',
     "School Type": 'school_type',
-    "School Track": 'school_trck',
+    "School Track": 'school_track',
     "School Size": 'school_size',
     "Class Size": 'class_size',
     "School Composition": 'school_comp',
@@ -355,9 +378,11 @@ TEXT_AREA_FIELDS = [
 # Campi numerici
 NUMERIC_FIELDS = [
     'starting_year',
-    'ending_year',
     'avg_samp_size_x_wave'
 ]
+
+# Campo ending_year può essere un anno o "ongoing"
+# Viene gestito separatamente nel template
 
 # Campi URL
 URL_FIELDS = [
@@ -422,7 +447,7 @@ def is_required_field(field_name):
     Returns:
         bool: True se il campo è obbligatorio
     """
-    return field_name in REQUIRED_FIELDS
+    return field_name in REQUIRED_FIELDS or field_name in REQUIRED_VARIABLE_FIELDS
 
 def get_field_options(field_name):
     """

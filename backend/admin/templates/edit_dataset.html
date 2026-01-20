@@ -71,6 +71,14 @@
     background-color: var(--secondary-color);
     color: #333;
 }
+.badge-required {
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
 </style>
 {% endblock %}
 
@@ -97,6 +105,40 @@
     </div>
     
     <form method="POST" id="datasetForm">
+        
+        <!-- DEBUG SECTION - Mostra valori reali del dataset (solo in edit mode) -->
+        {% if not is_new %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading">
+                <i class="bi bi-bug"></i> Debug Info - Valori Dataset
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <hr>
+            <div class="row small">
+                <div class="col-md-6">
+                    <strong>Student's Info (campione):</strong>
+                    <ul class="mb-0">
+                        <li>stud_gen: <code>{{ dataset.get('st_gender', 'NULL') }}</code></li>
+                        <li>stud_age: <code>{{ dataset.get('st_age', 'NULL') }}</code></li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <strong>Other (campione):</strong>
+                    <ul class="mb-0">
+                        <li>num_of_par: <code>{{ dataset.get('num_of_par', 'NULL') }}</code></li>
+                        <li>teach_age: <code>{{ dataset.get('teach_age', 'NULL') }}</code></li>
+                        <li>school_geo_ref: <code>{{ dataset.get('school_geo', 'NULL') }}</code></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-2">
+            <small class="text-muted">
+                <i class="bi bi-info-circle"></i> 
+                Se vedi "NULL", significa che il database non ha valori per questi campi.
+                Seleziona i valori corretti e salva per popolarli.
+            </small>
+        </div>
+        {% endif %}
         
         <!-- ================================================================ -->
         <!-- MACRO CATEGORIA 1: BASIC INFORMATION (sempre visibile) -->
@@ -132,7 +174,7 @@
                             <select class="form-select" id="cntry" name="cntry" required>
                                 <option value="">-- Select --</option>
                                 {% for c in ['AT (Austria)', 'BE (Flanders)', 'BE (Wallonia)', 'BG (Bulgaria)', 'HR (Croatia)', 'CY (Cyprus)', 'CZ (Czech Republic)', 'DK (Denmark)', 'EE (Estonia)', 'FI (Finland)', 'FR (France)', 'DE (Germany)', 'GR (Greece)', 'HU (Hungary)', 'IS (Iceland)', 'IE (Ireland)', 'IT (Italy)', 'LV (Latvia)', 'LI (Liechtenstein)', 'LT (Lithuania)', 'LU (Luxembourg)', 'MT (Malta)', 'NL (Netherlands)', 'NO (Norway)', 'PL (Poland)', 'PT (Portugal)', 'RO (Romania)', 'SK (Slovakia)', 'SI (Slovenia)', 'ES (Spain)', 'SE (Sweden)', 'CH (Switzerland)', 'UK (United Kingdom)'] %}
-                                    <option value="{{ c }}" {% if dataset.cntry == c %}selected{% endif %}>{{ c }}</option>
+                                    <option value="{{ c }}" {% if dataset.get("cntry") == c %}selected{% endif %}>{{ c }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -178,7 +220,7 @@
                             <select class="form-select" id="long_data_struct" name="long_data_struct" required>
                                 <option value="">-- Select --</option>
                                 {% for opt in ['Panel', 'Cohort', 'Repeated Cross-Sectional', 'Other'] %}
-                                    <option value="{{ opt }}" {% if dataset.long_data_struct == opt %}selected{% endif %}>{{ opt }}</option>
+                                    <option value="{{ opt }}" {% if dataset.get("long_data_struct") == opt %}selected{% endif %}>{{ opt }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -187,7 +229,7 @@
                             <select class="form-select" id="type_of_long_data" name="type_of_long_data">
                                 <option value="">-- Select --</option>
                                 {% for opt in ['Prospective', 'Retrospective', 'Both', 'Not clear'] %}
-                                    <option value="{{ opt }}" {% if dataset.type_of_long_data == opt %}selected{% endif %}>{{ opt }}</option>
+                                    <option value="{{ opt }}" {% if dataset.get("type_of_long_data") == opt %}selected{% endif %}>{{ opt }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -207,7 +249,7 @@
                         ] %}
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
-                                   value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                   value="Yes" {% if dataset.get(field) == 'Yes' or dataset.get(field) == '1' %}checked{% endif %}>
                             <label class="form-check-label" for="{{ field }}">{{ label }}</label>
                         </div>
                         {% endfor %}
@@ -225,7 +267,7 @@
                         ] %}
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
-                                   value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                   value="Yes" {% if dataset.get(field) == 'Yes' or dataset.get(field) == '1' %}checked{% endif %}>
                             <label class="form-check-label" for="{{ field }}">{{ label }}</label>
                         </div>
                         {% endfor %}
@@ -241,7 +283,7 @@
                             <select class="form-select" id="data_coll_freq" name="data_coll_freq">
                                 <option value="">-- Select --</option>
                                 {% for opt in ['Annual', 'Biennial', 'Every 3 years', 'Every 4 years', 'Every 5 years', 'Every four years or more', 'Irregular', 'One-off', 'Other'] %}
-                                    <option value="{{ opt }}" {% if dataset.data_coll_freq == opt %}selected{% endif %}>{{ opt }}</option>
+                                    <option value="{{ opt }}" {% if dataset.get("data_coll_freq") == opt %}selected{% endif %}>{{ opt }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -254,15 +296,19 @@
                         </div>
                         <div class="col-md-2 mb-3">
                             <label for="ending_year" class="form-label">Ending Year</label>
-                            <input type="number" class="form-control" id="ending_year" name="ending_year" 
-                                   value="{{ dataset.ending_year or '' }}" min="1900" max="2100">
+                            <input type="text" class="form-control" id="ending_year" name="ending_year" 
+                                   value="{{ dataset.ending_year or '' }}" 
+                                   placeholder="YYYY or 'ongoing'"
+                                   pattern="^(\d{4}|ongoing)$"
+                                   title="Enter a 4-digit year (e.g., 2024) or 'ongoing'">
+                            <small class="form-text text-muted">Enter year (e.g., 2024) or "ongoing"</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="samp_level" class="form-label">Sample Level</label>
                             <select class="form-select" id="samp_level" name="samp_level">
                                 <option value="">-- Select --</option>
                                 {% for opt in ['National', 'Limited to specific regions/areas', 'Other'] %}
-                                    <option value="{{ opt }}" {% if dataset.samp_level == opt %}selected{% endif %}>{{ opt }}</option>
+                                    <option value="{{ opt }}" {% if dataset.get("samp_level") == opt %}selected{% endif %}>{{ opt }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -301,7 +347,7 @@
                                         <select class="form-select" id="info_on_ecec_or_preprim_edu" name="info_on_ecec_or_preprim_edu">
                                             <option value="">-- Select --</option>
                                             {% for opt in ['Yes', 'No', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset.info_on_ecec_or_preprim_edu == opt %}selected{% endif %}>{{ opt }}</option>
+                                                <option value="{{ opt }}" {% if dataset.get("info_on_ecec_or_preprim_edu") == opt %}selected{% endif %}>{{ opt }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -310,7 +356,7 @@
                                         <select class="form-select" id="stud_foll_after_school_edu" name="stud_foll_after_school_edu">
                                             <option value="">-- Select --</option>
                                             {% for opt in ['Yes', 'No', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset.stud_foll_after_school_edu == opt %}selected{% endif %}>{{ opt }}</option>
+                                                <option value="{{ opt }}" {% if dataset.get("stud_foll_after_school_edu") == opt %}selected{% endif %}>{{ opt }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -335,7 +381,7 @@
                                     ] %}
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="{{ grade_field }}" name="{{ grade_field }}" 
-                                               value="Yes" {% if dataset[grade_field] == 'Yes' or dataset[grade_field] == '1' %}checked{% endif %}>
+                                               value="Yes" {% if dataset.get(grade_field) == 'Yes' or dataset.get(grade_field) == '1' %}checked{% endif %}>
                                         <label class="form-check-label" for="{{ grade_field }}">Grade {{ grade_num }}</label>
                                     </div>
                                     {% endfor %}
@@ -364,7 +410,7 @@
                                     ] %}
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
-                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                               value="Yes" {% if dataset.get(field) == 'Yes' or dataset.get(field) == '1' %}checked{% endif %}>
                                         <label class="form-check-label" for="{{ field }}">{{ label }}</label>
                                     </div>
                                     {% endfor %}
@@ -385,7 +431,7 @@
                                     ] %}
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
-                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                               value="Yes" {% if dataset.get(field) == 'Yes' or dataset.get(field) == '1' %}checked{% endif %}>
                                         <label class="form-check-label" for="{{ field }}">{{ label }}</label>
                                     </div>
                                     {% endfor %}
@@ -397,7 +443,7 @@
                                         <select class="form-select" id="admin_meth" name="admin_meth">
                                             <option value="">-- Select --</option>
                                             {% for opt in ['Paper-based', 'Computer-based', 'Both', 'Other', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset.admin_meth == opt %}selected{% endif %}>{{ opt }}</option>
+                                                <option value="{{ opt }}" {% if dataset.get("admin_meth") == opt %}selected{% endif %}>{{ opt }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -425,7 +471,7 @@
                                     ] %}
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
-                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                               value="Yes" {% if dataset.get(field) == 'Yes' or dataset.get(field) == '1' %}checked{% endif %}>
                                         <label class="form-check-label" for="{{ field }}">{{ label }}</label>
                                     </div>
                                     {% endfor %}
@@ -453,7 +499,7 @@
                                     ] %}
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
-                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                               value="Yes" {% if dataset.get(field) == 'Yes' or dataset.get(field) == '1' %}checked{% endif %}>
                                         <label class="form-check-label" for="{{ field }}">{{ label }}</label>
                                     </div>
                                     {% endfor %}
@@ -476,7 +522,7 @@
                                     <select class="form-select" id="data_link_at_indiv_level" name="data_link_at_indiv_level">
                                         <option value="">-- Select --</option>
                                         {% for opt in ['Yes', 'No', 'Partially', 'Not clear'] %}
-                                            <option value="{{ opt }}" {% if dataset.data_link_at_indiv_level == opt %}selected{% endif %}>{{ opt }}</option>
+                                            <option value="{{ opt }}" {% if dataset.get("data_link_at_indiv_level") == opt %}selected{% endif %}>{{ opt }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -493,7 +539,7 @@
                                     ] %}
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="{{ field }}" name="{{ field }}" 
-                                               value="Yes" {% if dataset[field] == 'Yes' or dataset[field] == '1' %}checked{% endif %}>
+                                               value="Yes" {% if dataset.get(field) == 'Yes' or dataset.get(field) == '1' %}checked{% endif %}>
                                         <label class="form-check-label" for="{{ field }}">{{ label }}</label>
                                     </div>
                                     {% endfor %}
@@ -517,7 +563,7 @@
                                         <select class="form-select" id="acc_to_mic_data" name="acc_to_mic_data">
                                             <option value="">-- Select --</option>
                                             {% for opt in ['Yes, freely available', 'Yes, upon request', 'Yes, with restrictions', 'No', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset.acc_to_mic_data == opt %}selected{% endif %}>{{ opt }}</option>
+                                                <option value="{{ opt }}" {% if dataset.get("acc_to_mic_data") == opt %}selected{% endif %}>{{ opt }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -526,7 +572,7 @@
                                         <select class="form-select" id="constr_for_data_dwnld_and_mgmt" name="constr_for_data_dwnld_and_mgmt">
                                             <option value="">-- Select --</option>
                                             {% for opt in ['No constraints', 'Registration required', 'Application/proposal required', 'Fee required', 'Data use agreement required', 'On-site access only', 'Multiple constraints', 'Other', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset.constr_for_data_dwnld_and_mgmt == opt %}selected{% endif %}>{{ opt }}</option>
+                                                <option value="{{ opt }}" {% if dataset.get("constr_for_data_dwnld_and_mgmt") == opt %}selected{% endif %}>{{ opt }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -564,35 +610,196 @@
                         <div id="studentsInfo" class="accordion-collapse collapse show" data-bs-parent="#datasetVariablesAccordion">
                             <div class="accordion-body">
                                 <div class="row">
-                                    {% for field_name, field_label in [
-                                        ('stud_gen', 'Student Gender'),
-                                        ('stud_age', 'Student Age'),
-                                        ('stud_citz', 'Student Citizenship'),
-                                        ('stud_for_brth_cntry', 'Student Foreign Birth Country'),
-                                        ('stud_spec_brth_cntry', 'Student Specific Birth Country'),
-                                        ('stud_town_of_res', 'Student Town of Residence'),
-                                        ('stud_prov_of_res', 'Student Province of Residence'),
-                                        ('stud_reg_of_res', 'Student Region of Residence'),
-                                        ('stud_bel_to_rec_eth_min', 'Student Belonging to a Recognized Ethnic Minority'),
-                                        ('stud_ecec_att', 'Student ECEC Attendance'),
-                                        ('stud_prev_grd_ret', 'Student Previous Grade Retention'),
-                                        ('stud_learn_imp', 'Student Learning Impairments'),
-                                        ('stud_phys_imp', 'Student Physical Impairments'),
-                                        ('stud_school_att_or_motiv', 'Student School Attitude or Motivation'),
-                                        ('stud_asgn_teach_grds', 'Student Assigned Teacher Grades'),
-                                        ('stud_allow_schol', 'Student Allowance/Scholarship')
-                                    ] %}
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
-                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                        <label for="st_gender" class="form-label">
+                                            Student Gender <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_gender" name="st_gender" required>
                                             <option value="">-- Select --</option>
-                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
-                                            {% endfor %}
+                                                <option value="Yes" {% if dataset.get("st_gender") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_gender") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_gender") == "Not clear" %}selected{% endif %}>Not clear</option>
                                         </select>
                                     </div>
-                                    {% endfor %}
-                                </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_age" class="form-label">
+                                            Student Age <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_age" name="st_age" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_age") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_age") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_age") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_citizen" class="form-label">
+                                            Student Citizenship <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_citizen" name="st_citizen" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_citizen") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_citizen") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_citizen") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_for_brth_cntry" class="form-label">
+                                            Student Foreign Birth Country <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_for_brth_cntry" name="st_for_brth_cntry" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_for_brth_cntry") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_for_brth_cntry") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_for_brth_cntry") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_spec_brth_cntry" class="form-label">
+                                            Student Specific Birth Country <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_spec_brth_cntry" name="st_spec_brth_cntry" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_spec_brth_cntry") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_spec_brth_cntry") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_spec_brth_cntry") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_town_of_resid" class="form-label">
+                                            Student Town of Residence <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_town_of_resid" name="st_town_of_resid" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_town_of_resid") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_town_of_resid") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_town_of_resid") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_prov_of_resid" class="form-label">
+                                            Student Province of Residence <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_prov_of_resid" name="st_prov_of_resid" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_prov_of_resid") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_prov_of_resid") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_prov_of_resid") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_reg_of_resid" class="form-label">
+                                            Student Region of Residence <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_reg_of_resid" name="st_reg_of_resid" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_reg_of_resid") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_reg_of_resid") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_reg_of_resid") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_belong_to_a_recog_ethn_min" class="form-label">
+                                            Student Belonging to a Recognized Ethnic Minority <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_belong_to_a_recog_ethn_min" name="st_belong_to_a_recog_ethn_min" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_belong_to_a_recog_ethn_min") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_belong_to_a_recog_ethn_min") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_belong_to_a_recog_ethn_min") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_ecec_attnd" class="form-label">
+                                            Student ECEC Attendance <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_ecec_attnd" name="st_ecec_attnd" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_ecec_attnd") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_ecec_attnd") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_ecec_attnd") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_prev_grade_retent" class="form-label">
+                                            Student Previous Grade Retention <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_prev_grade_retent" name="st_prev_grade_retent" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_prev_grade_retent") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_prev_grade_retent") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_prev_grade_retent") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_learn_impair" class="form-label">
+                                            Student Learning Impairments <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_learn_impair" name="st_learn_impair" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_learn_impair") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_learn_impair") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_learn_impair") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_phys_impair" class="form-label">
+                                            Student Physical Impairments <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_phys_impair" name="st_phys_impair" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_phys_impair") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_phys_impair") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_phys_impair") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_school_attit_or_motiv" class="form-label">
+                                            Student School Attitude or Motivation <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_school_attit_or_motiv" name="st_school_attit_or_motiv" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_school_attit_or_motiv") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_school_attit_or_motiv") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_school_attit_or_motiv") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_assgn_teach_grd" class="form-label">
+                                            Student Assigned Teacher Grades <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_assgn_teach_grd" name="st_assgn_teach_grd" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_assgn_teach_grd") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_assgn_teach_grd") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_assgn_teach_grd") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_allowschlr" class="form-label">
+                                            Student Allowance/Scholarship <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_allowschlr" name="st_allowschlr" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("st_allowschlr") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("st_allowschlr") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("st_allowschlr") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="st_info_type" class="form-label">
+                                            Student Information Type <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="st_info_type" name="st_info_type" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Self-reported (provided by the student)" {% if dataset.get("st_info_type") == "Self-reported (provided by the student)" %}selected{% endif %}>Self-reported (provided by the student)</option>
+                                                <option value="Administrative (provided by the institution or others)" {% if dataset.get("st_info_type") == "Administrative (provided by the institution or others)" %}selected{% endif %}>Administrative (provided by the institution or others)</option>
+                                                <option value="Both self-reported and administrative" {% if dataset.get("st_info_type") == "Both self-reported and administrative" %}selected{% endif %}>Both self-reported and administrative</option>
+                                                <option value="Not clear" {% if dataset.get("st_info_type") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -607,34 +814,194 @@
                         <div id="householdInfo" class="accordion-collapse collapse" data-bs-parent="#datasetVariablesAccordion">
                             <div class="accordion-body">
                                 <div class="row">
-                                    {% for field_name, field_label in [
-                                        ('num_of_par', 'Number of Parents'),
-                                        ('pres_of_steppar', 'Presence of Stepparents'),
-                                        ('sibl', 'Siblings'),
-                                        ('par_work_stat', 'Parental Working Status'),
-                                        ('par_occ', 'Parental Occupation'),
-                                        ('par_edu', 'Parental Education'),
-                                        ('par_edu_level_isced', 'Parental Education Level (ISCED)'),
-                                        ('par_migr_backg', 'Parental Migratory Background'),
-                                        ('par_age', 'Parents Age'),
-                                        ('par_place_of_brth', 'Parents Place of Birth'),
-                                        ('par_inc_or_wlth', 'Parental Income or Wealth'),
-                                        ('par_host_cntry_lang_prof', "Parental Host Country's Language Proficiency"),
-                                        ('num_of_books', 'Number of Books'),
-                                        ('num_of_dig_dev', 'Number of Digital Devices'),
-                                        ('own_of_apt_hse', 'Ownership of the Apartment/House')
-                                    ] %}
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
-                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                        <label for="num_of_par" class="form-label">
+                                            Number of Parents <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="num_of_par" name="num_of_par" required>
                                             <option value="">-- Select --</option>
-                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
-                                            {% endfor %}
+                                                <option value="Yes" {% if dataset.get("num_of_par") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("num_of_par") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("num_of_par") == "Not clear" %}selected{% endif %}>Not clear</option>
                                         </select>
                                     </div>
-                                    {% endfor %}
-                                </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="pres_of_steppar" class="form-label">
+                                            Presence of Stepparents <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="pres_of_steppar" name="pres_of_steppar" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("pres_of_steppar") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("pres_of_steppar") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("pres_of_steppar") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="sibl" class="form-label">
+                                            Siblings <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="sibl" name="sibl" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("sibl") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("sibl") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("sibl") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paral_work_stat" class="form-label">
+                                            Parental Working Status <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="paral_work_stat" name="paral_work_stat" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes, for both parents" {% if dataset.get("paral_work_stat") == "Yes, for both parents" %}selected{% endif %}>Yes, for both parents</option>
+                                                <option value="Yes, only for one parent" {% if dataset.get("paral_work_stat") == "Yes, only for one parent" %}selected{% endif %}>Yes, only for one parent</option>
+                                                <option value="No" {% if dataset.get("paral_work_stat") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("paral_work_stat") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paral_occup" class="form-label">
+                                            Parental Occupation <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="paral_occup" name="paral_occup" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes, detailed information (e.g. ISCO code) for both parents" {% if dataset.get("paral_occup") == "Yes, detailed information (e.g. ISCO code) for both parents" %}selected{% endif %}>Yes, detailed information (e.g. ISCO code) for both parents</option>
+                                                <option value="Yes, detailed information (e.g. ISCO code) for only one parent" {% if dataset.get("paral_occup") == "Yes, detailed information (e.g. ISCO code) for only one parent" %}selected{% endif %}>Yes, detailed information (e.g. ISCO code) for only one parent</option>
+                                                <option value="Yes, simplified information for both parents" {% if dataset.get("paral_occup") == "Yes, simplified information for both parents" %}selected{% endif %}>Yes, simplified information for both parents</option>
+                                                <option value="Yes, simplified information for only one parent" {% if dataset.get("paral_occup") == "Yes, simplified information for only one parent" %}selected{% endif %}>Yes, simplified information for only one parent</option>
+                                                <option value="No" {% if dataset.get("paral_occup") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("paral_occup") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paral_edu" class="form-label">
+                                            Parental Education <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="paral_edu" name="paral_edu" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes, for both parents" {% if dataset.get("paral_edu") == "Yes, for both parents" %}selected{% endif %}>Yes, for both parents</option>
+                                                <option value="Yes, only for one parent" {% if dataset.get("paral_edu") == "Yes, only for one parent" %}selected{% endif %}>Yes, only for one parent</option>
+                                                <option value="No" {% if dataset.get("paral_edu") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("paral_edu") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paral_edu_level_iscd" class="form-label">
+                                            Parental Education Level (ISCED) <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="paral_edu_level_iscd" name="paral_edu_level_iscd" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes, full ISCED for both parents" {% if dataset.get("paral_edu_level_iscd") == "Yes, full ISCED for both parents" %}selected{% endif %}>Yes, full ISCED for both parents</option>
+                                                <option value="Yes, full ISCED for only one parent" {% if dataset.get("paral_edu_level_iscd") == "Yes, full ISCED for only one parent" %}selected{% endif %}>Yes, full ISCED for only one parent</option>
+                                                <option value="Yes, simplified ISCED for both parents" {% if dataset.get("paral_edu_level_iscd") == "Yes, simplified ISCED for both parents" %}selected{% endif %}>Yes, simplified ISCED for both parents</option>
+                                                <option value="Yes, simplified ISCED for only one parent" {% if dataset.get("paral_edu_level_iscd") == "Yes, simplified ISCED for only one parent" %}selected{% endif %}>Yes, simplified ISCED for only one parent</option>
+                                                <option value="No" {% if dataset.get("paral_edu_level_iscd") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("paral_edu_level_iscd") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paral_migr_bg" class="form-label">
+                                            Parental Migratory Background <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="paral_migr_bg" name="paral_migr_bg" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes, for both parents" {% if dataset.get("paral_migr_bg") == "Yes, for both parents" %}selected{% endif %}>Yes, for both parents</option>
+                                                <option value="Yes, only for one parent" {% if dataset.get("paral_migr_bg") == "Yes, only for one parent" %}selected{% endif %}>Yes, only for one parent</option>
+                                                <option value="No" {% if dataset.get("paral_migr_bg") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("paral_migr_bg") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="par_age" class="form-label">
+                                            Parents Age <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="par_age" name="par_age" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("par_age") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("par_age") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("par_age") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="par_plc_of_brth" class="form-label">
+                                            Parents Place of Birth <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="par_plc_of_brth" name="par_plc_of_brth" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("par_plc_of_brth") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("par_plc_of_brth") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("par_plc_of_brth") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paral_inc_or_wlth" class="form-label">
+                                            Parental Income or Wealth <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="paral_inc_or_wlth" name="paral_inc_or_wlth" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("paral_inc_or_wlth") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("paral_inc_or_wlth") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("paral_inc_or_wlth") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paral_host_cntrys_lang_prof" class="form-label">
+                                            Parental Host Country's Language Proficiency <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="paral_host_cntrys_lang_prof" name="paral_host_cntrys_lang_prof" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("paral_host_cntrys_lang_prof") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("paral_host_cntrys_lang_prof") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("paral_host_cntrys_lang_prof") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="num_of_bks" class="form-label">
+                                            Number of Books <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="num_of_bks" name="num_of_bks" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("num_of_bks") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("num_of_bks") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("num_of_bks") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="num_of_dgtl_dev" class="form-label">
+                                            Number of Digital Devices <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="num_of_dgtl_dev" name="num_of_dgtl_dev" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("num_of_dgtl_dev") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("num_of_dgtl_dev") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("num_of_dgtl_dev") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="own_of_the_apthse" class="form-label">
+                                            Ownership of the Apartment/House <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="own_of_the_apthse" name="own_of_the_apthse" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("own_of_the_apthse") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("own_of_the_apthse") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("own_of_the_apthse") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="hse_info_type" class="form-label">
+                                            Household Information Type <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="hse_info_type" name="hse_info_type" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Self-reported (provided by parents)" {% if dataset.get("hse_info_type") == "Self-reported (provided by parents)" %}selected{% endif %}>Self-reported (provided by parents)</option>
+                                                <option value="Administrative (provided by the institution or others)" {% if dataset.get("hse_info_type") == "Administrative (provided by the institution or others)" %}selected{% endif %}>Administrative (provided by the institution or others)</option>
+                                                <option value="Both self-reported and administrative" {% if dataset.get("hse_info_type") == "Both self-reported and administrative" %}selected{% endif %}>Both self-reported and administrative</option>
+                                                <option value="Not clear" {% if dataset.get("hse_info_type") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -649,24 +1016,85 @@
                         <div id="teachersInfo" class="accordion-collapse collapse" data-bs-parent="#datasetVariablesAccordion">
                             <div class="accordion-body">
                                 <div class="row">
-                                    {% for field_name, field_label in [
-                                        ('teach_age', 'Teacher Age'),
-                                        ('teach_gen', 'Teacher Gender'),
-                                        ('teach_sen', 'Teacher Seniority'),
-                                        ('teach_edu_deg', 'Teacher Educational Degree'),
-                                        ('teach_contr_type', 'Teacher Contract Type')
-                                    ] %}
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
-                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                        <label for="teach_age" class="form-label">
+                                            Teacher Age <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="teach_age" name="teach_age" required>
                                             <option value="">-- Select --</option>
-                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
-                                            {% endfor %}
+                                                <option value="Yes" {% if dataset.get("teach_age") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("teach_age") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("teach_age") == "Not clear" %}selected{% endif %}>Not clear</option>
                                         </select>
                                     </div>
-                                    {% endfor %}
-                                </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="teach_gender" class="form-label">
+                                            Teacher Gender <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="teach_gender" name="teach_gender" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("teach_gender") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("teach_gender") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("teach_gender") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="teach_senior" class="form-label">
+                                            Teacher Seniority <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="teach_senior" name="teach_senior" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("teach_senior") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("teach_senior") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("teach_senior") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="teach_edu_deg" class="form-label">
+                                            Teacher Educational Degree <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="teach_edu_deg" name="teach_edu_deg" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("teach_edu_deg") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("teach_edu_deg") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("teach_edu_deg") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="teach_contr_type" class="form-label">
+                                            Teacher Contract Type <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="teach_contr_type" name="teach_contr_type" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("teach_contr_type") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("teach_contr_type") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("teach_contr_type") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="teach_info_type" class="form-label">
+                                            Teacher Information Type <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="teach_info_type" name="teach_info_type" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Self-reported (provided by teachers)" {% if dataset.get("teach_info_type") == "Self-reported (provided by teachers)" %}selected{% endif %}>Self-reported (provided by teachers)</option>
+                                                <option value="Administrative (provided by the institution or others)" {% if dataset.get("teach_info_type") == "Administrative (provided by the institution or others)" %}selected{% endif %}>Administrative (provided by the institution or others)</option>
+                                                <option value="Not clear" {% if dataset.get("teach_info_type") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="teach_info_link" class="form-label">
+                                            Teacher Information Linkability <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="teach_info_link" name="teach_info_link" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Linkable to the ones of students" {% if dataset.get("teach_info_link") == "Linkable to the ones of students" %}selected{% endif %}>Linkable to the ones of students</option>
+                                                <option value="Not linkable to the ones of students" {% if dataset.get("teach_info_link") == "Not linkable to the ones of students" %}selected{% endif %}>Not linkable to the ones of students</option>
+                                                <option value="Not clear" {% if dataset.get("teach_info_link") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -681,26 +1109,85 @@
                         <div id="schoolInfo" class="accordion-collapse collapse" data-bs-parent="#datasetVariablesAccordion">
                             <div class="accordion-body">
                                 <div class="row">
-                                    {% for field_name, field_label in [
-                                        ('school_geo_ref', 'School Geo-Referencing'),
-                                        ('school_type', 'School Type'),
-                                        ('school_trck', 'School Track'),
-                                        ('school_size', 'School Size'),
-                                        ('class_size', 'Class Size'),
-                                        ('school_comp', 'School Composition'),
-                                        ('class_comp', 'Class Composition')
-                                    ] %}
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ field_name }}" class="form-label">{{ field_label }}</label>
-                                        <select class="form-select" id="{{ field_name }}" name="{{ field_name }}">
+                                        <label for="school_geo" class="form-label">
+                                            School Geo-Referencing <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="school_geo" name="school_geo" required>
                                             <option value="">-- Select --</option>
-                                            {% for opt in ['Yes', 'No', 'Not clear'] %}
-                                                <option value="{{ opt }}" {% if dataset[field_name] == opt %}selected{% endif %}>{{ opt }}</option>
-                                            {% endfor %}
+                                                <option value="Yes" {% if dataset.get("school_geo") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("school_geo") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("school_geo") == "Not clear" %}selected{% endif %}>Not clear</option>
                                         </select>
                                     </div>
-                                    {% endfor %}
-                                </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="school_type" class="form-label">
+                                            School Type <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="school_type" name="school_type" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("school_type") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("school_type") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("school_type") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="school_track" class="form-label">
+                                            School Track <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="school_track" name="school_track" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("school_track") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("school_track") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("school_track") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="school_size" class="form-label">
+                                            School Size <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="school_size" name="school_size" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("school_size") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("school_size") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("school_size") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="class_size" class="form-label">
+                                            Class Size <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="class_size" name="class_size" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("class_size") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("class_size") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("class_size") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="school_comp" class="form-label">
+                                            School Composition <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="school_comp" name="school_comp" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("school_comp") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("school_comp") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("school_comp") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="class_comp" class="form-label">
+                                            Class Composition <span class="badge badge-required">REQUIRED</span>
+                                        </label>
+                                        <select class="form-select" id="class_comp" name="class_comp" required>
+                                            <option value="">-- Select --</option>
+                                                <option value="Yes" {% if dataset.get("class_comp") == "Yes" %}selected{% endif %}>Yes</option>
+                                                <option value="No" {% if dataset.get("class_comp") == "No" %}selected{% endif %}>No</option>
+                                                <option value="Not clear" {% if dataset.get("class_comp") == "Not clear" %}selected{% endif %}>Not clear</option>
+                                        </select>
+                                    </div>
+
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -737,6 +1224,65 @@
 
 {% block extra_js %}
 <script>
+// Debug: mostra i valori del dataset (solo in modalità edit)
+{% if not is_new %}
+console.group('🔍 Dataset Debug Info');
+console.log('Dataset ID:', {{ dataset.get('id', 'undefined') }});
+console.log('Dataset Name:', '{{ dataset.get('name', 'undefined') }}');
+
+// Mostra tutti i campi variabili
+const variableFields = {
+    // Student's Information
+    stud_gen: "{{ dataset.get('st_gender', 'NULL') }}",
+    stud_age: "{{ dataset.get('st_age', 'NULL') }}",
+    stud_citz: "{{ dataset.get('st_citizen', 'NULL') }}",
+    // Household's Information
+    num_of_par: "{{ dataset.get('num_of_par', 'NULL') }}",
+    pres_of_steppar: "{{ dataset.get('pres_of_steppar', 'NULL') }}",
+    sibl: "{{ dataset.get('sibl', 'NULL') }}",
+    // Teachers' Information
+    teach_age: "{{ dataset.get('teach_age', 'NULL') }}",
+    teach_gen: "{{ dataset.get('teach_gender', 'NULL') }}",
+    // School/Class Information
+    school_geo_ref: "{{ dataset.get('school_geo', 'NULL') }}",
+    school_type: "{{ dataset.get('school_type', 'NULL') }}"
+};
+
+console.table(variableFields);
+
+// Conta i NULL
+const nullCount = Object.values(variableFields).filter(v => v === 'NULL').length;
+const totalFields = Object.keys(variableFields).length;
+const percentage = ((nullCount / totalFields) * 100).toFixed(1);
+
+console.log(`📊 Statistiche: ${nullCount}/${totalFields} campi sono NULL (${percentage}%)`);
+
+if (nullCount > 0) {
+    console.warn(`⚠️ ATTENZIONE: ${nullCount} campi hanno valore NULL nel database`);
+    console.log('💡 Questi campi mostreranno "-- Select --" nel form');
+    console.log('💡 Seleziona i valori corretti e salva per popolarli');
+    
+    // Mostra quali campi sono NULL
+    const nullFields = Object.entries(variableFields)
+        .filter(([key, value]) => value === 'NULL')
+        .map(([key]) => key);
+    console.log('Campi NULL:', nullFields);
+}
+
+console.groupEnd();
+
+// Verifica automatica: se ci sono molti NULL, mostra un alert
+if (percentage > 50) {
+    console.error(`❌ PROBLEMA: Più del 50% dei campi sono NULL!`);
+    // Decommentare per mostrare un alert visivo
+    // setTimeout(() => {
+    //     if (confirm('⚠️ Attenzione: Molti campi hanno valori NULL nel database.\n\nVuoi vedere quali campi mancano nella console?')) {
+    //         console.log('Campi NULL:', nullFields);
+    //     }
+    // }, 1000);
+}
+{% endif %}
+
 // Form submission
 document.getElementById('datasetForm').addEventListener('submit', function(e) {
     const btn = this.querySelector('button[type="submit"]');
