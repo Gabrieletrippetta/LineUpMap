@@ -166,7 +166,8 @@ function applyFilters() {
         return values.some(val => {
             const cleanVal = val.replace(/ Data$/, "").toLowerCase();
             // 1. Chiave diretta: group = "Parental Education", val = "for both parents"
-            const directVal = entry[group]?.toLowerCase() || "";
+            const rawVal = getField(entry, group);
+            const directVal = (rawVal === "N/A" ? "" : rawVal).toLowerCase() || "";
             
             if (group === "Data Collection Frequency") {
                 return directVal === cleanVal || directVal.includes(cleanVal);
@@ -245,7 +246,7 @@ function showResultsModal(filteredData) {
         "yearly (or more than once per year)": 1,
         "every other year": 2,
         "every three years": 3,
-        "every four year or more": 4
+        "every four years or more": 4
     };
     
     function normalize(text) {

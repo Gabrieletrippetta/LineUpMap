@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>LINEup Education Data Explorer - An Open-Source Map to Longitudinal Datasets in Europe</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -25,7 +25,7 @@
             frameborder="0"
             style="border:none;">
         </iframe>
-        <p class="contact-panel-description">Prefer to get in touch directly? <br> Contact us at <a href="mailto:info@lineup-project.eu">info@lineup-project.eu</a></p>
+        <p class="contact-panel-description">Prefer to get in touch directly? <br> Contact us at <a href="/cdn-cgi/l/email-protection#f69f989099b69a9f98938386db8684999c939582d89383"><span class="__cf_email__" data-cfemail="7f161119103f1316111a0a0f520f0d10151a1c0b511a0a">[email&#160;protected]</span></a></p>
     </div>
     
     <!--! Role selection MODAL -->
@@ -59,6 +59,10 @@
                                         <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-User-Guidelines.pdf" class="btn btn-secondary guide-faq-button" target="_blank">Guidelines</a>
                                         <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-FAQ.pdf" class="btn btn-secondary guide-faq-button" target="_blank">FAQ</a>
                                     </div>
+                                    <!-- Hamburger: visibile solo su mobile/tablet via CSS -->
+                                    <button id="hamburger-btn" onclick="toggleDrawer()" aria-label="Apri filtri" style="display:none;">
+                                        <span></span>
+                                    </button>
                                 </div>
                                 <p class="mb-0 mt-0 m-4 creative-commons"><img src="./assets/img/cc.svg" alt=""><img src="./assets/img/by.svg" alt="">Licensed under Creative Commons Attribution (CC BY).</p>
                             </div>
@@ -83,6 +87,8 @@
             </div>
                 
             <div id="filter-area">
+                <!-- Pulsante chiudi drawer, visibile solo su mobile -->
+                <button id="drawer-close-btn" onclick="closeDrawer()" aria-label="Chiudi filtri" style="display:none;">✖</button>
                 <div>
                     <button id="toggle-view-button" class="btn btn-success btn-sm mb-4 col-12" onclick="toggleView()">List View</button>
                 </div>
@@ -204,10 +210,36 @@
     
 
 
-        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+        <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
         <script src="assets/script.js"></script>
         <script src="assets/search.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
+
+    <!-- Backdrop per il drawer mobile -->
+    <div id="drawer-backdrop" style="display:none;" onclick="closeDrawer()"></div>
+
+    <script>
+    function toggleDrawer() {
+        const filterArea = document.getElementById('filter-area');
+        if (filterArea.classList.contains('drawer-open')) {
+            closeDrawer();
+        } else {
+            openDrawer();
+        }
+    }
+    function openDrawer() {
+        document.getElementById('filter-area').classList.add('drawer-open');
+        document.getElementById('drawer-backdrop').classList.add('show');
+        document.getElementById('hamburger-btn').classList.add('open');
+    }
+    function closeDrawer() {
+        document.getElementById('filter-area').classList.remove('drawer-open');
+        document.getElementById('drawer-backdrop').classList.remove('show');
+        document.getElementById('hamburger-btn').classList.remove('open');
+    }
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 992) closeDrawer();
+    });
+    </script>
 </body>
 </html>
-

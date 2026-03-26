@@ -1927,7 +1927,7 @@ function setupMainFilterInteraction(data) {
                 "Yearly (or more than once per year)",
                 "Every other year",
                 "Every three years",
-                "Every four year or more"
+                "every four years or more"
             ];
             return order.indexOf(a) - order.indexOf(b);
         }),
