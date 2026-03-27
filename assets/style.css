@@ -773,10 +773,10 @@ body.contact-open #header-title h1.wrap {
 }
 
 /* =====================================================================
-   RESPONSIVE — TABLET & MOBILE  (≤ 992px)
-   Desktop (> 992px): tutto invariato
+   RESPONSIVE — TABLET & MOBILE  (≤ 1390px)
+   Desktop (> 1390px): tutto invariato
    ===================================================================== */
-@media (max-width: 992px) {
+@media (max-width: 1390px) {
 
     /* --- Mappa full-screen --- */
     #map {
@@ -806,8 +806,8 @@ body.contact-open #header-title h1.wrap {
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
-    h1 { font-size: 22px !important; white-space: normal !important; }
-    header h2 { font-size: 14px !important; }
+    h1 { font-size: 22px !important; white-space: normal !important; text-align: left !important; }
+    header h2 { font-size: 14px !important; text-align: left !important; }
 
     /* Titolo + hamburger affiancati */
     #header-title .d-flex.flex-row {
@@ -816,13 +816,21 @@ body.contact-open #header-title h1.wrap {
         gap: 8px;
     }
 
-    /* Nascondi Guidelines/FAQ nell'header su mobile (restano nel drawer) */
+    /* Guidelines/FAQ: inline e più compatti */
     #header-title .d-flex.flex-column.gap-2 {
-        display: none !important;
+        flex-direction: row !important;
+        gap: 4px !important;
     }
 
-    /* Creative commons compatta */
-    .creative-commons { display: none !important; }
+    /* Creative commons: visibile ma più piccola */
+    .creative-commons {
+        display: flex !important;
+        font-size: 8px !important;
+        margin: 2px 8px 0 !important;
+    }
+    .creative-commons img {
+        width: 8px !important;
+    }
     .h1.m-4  { margin: 4px 8px !important; }
     .h4.text-muted.m-4 { margin: 2px 8px 4px !important; }
 
@@ -960,7 +968,7 @@ body.contact-open #header-title h1.wrap {
 /* =====================================================================
    LEGENDA MAPPA — responsive
    ===================================================================== */
-@media (max-width: 992px) {
+@media (max-width: 1390px) {
     /* Rimuovi padding Bootstrap che stringe la mappa */
     .container-fluid {
         padding-left: 0 !important;
@@ -1019,6 +1027,11 @@ body.contact-open #header-title h1.wrap {
 }
 
 @media (max-width: 768px) {
+    .contact-tab {
+        font-size: 11px !important;
+        padding: 4px 10px !important;
+    }
+
     .choropleth-legend {
         font-size: 8px !important;
         padding: 4px 6px !important;
