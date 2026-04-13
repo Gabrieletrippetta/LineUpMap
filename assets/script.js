@@ -2664,7 +2664,21 @@ document.addEventListener('DOMContentLoaded', () => {
             window.updateSelectedFiltersDisplay();
         });
     
-        
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    const icon = document.getElementById('theme-icon');
+    icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+(function () {
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.addEventListener('DOMContentLoaded', function () {
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.className = 'fa-solid fa-sun';
+        });
+    }
+})();
         
         
         

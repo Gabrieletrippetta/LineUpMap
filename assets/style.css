@@ -1056,3 +1056,79 @@ body.contact-open #header-title h1.wrap {
         max-width: 80px !important;
     }
 }
+
+/* ===== DARK MODE ===== */
+body.dark-mode {
+    background-color: #1a1a2e;
+    color: #d4d4d4;
+}
+body.dark-mode header {
+    background: rgba(26, 26, 46, 0.97) !important;
+}
+body.dark-mode h1, body.dark-mode h2,
+body.dark-mode h3, body.dark-mode h4,
+body.dark-mode h5, body.dark-mode h6 {
+    color: #c9e02a !important;
+}
+body.dark-mode .text-muted { color: #aaa !important; }
+body.dark-mode #filter-area {
+    background-color: #16213e;
+    color: #d4d4d4;
+}
+body.dark-mode #search_bottom_cont {
+    background: #16213e;
+}
+body.dark-mode .accordion-item {
+    background-color: #1e2a40;
+    border-color: #334455;
+}
+body.dark-mode .accordion-button {
+    background-color: #1e2a40 !important;
+    color: #d4d4d4 !important;
+}
+body.dark-mode .accordion-button:not(.collapsed) {
+    background-color: #253520 !important;
+}
+body.dark-mode .accordion-body {
+    background-color: #1e2a40;
+    color: #d4d4d4;
+}
+body.dark-mode .accordion-button::after {
+    filter: invert(1);
+}
+body.dark-mode .form-control {
+    background-color: #253045;
+    color: #d4d4d4;
+    border-color: #445566;
+}
+body.dark-mode .form-control::placeholder { color: #888; }
+body.dark-mode #dbpanel {
+    background: #1e2a40;
+    color: #d4d4d4;
+}
+body.dark-mode #dbpanel-content > div { border-color: #334; }
+body.dark-mode .db-modal,
+body.dark-mode .db-modal-header {
+    background-color: #1e2a40;
+    color: #d4d4d4;
+}
+body.dark-mode .db-entry { border-color: #334; }
+body.dark-mode .contact-panel {
+    background-color: #1e2a40;
+    color: #d4d4d4;
+}
+body.dark-mode .filter-toggle {
+    background-color: #253045;
+    color: #d4d4d4;
+}
+body.dark-mode .filter-options { background-color: #1e2a40; }
+body.dark-mode .modal-content {
+    background: #1e2a40;
+    color: #d4d4d4;
+}
+body.dark-mode .leaflet-popup-content-wrapper,
+body.dark-mode .leaflet-popup-tip {
+    background: #1e2a40 !important;
+    color: #d4d4d4 !important;
+}
+
