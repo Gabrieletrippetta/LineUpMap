@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -58,11 +59,11 @@
                                     <div class="d-flex flex-column gap-2">
                                         <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-User-Guidelines.pdf" class="btn btn-secondary guide-faq-button" target="_blank">Guidelines</a>
                                         <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-FAQ.pdf" class="btn btn-secondary guide-faq-button" target="_blank">FAQ</a>
+                                        <!-- Dark Mode -->
+                                        <button id="theme-toggle" class="btn btn-secondary guide-faq-button" onclick="toggleTheme()" title="Toggle dark/light mode">
+                                            <i id="theme-icon" class="fa-solid fa-moon"></i>
+                                        </button>
                                     </div>
-                                    <!-- Dark Mode -->
-                                    <button id="theme-toggle" class="btn btn-secondary guide-faq-button" onclick="toggleTheme()" title="Toggle dark/light mode">
-                                        <i id="theme-icon" class="fa-solid fa-moon"></i>
-                                    </button>
                                     <!-- Hamburger: visibile solo su mobile/tablet via CSS -->
                                     <button id="hamburger-btn" onclick="toggleDrawer()" aria-label="Apri filtri" style="display:none;">
                                         <span></span>

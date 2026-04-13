@@ -285,6 +285,12 @@ ul {
 
 .guide-faq-button {
     background-color: #006EC4 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
 }
 
 .guide-faq-button:hover {
@@ -1132,3 +1138,6 @@ body.dark-mode .leaflet-popup-tip {
     color: #d4d4d4 !important;
 }
 
+body.dark-mode .creative-commons {
+    color: #ccc !important;
+}
