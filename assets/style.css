@@ -285,7 +285,7 @@ ul {
 
 .guide-faq-button {
     background-color: #006EC4 !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
     line-height: 1;

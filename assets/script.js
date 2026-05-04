@@ -2680,5 +2680,46 @@ function toggleTheme() {
     }
 })();
         
+
+//Popup video
         
-        
+document.addEventListener('DOMContentLoaded', function () {
+    const openBtn = document.getElementById('open-btn');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('close-btn');
+    const video   = document.getElementById('video-frame');
+    const playBtn = document.getElementById('play-btn');
+
+    openBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        overlay.style.display = 'flex';
+    });
+
+    // Click sul bottone centrale → avvia e nasconde il bottone
+    playBtn.addEventListener('click', function () {
+        video.play();
+        playBtn.style.display = 'none';
+    });
+
+    // Se l'utente mette in pausa dai controls nativi → rimostra il bottone
+    video.addEventListener('pause', function () {
+        if (!video.ended) playBtn.style.display = 'flex';
+    });
+
+    // Se riprende dai controls nativi → nasconde il bottone
+    video.addEventListener('play', function () {
+        playBtn.style.display = 'none';
+    });
+
+    function closePopup() {
+        video.pause();
+        video.currentTime = 0;
+        playBtn.style.display = 'flex';
+        overlay.style.display = 'none';
+    }
+
+    closeBtn.addEventListener('click', closePopup);
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closePopup();
+    });
+});

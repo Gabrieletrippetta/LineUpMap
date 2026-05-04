@@ -57,7 +57,8 @@
                                         <h2 class="h4 text-muted mt-1 mb-0 m-4">An Open-Source Map to Longitudinal Datasets in Europe</h2>
                                     </div>
                                     <div class="d-flex flex-column gap-2">
-                                        <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-User-Guidelines.pdf" class="btn btn-secondary guide-faq-button" target="_blank">Guidelines</a>
+                                        <a href="#" id="open-btn" class="btn btn-secondary guide-faq-button">Guidelines</a>
+
                                         <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-FAQ.pdf" class="btn btn-secondary guide-faq-button" target="_blank">FAQ</a>
                                         <!-- Dark Mode -->
                                         <button id="theme-toggle" class="btn btn-secondary guide-faq-button" onclick="toggleTheme()" title="Toggle dark/light mode">
@@ -218,10 +219,52 @@
         <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
         <script src="assets/script.js"></script>
         <script src="assets/search.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
 
-    <!-- Backdrop per il drawer mobile -->
-    <div id="drawer-backdrop" style="display:none;" onclick="closeDrawer()"></div>
+        <!-- Backdrop per il drawer mobile -->
+        <div id="drawer-backdrop" style="display:none;" onclick="closeDrawer()"></div>
+
+        <!-- Video Modal Overlay -->
+        <div id="overlay" style="display:none; position:fixed; inset:0; z-index:9999;
+        background:rgba(0,0,0,0.75); align-items:center; justify-content:center;">
+
+        <div style="background:#fff; border-radius:12px; padding:2.5rem 1.5rem 1.5rem;
+                    width:95%; max-width:900px; position:relative; box-sizing:border-box; display: inline-block;">
+
+            <button id="close-btn"
+                    style="position:absolute; top:10px; right:14px; z-index:10;
+                        background:none; border:none; font-size:26px;
+                        cursor:pointer; line-height:1; padding:0; color:#000;">✕</button>
+
+            <div style="position:relative; border-radius:8px; overflow:hidden;">
+
+                <video id="video-frame" controls preload="auto"
+                    style="width:100%; display:block; max-height:75vh; background:#000; border-radius:8px;">
+                    <source src="./assets/video/Lineup-Sub.mp4" type="video/mp4">
+                </video>
+
+                <!-- Bottone play centrale, sparisce al click -->
+                <button id="play-btn"
+                        style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                            background:rgba(0,0,0,0.55); border:none; border-radius:50%;
+                            width:72px; height:72px; cursor:pointer; display:flex;
+                            align-items:center; justify-content:center; z-index:5;">
+                    <svg viewBox="0 0 24 24" width="34" height="34" fill="white">
+                        <polygon points="6,3 20,12 6,21"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div style="margin-top:1rem; text-align:center;">
+                <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-User-Guidelines.pdf"
+                class="btn btn-secondary guide-faq-button" target="_blank">Download the Guidelines (PDF)</a>
+            </div>
+        </div>
+    </div>
+            <a href="https://www.lineup-project.eu/wp-content/uploads/2026/01/LINEUP-Data-Explorer-User-Guidelines.pdf"
+            class="btn btn-secondary guide-faq-button" target="_blank">Download the Guidelines (PDF)</a>
+        </div>
+    </div>
 
     <script>
     function toggleDrawer() {
