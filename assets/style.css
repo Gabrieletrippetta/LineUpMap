@@ -1141,3 +1141,14 @@ body.dark-mode .leaflet-popup-tip {
 body.dark-mode .creative-commons {
     color: #ccc !important;
 }
+
+.credits {
+    font-family: "Raleway", sans-serif;
+    font-size: 10px;
+    color: #555;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+}
